@@ -26,7 +26,7 @@ func (s *Server) registerFullBackup() {
 // Only SetupMan's own backup folders can be opened (not any path a caller sends).
 func (s *Server) handleOpenFolder(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Which string `json:"which"` // "full" or a game id
+		Which string `json:"which"` // "full", "log" or a game id
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request")
@@ -36,6 +36,8 @@ func (s *Server) handleOpenFolder(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case in.Which == "full" && s.Full != nil:
 		dir = s.Full.Dir()
+	case in.Which == "log" && s.Full != nil:
+		dir = s.Full.DataDir // setupman.log, for attaching to a problem report (D-156)
 	case in.Which != "" && s.lib.Backups != nil:
 		dir = s.lib.Backups.GameDir(in.Which)
 	default:

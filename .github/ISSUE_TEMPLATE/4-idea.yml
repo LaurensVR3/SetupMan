@@ -1,0 +1,27 @@
+name: Idea or missing feature
+description: Something SetupMan could do better, or a game it should support.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      placeholder: "Show the tyre pressures to set for the next stint on the Pit stop page."
+    validations:
+      required: true
+  - type: textarea
+    id: when
+    attributes:
+      label: When would you use it?
+      description: The situation helps us get it right (practice, race night, setting up, sharing with a team …).
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options:
+        - All games
+        - Assetto Corsa Competizione (ACC)
+        - Assetto Corsa (AC)
+        - Assetto Corsa EVO (AC EVO)
+        - Assetto Corsa Rally (AC Rally)
+        - A game SetupMan doesn't support yet (say which above)

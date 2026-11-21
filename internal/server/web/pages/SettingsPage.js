@@ -389,7 +389,9 @@ export const SettingsPage = {
     };
 
     const visLabel = { auto: "When installed", show: "Always", hide: "Never" };
-    return { lfmId, saveLfm, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
+    // GitHub issue forms (D-156); the forms read ?version= into their version field.
+    const issueUrl = (form) => `https://github.com/LaurensVR3/SetupMan/issues/new?template=${form}&version=${encodeURIComponent(store.app?.number || "")}`;
+    return { issueUrl, lfmId, saveLfm, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
       hist, preview, applyHistory, countNodes, setEndurance, autostart, setAutostart,
       manage, setManaged, setTidy, setAutoRename, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
       full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
@@ -805,9 +807,28 @@ export const SettingsPage = {
           <p>SetupMan is free and open source (MIT licence). It only changes a game's setups folder when folder management is enabled for that game, and it creates a backup first.</p>
           <ul class="about-links">
             <li><a href="https://github.com/LaurensVR3/SetupMan" target="_blank" rel="noopener">SetupMan on GitHub</a></li>
-            <li><a href="https://github.com/LaurensVR3/SetupMan/issues" target="_blank" rel="noopener">Report a problem or idea</a></li>
+            <li><a href="https://github.com/LaurensVR3/SetupMan/releases/latest" target="_blank" rel="noopener">Latest version</a></li>
             <li><a href="https://lavaro.net" target="_blank" rel="noopener">lavaro.net</a></li>
           </ul>
+        </section>
+
+        <!-- Feedback (D-156): each button opens the matching GitHub form with this version filled in -->
+        <section v-if="tab === 'about'" class="settings-section about">
+          <h2>Feedback</h2>
+          <p>SetupMan is new and so far tested on one sim rig, mostly with ACC. Reports from players make it better quickly, especially for AC, AC EVO and AC Rally. Each button opens a short form on GitHub (a free GitHub account is needed) with your version already filled in.</p>
+          <div class="feedback-actions">
+            <a class="btn btn-primary" :href="issueUrl('1-problem.yml')" target="_blank" rel="noopener">Report a problem</a>
+            <a class="btn" :href="issueUrl('2-values.yml')" target="_blank" rel="noopener">A value differs from the game</a>
+            <a class="btn" :href="issueUrl('3-test-report.yml')" target="_blank" rel="noopener">Send a test report</a>
+            <a class="btn" :href="issueUrl('4-idea.yml')" target="_blank" rel="noopener">Suggest an idea</a>
+          </div>
+          <div class="setting">
+            <div class="setting-text">
+              <h3>Log file</h3>
+              <p><code>setupman.log</code> lists what SetupMan saw of your games: sessions, laps, which setup it recognised and changes in the setups folders. Drag it into your report; it helps most. It contains your setup names and nothing else personal.</p>
+            </div>
+            <button type="button" class="btn" @click="openFolder('log')">Open log folder</button>
+          </div>
         </section>
 
         <section v-if="tab === 'about'" class="settings-section about">

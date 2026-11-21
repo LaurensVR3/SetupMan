@@ -100,13 +100,18 @@ go build -ldflags "-H=windowsgui" -o SetupMan.exe ./cmd/setupman
 
 ## Feedback
 
-SetupMan is tested on one sim rig so far, mostly with ACC. Please open an
-[issue](https://github.com/LaurensVR3/SetupMan/issues) when something is wrong or missing, especially for
-Assetto Corsa, AC EVO and AC Rally. Helpful to include:
-- the game, car and track, and what you did;
-- what SetupMan showed and what the game showed (a screenshot of both helps);
-- `%APPDATA%\SetupMan\setupman.log` (it lists what SetupMan saw of the game; check it before posting,
-  it contains your setup names).
+SetupMan is tested on one sim rig so far, mostly with ACC. Reports from players make it better quickly,
+especially for Assetto Corsa, AC EVO and AC Rally. The easiest way: in SetupMan, **Settings → About →
+Feedback**. Each button opens a short form with your version filled in:
+
+- **Report a problem**: something is wrong, missing or doesn't start;
+- **A value differs from the game**: a number on the Setup tab doesn't match the game's setup screen;
+- **Send a test report**: tick what worked with a game (about ten minutes of driving);
+- **Suggest an idea**.
+
+Or [open an issue](https://github.com/LaurensVR3/SetupMan/issues/new/choose) here directly. The log file helps
+most: Settings → About → **Open log folder**, then drag `setupman.log` into the form. It lists what SetupMan
+saw of your games and your setup names, nothing else personal.
 
 ## Credits
 

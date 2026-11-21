@@ -1,0 +1,59 @@
+name: A setup value differs from the game
+description: SetupMan shows a different number or name than the game's setup screen (camber, ride height, pressures, fuel …).
+labels: ["car data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        SetupMan shows values the way the game does, using a table per car. When a number is off, the table for that car needs fixing. A screenshot of SetupMan's Setup tab next to the game's screen is the quickest way to show it.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options:
+        - Assetto Corsa Competizione (ACC)
+        - Assetto Corsa (AC)
+        - Assetto Corsa EVO (AC EVO)
+        - Assetto Corsa Rally (AC Rally)
+    validations:
+      required: true
+  - type: input
+    id: car
+    attributes:
+      label: Car
+      placeholder: "Porsche 718 Cayman GT4"
+    validations:
+      required: true
+  - type: input
+    id: setting
+    attributes:
+      label: Which setting?
+      description: The game's tab and the setting's name.
+      placeholder: "Aero → ride height (front and rear)"
+    validations:
+      required: true
+  - type: input
+    id: setupman
+    attributes:
+      label: SetupMan shows
+      placeholder: "front 96 mm, rear 90 mm"
+    validations:
+      required: true
+  - type: input
+    id: ingame
+    attributes:
+      label: The game shows
+      placeholder: "front 111 mm, rear 105 mm"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SetupMan version
+      description: Settings → About.
+      placeholder: "0.23.0"
+  - type: textarea
+    id: files
+    attributes:
+      label: Screenshots and the setup file
+      description: A screenshot of both screens helps most. You can also drag the setup file here (from the game's setups folder), so we can check the raw value.

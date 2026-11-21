@@ -1,0 +1,70 @@
+name: Something doesn't work
+description: SetupMan shows something wrong, misses something, or doesn't start.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping! A few short answers are enough. The **log file** helps most: SetupMan → Settings → About → **Open log folder**, then drag `setupman.log` into the box at the bottom.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options:
+        - Assetto Corsa Competizione (ACC)
+        - Assetto Corsa (AC)
+        - Assetto Corsa EVO (AC EVO)
+        - Assetto Corsa Rally (AC Rally)
+        - Not about one game
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where in SetupMan?
+      options:
+        - Finding the game or its setups
+        - Setup values or names (Setup tab)
+        - Recording laps or recognising the setup I drive
+        - Pit stop page
+        - Race prep or fuel calculator
+        - Choosing what the game shows (folder management), renaming, duplicates
+        - History, comparing, families
+        - Backups, sharing, import or export
+        - Phone or other PC (network access)
+        - Starting SetupMan, tray icon, Start with Windows
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, and what SetupMan did.
+      placeholder: "I loaded my setup in the pit box and drove out; the top bar kept saying setup unknown."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      placeholder: "The top bar shows the name of my setup."
+  - type: input
+    id: car-track
+    attributes:
+      label: Car and track (if it's about one)
+      placeholder: "Ferrari 296 GT3 at Imola"
+  - type: input
+    id: version
+    attributes:
+      label: SetupMan version
+      description: Settings → About. Filled in when you start from SetupMan's "Report a problem" link.
+      placeholder: "0.23.0"
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Log and screenshots
+      description: |
+        Drag `setupman.log` here (Settings → About → Open log folder), plus screenshots if they help. The log lists your setup names and what SetupMan saw of the game; nothing else personal. Read it first if you like.

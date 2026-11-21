@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How SetupMan works
+    url: https://github.com/LaurensVR3/SetupMan#readme
+    about: The README, and the Manual inside SetupMan (top bar → Manual), explain every feature.

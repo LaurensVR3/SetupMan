@@ -1,0 +1,56 @@
+name: Test report for a game
+description: You tried SetupMan with a game and want to tell what works and what doesn't. Especially welcome for AC, AC EVO and AC Rally.
+labels: ["test report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ACC has been tested on a real rig; the other games were built from public documentation, so every report helps. Tick what worked, leave the rest unticked, and add notes where something was off. Takes about ten minutes of driving.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options:
+        - Assetto Corsa (AC)
+        - Assetto Corsa EVO (AC EVO)
+        - Assetto Corsa Rally (AC Rally)
+        - Assetto Corsa Competizione (ACC)
+    validations:
+      required: true
+  - type: checkboxes
+    id: worked
+    attributes:
+      label: What worked?
+      options:
+        - label: SetupMan found the game and its setups by itself (Games page)
+        - label: The setup values match the game's setup screen
+        - label: The top bar says the game is running, and "Driving" when on track
+        - label: Laps were recorded (setup page → Lap times)
+        - label: SetupMan recognised the setup I drove (or offered Manual setup select)
+        - label: The Pit stop page showed fuel and tyre advice during a session
+        - label: Choosing which setups the game lists (folder management) worked
+        - label: Changing a value in SetupMan showed up in the game
+  - type: input
+    id: program
+    attributes:
+      label: The game's program name
+      description: "While driving: Task Manager → Details. SetupMan knows a game runs from this name, so it's very useful."
+      placeholder: "acs.exe"
+  - type: textarea
+    id: notes
+    attributes:
+      label: What was off?
+      description: For each unticked item, what you saw. Car and track help.
+  - type: input
+    id: version
+    attributes:
+      label: SetupMan version
+      description: Settings → About.
+      placeholder: "0.23.0"
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Log and screenshots
+      description: Drag `setupman.log` here (Settings → About → Open log folder). It shows what SetupMan saw of the game, lap by lap.

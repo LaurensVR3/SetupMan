@@ -859,3 +859,4 @@ a.sr-name:hover { color: var(--link); text-decoration: underline; }
 .ss-list { padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; max-width: 100%; }
 .ss-strip { border-top: 1px solid var(--line); background: var(--dup-bg); }
 .ss-strip .setup-select { margin: 0; padding: 6px 0; background: none; border: 0; border-radius: 0; }
+.feedback-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
