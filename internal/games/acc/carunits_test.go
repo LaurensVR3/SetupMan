@@ -106,6 +106,10 @@ func TestCarUnitsPorscheGT4RideHeight(t *testing.T) {
 	if got := f["advancedSetup.aeroBalance.rideHeight[2]"].RealValue(); got != 101 {
 		t.Errorf("rear ride height for 2 clicks = %v, want 101", got)
 	}
+	// The mm depend on the track's BoP, so the setup page says they can be a few mm off (D-158).
+	if f["advancedSetup.aeroBalance.rideHeight[0]"].Note == "" || f["basicSetup.alignment.camber[0]"].Note != "" {
+		t.Error("only ride heights carry the BoP note")
+	}
 }
 
 // ACC's Aero tab shows the rear box left of the front box (rig 2026-11-21): the rear column comes first.

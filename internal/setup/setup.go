@@ -36,6 +36,9 @@ type Field struct {
 	Group  string `json:"group,omitempty"`
 	Row    string `json:"row,omitempty"`
 	Col    string `json:"col,omitempty"`
+	// Note: shown once under the field's section on the setup page, e.g. why a real value can
+	// differ from the game (ACC ride heights, D-158).
+	Note string `json:"note,omitempty"`
 }
 
 // IsNumber reports whether the field holds a number.

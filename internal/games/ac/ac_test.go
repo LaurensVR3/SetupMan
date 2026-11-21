@@ -52,6 +52,7 @@ func TestScan(t *testing.T) {
 	}
 	os.WriteFile(filepath.Join(dir, "q.ini"), []byte(sample), 0o644)
 	os.WriteFile(filepath.Join(dir, "q.sp"), []byte("[PRESET_0]\r\nFUEL=0\r\n"), 0o644)
+	os.WriteFile(filepath.Join(dir, "Last.ini"), []byte(sample), 0o644) // AC's copy of the loaded setup (D-157)
 	g := &Game{}
 	g.once.Do(func() {}) // no installed game in tests: names come from the folders
 	s, err := g.Scan(root)
@@ -61,7 +62,7 @@ func TestScan(t *testing.T) {
 	if len(s.Cars) != 1 || s.Cars[0].Name != "Mazda Mx5 Cup" || s.Cars[0].Tracks[0].Name != "Any track" {
 		t.Fatalf("unexpected scan: %+v", s.Cars)
 	}
-	if len(s.Cars[0].Tracks[0].Setups) != 1 || len(s.Ignored) != 1 {
+	if len(s.Cars[0].Tracks[0].Setups) != 1 || len(s.Ignored) != 2 {
 		t.Fatalf("setups %d, ignored %v", len(s.Cars[0].Tracks[0].Setups), s.Ignored)
 	}
 }
@@ -83,11 +84,11 @@ func TestSamples(t *testing.T) {
 		n += c.SetupCount()
 	}
 	for _, i := range s.Ignored {
-		if filepath.Ext(i.RelPath) != ".sp" {
+		if filepath.Ext(i.RelPath) != ".sp" && filepath.Base(i.RelPath) != "last.ini" {
 			t.Errorf("ignored %s: %s", i.RelPath, i.Reason)
 		}
 	}
-	if n < 50 {
+	if n < 30 { // 38 real setups; the other cars only have AC's last.ini (D-157)
 		t.Errorf("only %d setups read", n)
 	}
 	t.Logf("%d cars, %d setups", len(s.Cars), n)

@@ -108,7 +108,10 @@ func (g *Game) Scan(folder string) (*game.Scan, error) {
 		Car:   g.car,
 		Track: g.track,
 		Skip:  map[string]string{".sp": "AC's pit-stop presets for the setup with the same name (not a setup)"},
-		Hint:  `No setups found. Choose the folder that contains the car folders (normally Documents\Assetto Corsa\setups).`,
+		// AC copies the setup you load into last.ini; counted as a setup it got a new
+		// version at every load and looked like a duplicate of the loaded setup (D-157).
+		SkipNames: map[string]string{"last.ini": "AC's copy of the last setup used, rewritten by the game (not a setup)"},
+		Hint:      `No setups found. Choose the folder that contains the car folders (normally Documents\Assetto Corsa\setups).`,
 	}
 	return lay.Scan(folder)
 }

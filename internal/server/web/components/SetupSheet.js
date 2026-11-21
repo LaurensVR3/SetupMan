@@ -68,7 +68,10 @@ export const SetupSheet = {
       }
       // The order of ACC's own setup screens; anything else after.
       const rank = (n) => { const i = SECTION_ORDER.indexOf(n); return i < 0 ? 99 : i; };
-      for (const s of out) s.blocks = blocks(s.rows, editing.value);
+      for (const s of out) {
+        s.blocks = blocks(s.rows, editing.value);
+        s.notes = [...new Set(s.rows.map((f) => f.note).filter(Boolean))]; // e.g. ACC ride heights (D-158)
+      }
       return out.sort((a, b) => rank(a.name) - rank(b.name));
     });
     // A plain row shows the game's name; a wheel setting listed on its own row (while changing
@@ -138,6 +141,7 @@ export const SetupSheet = {
               </tr>
             </table>
           </template>
+          <p v-for="n in s.notes" :key="n" class="sheet-note">{{ n }}</p>
         </section>
       </div>
       <div v-if="editing" class="edit-bar">

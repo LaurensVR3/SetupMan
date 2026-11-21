@@ -24,7 +24,10 @@ type Layout struct {
 	Car   func(folder string) game.Car            // readable car name, brand, class (Tracks left empty)
 	Track func(folder string) string              // readable track name
 	Skip  map[string]string                       // other file types and why they are not setups, e.g. ".sp"
-	Hint  string                                  // shown when no setups are found
+	// SkipNames: file names (lower case) of the setup type that the game writes itself and
+	// that are not setups, e.g. AC's "last.ini", with the reason shown under ignored files.
+	SkipNames map[string]string
+	Hint      string // shown when no setups are found
 }
 
 // Scan reads the folder (read-only, spec D-07), groups the setups per car and track and
@@ -82,6 +85,10 @@ func (lay Layout) Scan(root string) (*game.Scan, error) {
 					} else {
 						ignore(rel, "not a "+lay.Ext+" file")
 					}
+					continue
+				}
+				if why, ok := lay.SkipNames[strings.ToLower(f.Name())]; ok {
+					ignore(rel, why)
 					continue
 				}
 				seen++

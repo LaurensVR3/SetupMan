@@ -86,6 +86,10 @@ var settingOf = map[string]struct{ setting, unit string }{
 // GT3-type tyres start at 20.3 psi (realUnits).
 const gt4Pressure = 17.0
 
+// rideHeightNote: ACC shifts ride heights per track (Balance of Performance; the setup file's
+// trackBopType) and no public source has those numbers, so the mm can be a few off (D-158, Q-RIG7).
+const rideHeightNote = "Ride heights can differ a few mm from the game: ACC adjusts them per track (Balance of Performance)."
+
 // applyCarUnits gives the fields of a setup for a known car their real values.
 func applyCarUnits(s *Setup) {
 	car, ok := carUnits[strings.ToLower(s.CarName)]
@@ -115,6 +119,9 @@ func applyCarUnits(s *Setup) {
 			continue // the game shows the clicks themselves
 		}
 		f.Real, f.Unit = true, so.unit
+		if leaf == "rideHeight" {
+			f.Note = rideHeightNote
+		}
 		if len(c.Table) > 0 {
 			f.Table, f.Offset, f.Step = c.Table, 0, 0
 		} else {

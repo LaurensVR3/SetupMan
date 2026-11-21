@@ -7,7 +7,7 @@ import (
 )
 
 // Number is SetupMan's version. Raise it with every build that goes to the sim rig or to users.
-const Number = "0.23.0"
+const Number = "0.23.1"
 
 // Info describes the running build.
 type Info struct {
