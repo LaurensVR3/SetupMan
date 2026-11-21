@@ -1,0 +1,500 @@
+# SetupMan – Project Spec (living document)
+
+Status (2026-11-21): **Phases 1–8 built, version 0.23.0 (public GitHub version prepared D-155, audit after round 3 D-154, ACC keeps no record of the loaded setup D-153, recognition in the pits and tyre-pressure tie-break D-152, round 2 results D-151, round 2 first fixes D-150, ACC setup recognition by pit strategy, manual setup select and rig probe D-149, setup recognition from the last-opened time D-147, About tab D-148, review fixes D-138, PIN opt-out D-139, rig preparation D-140, race prep and real units D-141, LFM D-142, LFM list fixes D-143, first ACC rig test fixes D-144, air/track temperatures in names D-145, temperature labels per author D-146); ACC rig test round 1 done (20 of 22 checks, section 6), fixes waiting for round 2.** Only what's under "Decisions" is agreed.
+Source: `SetupMan Description.txt` (original feature list) + discussion with Claude, 2026-11-18.
+This spec is expected to change once the tool is in use (D-14).
+
+---
+
+## 1. Original feature list (from description)
+
+- Manage simracing setups; version history per setup.
+- Compare setups; flag duplicates / near-duplicates.
+- User descriptions / notes linked to setups.
+- Visual comparison of setups.
+- Adjust (edit) setups.
+- Multi-game; ACC first. Test data in `ACC Setups/`.
+- Auto-detect installed supported titles + their setup folders.
+- Listen to shared memory / UDP to log fuel use, best & average lap, tyre wear, etc.
+- Count laps driven per setup; attach this telemetry metadata to the setup.
+- Auto-adjust a base setup to session temperature (tyre pressures, ducts, ...).
+- Opt-in auto-renaming: `<ProviderName> <SessionType> <Weather> <Temperature> <GameVersion> <Other>`.
+- Batch import/export.
+- Backup: full DB or setups only. Local first, cloud later.
+- Secure sharing of setups/metadata with other users.
+- Runs as app or service on Windows. GUI via web browser.
+- *(Added 2026-11-18)* **Fuel calculator** for qualifying and race, using measured fuel use per lap,
+  the setup's average lap time and the time lost by a pit stop (measured):
+  - **Qualifying:** one stint if Q is shorter than 12 minutes; otherwise two stints. With an odd number
+    of laps, the second stint is the longer one. Fuel per stint = laps × fuel/lap, rounded up to whole litres.
+  - **Race:** laps = race length / average lap time, rounded up to the next whole lap. Add 1 out-lap,
+    multiply by fuel/lap, add the safety margin (default 2 L), round up to whole litres (D-54, D-55).
+  - Details: D-54 … D-60, D-63 … D-65; all decided.
+
+---
+
+## 2. Observations from the ACC test data
+
+- 145 files: 144 `.json` setups + 1 stray `.pdf` (`ferrari_488_gt3_evo/Spa/Untitled+Document.pdf`).
+- Layout: `<carName>/<track>/<setupName>.json`, mirroring ACC's `Documents\Assetto Corsa Competizione\Setups`.
+  Track folder casing is inconsistent (`Spa` vs `spa`, `Nurburgring` vs `nurburgring`).
+- Many empty car/track folders (ACC creates them).
+- File contents: `carName`, `basicSetup` (tyres, alignment, electronics, strategy), `advancedSetup`
+  (mechanical balance, dampers, aero, drivetrain), `trackBopType`.
+- **Most values are click indices, not physical units.** E.g. `tyrePressure: [52,55,48,51]` is a click
+  offset, not psi. Converting to real units needs per-car tables (min value + step).
+  Some fields are floats that look like values the game derives from the clicks: `staticCamber`,
+  `toeOutLinear`, `rodLength`. (`fuelPerLap` is a float too but looks like a strategy input.)
+- Two file size classes (~1.8 KB vs ~8.3 KB): the large ones have **30 `pitStrategy` slots**; checked
+  `ferrari_296_gt3/Spa/nite45m.json`: 1 distinct entry + 29 identical copies (unused padding).
+- **Confirmed exact duplicate across tracks:** `Hungaroring/-abesports_HUN_2026.json` is byte-identical
+  to `watkins_glen/-abesports_HUN_2026.json`.
+- Filenames encode info inconsistently: provider (`LA`, `SCG`, `FRI3`, `-abesports`), session (`Q`, `R`,
+  `quali`, `race`, `45m`, `25m`), temperatures (`20_25`, `2026`, `23-27C`), lap times (`1.42.9`),
+  game version (`v1.9.2`), junk names (`tst`, `xcv`, `yt (17)`).
+
+### How ACC uses setup files (as understood, to be verified once ACC is installed)
+
+- ACC reads the file when a setup is loaded and writes it on save; it does not hold the file during driving.
+- ACC shared memory exposes car, track, session type, air/track temp, fuel, lap times, tyre pressures,
+  brake bias, TC/ABS/map – but **not** the setup filename.
+- Active setup detection (D-147): the setup file the game opened last since it started (Windows records the
+  moment a file was last read); the car's values (fuel, TC, ABS, map) decide only when that doesn't. The user can
+  correct it with one click.
+
+---
+
+## 3. Decisions
+
+| # | Topic | Decision |
+|---|-------|----------|
+| D-01 | Audience / licence | Personal use first; maybe friends/public later. Free & open source. |
+| D-02 | Versioning rule | **Any** change to any setup value = new version (even 0.2% brake bias). |
+| D-03 | MVP scope | Scan all setups in a folder, compare them, show exact and near duplicates. |
+| D-04 | Developer profile | User is not a programmer; code is written/maintained by an LLM. Language must be LLM-reliable. |
+| D-05 | Telemetry goal | No full telemetry; only data that helps choose which setup to race with. |
+| D-06 | Staging | Game car/track folder shows **only staged setups**; everything else lives in SetupMan's library. |
+| D-07 | Non-destructive | Never destructive. Deleting only by explicit user action + "are you sure". MVP is fully read-only on the source folder. |
+| D-08 | Strategy counts | Fuel / pit strategy differences make it a **different setup**. |
+| D-09 | Near-duplicate metric | Similarity score (%). Threshold adjustable (slider); default chosen after real use. |
+| D-10 | Comparison scope | ACC: within same car+track. Cross-track similarity = nice-to-have, low priority. |
+| D-11 | Results view | Group by car/track → clusters (identical / near-identical with diff summary) → side-by-side table, diffs highlighted. |
+| D-12 | Renamed-save lineage | A setup saved under a new name with changes stays the **same setup** (new version); SetupMan renames it and adds a note "based on X". |
+| D-13 | Performance | Near-zero CPU while driving; must not cost FPS. Target: < 0.5% avg of one core while ACC runs (to be measured). |
+| D-14 | Living spec | User expects to change their mind after use; spec is updated as we go. |
+| D-15 | Tech stack | **Go** (single small .exe, low RAM/CPU, simple syntax, good docs), **SQLite** for storage, local web UI opened in the browser. User delegated this choice to Claude. |
+| D-16 | Pit-strategy padding | Compare **distinct** pit-strategy entries only; identical padding slots are ignored. |
+| D-17 | Score weighting | Every click counts equally for now; per-category weights maybe later. |
+| D-18 | Lineage linking | Auto-link a new/renamed file to its most similar setup. On opening the GUI a **changelog** shows what was linked; user can re-link. |
+| D-19 | MVP data source | The test dump `ACC Setups/` (ACC not installed on dev machine). Folder picker; auto-detect of the ACC folder comes later. |
+| D-20 | Similarity score | Accepted as defined in section 4 (% identical fields, click total shown alongside, listed exclusions). |
+| D-21 | MVP + roadmap | MVP spec (section 4) and roadmap (section 5) accepted. MVP is ready to build. |
+| D-22 | Tyre set not scored | `tyreSet` (main and pit strategy) is just the set selected when saving; shown, but not scored. |
+| D-23 | Copied pit slots | Ignore copied slots: slot 1 always counts; later slots are ignored when identical to an earlier slot or when their tyres copy the main setup's tyres. |
+| D-24 | Git hosting | Local git repository only for now. Nothing gets pushed or published until the user asks (user runs their own Gitea). |
+| D-25 | Fuel per lap | ACC's `fuelPerLap` estimate is often wrong: not scored. Later shown next to SetupMan's own measured average fuel use (Phase 4). |
+| D-26 | Navigation structure | Overview (game tiles) → Game (car tiles) → Car (track tiles) → Track (setups + compare). Breadcrumbs, working back button, every page has its own URL. Settings is a separate page, always reachable. Folder picker moves out of the top bar into Settings. |
+| D-27 | Readable names | Never show raw IDs: `ferrari_296_gt3` → "Ferrari 296 GT3", `brands_hatch` → "Brands Hatch". Built-in name tables per game, fallback = tidy version of the ID. |
+| D-28 | Tile contents (Q-U1) | Game tile: name, #cars, #tracks, #setups, #duplicate clusters, folder status. Car tile: readable name, class badge, #tracks, #setups, duplicate marker. Track tile: readable name, #setups, duplicate marker. More info later. |
+| D-29 | Car tile order (Q-U2) | Grouped by class (GT3, GT4, GT2, Cup/others), alphabetical within each class. |
+| D-30 | Track page (Q-U3) | Setup list + similarity grid (every setup vs every other, coloured by score, click = compare) + comparison panel below. Not-scored values hidden by default, decimals rounded, only differing cells highlighted. |
+| D-31 | Games on overview (Q-U4) | All installed sim titles that SetupMan supports. Visibility per game can be toggled in Settings. |
+| D-32 | Scanning (Q-U6) | Automatic, all the time (folder watching), except while the user is driving. |
+| D-33 | Settings page (Q-U7) | Theme (follow Windows / light / dark), near-identical threshold, per-game setup folder with Browse + validity check, per-game visibility. |
+| D-34 | Look & feel | Beautiful to look at, idiot-proof in use. Structure must be right from the start. |
+| D-35 | Frontend tech | Vue 3 (vendored file inside the exe, no build step, works offline) for a component-based structure. Go side gets a "game" layer; ACC is the first game. (Technical choice delegated to Claude, D-15.) |
+| D-36 | Brand logos (Q-U8) | Fetched from Wikimedia Commons at runtime, cached in `%APPDATA%\SetupMan`, never shipped in the repo. Settings switch "Download brand logos" (on by default). No logo → clean text-only tile. |
+| D-37 | Game visibility override (Q-U9) | Overview shows installed supported titles; Settings can override (force show/hide, set folder manually) – used to show ACC on the dev machine. |
+| D-38 | "Driving" definition (Q-U10) | Driving = session live **and** car moving (speed above a few km/h) and not stationary in the pit box. Pit menu / garage / pause / replay / main menu = not driving → scanning allowed. Uses ACC shared memory (status, speed, pit flags). |
+| D-39 | Build before testing (Q-U11) | Build game detection, driving detection and shared-memory reading now from public documentation; user tests on the sim rig once the app works. Until verified: if live data can't be read, assume not driving. |
+| D-40 | Probable history (Q-V1) | Import existing setups (years of badly named files) and rebuild a *probable* version history from date modified + similarity. Marked as probable; user can correct links. |
+| D-41 | Version snapshots now (Q-V2) | SetupMan keeps a copy of every setup version in its own library (SQLite in %APPDATA%), starting now. |
+| D-42 | Test late (Q-V2) | User starts rig testing only when nearly every feature is implemented. Build order changes accordingly. |
+| D-43 | Branches (Q-V3) | History shows branches, e.g. Q, R and endurance R grown from one base setup. |
+| D-44 | Key lap data (Q-V4) | Per setup (version): **best lap ever** and **average lap time** are the most important. |
+| D-45 | Notes needed (Q-V5) | User encodes extra info in names (e.g. "TC25" = TC shortcuts 2 and 5, which a setup file can't store). Custom notes per setup are needed for this. |
+| D-46 | Import source (Q-V6) | Only the game's current setups folder is loaded. No import of other folders or zip files. |
+| D-47 | Branch type (Q-V7) | Session type (Q / R / endurance R) is guessed from the name, with manual override. |
+| D-48 | Average lap (Q-V8) | Average of valid laps that are not pit-related (no out-laps, in-laps or laps with a stop). Show a graph of lap time against temperature. |
+| D-49 | Naming parts (Q-V9) | In e.g. `ABC R 1.10.4 2327 TC25`: initials of the driver/company (ABC, BGK, CDA, LA, HYMO – any length), session (R), ACC version (1.10.4), temperature (23 °C air, 27 °C track as ACC shows them; read as a range until D-145), own codes (TC25). Read from names into editable fields, same principle as D-47. |
+| D-50 | Phases before rig test (Q-V10) | Order agreed. Phases 2–6 must be done before the user starts testing: library + history + notes, staging, telemetry, editing + renaming, temperature adjust. Backup/export after that; sharing and other games later. |
+| D-51 | Branch vs continuation (Q-H1) | A new file derived from an existing setup: if the old file still exists, it is a **branch** in the same family tree; if the old file is gone (renamed/deleted), it **continues the same line** as a new version. Refines D-12. |
+| D-52 | What is a new version (Q-H2) | A new version only when a scored value changes (not for tyre set, fuel estimate, telemetry laps). The latest file content is always stored. Refines D-02. |
+| D-53 | History link threshold (Q-H3) | A setup is guessed to come from an older one when ≥ 80% the same (default, adjustable, separate from the near-identical threshold). Below that it starts its own family. Try several thresholds on real data. |
+| D-54 | Race fuel formula (Q-F1) | laps = ⌈race length ÷ average lap time⌉; fuel = ⌈(laps + 1 out-lap) × fuel/lap + safety⌉ in whole litres. Example: 45 min, 1:45.0, 3.2 L/lap → 26 laps + 1 = 27 × 3.2 = 86.4 + 2 = 88.4 → **89 L**. |
+| D-55 | Safety margin (Q-F2) | Fixed litres, user-configurable, default 2 L. |
+| D-56 | Pit-stop time loss (Q-F3) | Entered manually (per track) for now; later SetupMan may calculate it once enough telemetry exists. |
+| D-57 | Use of pit loss (Q-F4) | Used to calculate the number of race laps more accurately (time spent in the pits is not spent driving laps). |
+| D-58 | Qualifying stints (Q-F5) | Each Q stint = 1 out-lap + flying laps; return to the garage straight after the last flying lap (no in-lap). |
+| D-59 | Session length (Q-F6) | Typed in by the user, so the calculation can be prepared in advance. |
+| D-60 | Fuel result (Q-F7) | Display only for now; writing it into the setup may come later. |
+| D-61 | Name as history clue (Q-H4) | When names match apart from session/temperature/version/lap-time parts, a lower content similarity (e.g. 65%) is enough to link setups in the probable history. |
+| D-62 | History preview (Q-H5) | Phase 2 includes an in-app "rebuild history" preview with a threshold slider; manual links are never overwritten. |
+| D-63 | Race stops (Q-F8) | Number of mandatory stops entered manually; laps = ⌈(race length − stops × pit loss) ÷ average lap⌉. Optional manual pit window for unequal stints. |
+| D-64 | Qualifying laps (Q-F9) | The Q time includes the out-laps. Example 15 min, 1:44 laps → 9 laps → 2 stints: out + 3 flying (⌈4 × 3.2⌉ = 13 L), out + 4 flying (⌈5 × 3.2⌉ = 16 L). |
+| D-65 | Splitting race fuel (Q-F10) | Total fuel is split over the stints given by the number of stops, in **whole laps** per stint (never half a lap of extra fuel in a stint). |
+| D-66 | Stint fuel (Q-F11) | Start fuel = ⌈(stint-1 laps + 1 out-lap) × fuel/lap + safety⌉; each stop adds ⌈stint laps × fuel/lap⌉ (safety stays in the tank). Laps split as evenly as possible in whole laps, extra lap(s) in later stint(s) unless a pit window is set. Warn when a stint exceeds the tank. Example: 60 min, 1 stop, 25 s loss, 1:45.0, 3.2 L → 35 laps = 17 + 18 → start 60 L, stop +58 L. **Qualifying fuel uses the best lap**; race uses the average lap. |
+| D-67 | Endurance definition (Q-V11) | What counts as Endurance differs per user, so it is a **setting per game**. For the user: a stint longer than 45 minutes, or long-life brake pads (meant to last 12–24 h). Replaces the 60-minute assumption. Details: Q-V12, Q-V13. |
+| D-68 | Pads and endurance (Q-V12) | Brake pads are **not** used to guess Endurance: the choice depends on car and weather (default GT3 sprint pad is Pad 1, but e.g. the BMW M2 runs Pad 2 in sprints). |
+| D-69 | Stops as metadata (Q-V13) | Stops don't need to be in setup names. Race length and number of stops are stored as editable metadata in SetupMan's library (pre-filled from the name when present). Endurance guess = stint (race length ÷ (stops + 1)) longer than a per-game setting, default 45 min; manual session always wins. Provisional: user will refine after a few races (D-14). |
+| D-70 | Tray icon | SetupMan runs without a console window, with an icon in the system tray (hidden icons). Menu: Open SetupMan, Start with Windows, Stop SetupMan. Log goes to %APPDATA%SetupMansetupman.log. (User request 2026-11-18; defaults chosen by Claude.) |
+| D-71 | Start with Windows | Optional, **off by default**, per Windows user (no admin rights). When on, SetupMan starts silently in the tray (no browser). Toggle in the tray menu and on the Settings page. |
+| D-72 | Stop SetupMan | "Stop SetupMan" in the tray menu shuts down cleanly (finishes writing the library, stops watching folders). Closing the browser does not stop SetupMan. |
+| D-73 | Staging is opt-in (Q-S1) | SetupMan only writes to a game folder after the user enables **Folder management** for that game (originally labelled "Let SetupMan manage my setups folder"; renamed by D-117). Until then everything stays read-only (D-07). |
+| D-74 | Backup first (Q-S2) | Enabling folder management first makes a full ZIP backup of the setups folder in %APPDATA%SetupManackups and verifies every setup is in the library, byte for byte, before anything is removed. A **Restore backup** action puts the backed-up setups back. Wording stays professional. |
+| D-75 | Clean per car/track (Q-S3) | A car/track folder is only cleaned when the user stages setups for it. Other folders are left as they are. |
+| D-76 | How to stage (Q-S4) | Track page: per setup "In game folder" / "Library only" with a toggle, plus "Stage only these" for ticked setups. Setup page: put any version (also older ones) in the game folder. Staging persists until changed. |
+| D-77 | File names when staging (Q-S5) | Original file name; if taken, a number is added, e.g. "quali (2)". Renaming comes in Phase 5. |
+| D-78 | In-game saves (Q-S6) | Not every in-game save should stay staged forever: that recreates the clutter. How to handle them: Q-S8. |
+| D-79 | Timing (Q-S7) | Staging works anytime except while driving (queued until driving stops). SetupMan reminds the user that ACC may need its setup screen reopened. |
+| D-80 | In-game saves (Q-S8) | Default: new in-game saves stay in the game folder until the user tidies up ("Keep in game folder" / "Move to library" per setup, shown on overview and track page). Optional setting: move new saves to the library automatically when the game closes, except those marked "keep". |
+| D-81 | Restore backup is exact | Restoring a backup returns the whole setups folder to **exactly** its state at backup time: every file byte-identical, files added since then removed, renamed files back to their old names, nothing skipped, no duplicates. All changes since the backup are undone in the folder (the library keeps its history). |
+| D-82 | Two kinds of backup (Q-S9) | Kept strictly apart, each explaining what it contains: **ACC setups folder backups** (only the game folder; restoring changes nothing in SetupMan's history/notes; made automatically when folder management is enabled and before every restore, or by hand) and **Full SetupMan backups** (library, history, notes, settings + setups folders; Phase 7). Restore always asks first and states what will change, be removed or come back. |
+| D-83 | File dates (Q-S10) | Folder backups store file dates; a restore puts them back, so the folder is truly identical and history stays correct. |
+| D-84 | Build order (Q-X1, delegated) | The owner left the order to Claude (no rig testing soon). Claude orders the remaining work: setup editing → fuel calculator → telemetry + active-setup detection → auto-renaming → temperature adjust → full backups + import/export → sharing / other games. |
+| D-85 | Editing in clicks first (Q-X2, delegated) | Setup values are edited in ACC steps (clicks). Real units (psi, degrees, mm) need per-car tables and come later, car by car. |
+| D-86 | Getting started (Q-X3, delegated) | The overview gets a short, dismissable "what you can do" panel. |
+| D-87 | Laps per setup (delegated, D-84) | While ACC runs, SetupMan records each completed lap (time, valid, pit, fuel used, air/track temperature) once per second from shared memory. The setup is recognised by comparing live fuel, TC, ABS and engine map with the setups of that car/track; if unsure, the session is "setup unknown" and the user picks it on the track page ("Which setup did you drive?"). Any session can be moved to another setup ("Wrong setup?"). The top bar shows "Recording laps: <setup>". |
+| D-88 | Fuel calculator uses recorded laps (delegated) | When laps are recorded on a car/track, the fuel calculator offers "Use my recorded numbers" (average lap, best lap, fuel per lap). Never filled in silently. |
+| D-89 | Renaming (delegated) | Suggested name order: initials, session (Q/R/ENDU), race minutes, stops, WET, temperature (e.g. 2327), game version, lap time, codes, then every word of the old name SetupMan doesn't recognise (nothing is lost). Rename by hand anytime; renaming a file in the game folder requires folder management (D-73) and not driving. Optional per game: "Give new saves a tidy name" (off by default); the original name goes into the notes. |
+| D-90 | Temperature adjust (delegated) | No invented physics: SetupMan learns from the user's own setups of the same car and track that have a temperature in their name and are variants of each other (≥70% alike or same name core). Per setting (4 tyre pressures, 2 brake ducts) it takes the median change per °C, proposes changes for a target range, shows what they are based on, and saves only as a new setup when the user asks. The first pit strategy's tyre pressures follow the main ones. No temperature in the name → it asks for one; no pairs → it explains why it can't propose. |
+| D-91 | Export / import (delegated) | Track page: "Export the ticked setups" / "Export all setups here" downloads a ZIP in the game's folder layout (<car>/<track>/<name>.json, exact bytes; read-only). "Import setups…" takes .json files and .zip files for that car/track into the **library only** (never straight into the game folder; then "Put in game folder" as usual). Skipped with a reason: setups already in the library (identical values), other cars, other tracks (from ZIP folders), non-setup files. Name clashes get " (2)". |
+| D-92 | Full SetupMan backups (delegated, completes D-82) | Settings → Backups: one ZIP with a snapshot of the library (versions, history, notes, lap times), settings.json and a fresh ACC setups folder backup per game; checked after writing. Download, add from a file (another PC), restore. Restore = SetupMan restarts and puts library + settings back before opening the library, after an automatic full backup of the current state (undo). The game folder is **not** changed; the folder backups inside are added to the ACC setups folder backups, where the user can restore them exactly (D-81). |
+| D-93 | Cloud backup (Q-X4) | SetupMan connects to a cloud service itself (option b) and stores full backups there. Which service: Q-X7. |
+| D-94 | Sharing (Q-X5) | "Share…" makes **one file** with the game setup plus part of SetupMan's metadata (name, notes, session, details read from the name, optionally a lap time summary). Another SetupMan imports it. Nothing leaves the PC unless the user sends the file. No online links. |
+| D-95 | Next games (Q-X6) | Assetto Corsa (AC), Assetto Corsa EVO (ACE) and Assetto Corsa Rally (ACR), when the user can provide real setup files from the sim rig. |
+| D-96 | Drag and drop import | Setup files can be dropped anywhere on a page: on a track page .json, .zip and .setupman files import for that car/track (same rules as D-91); on the start page .setupman files are opened (D-94), and .json/.zip files get the advice to drop them on a track page (they don't say which track). A full-page overlay says what will happen while dragging. |
+| D-97 | Cloud backup on the backlog (Q-X7) | Cloud backup (D-93) waits: the service choice and the one-time app registration are postponed by the user. |
+| D-98 | Plain wording + layout | Staging words follow what the user sees: "Shown in ACC" / "Hidden from ACC", buttons Show in ACC / Hide from ACC / Show only these in ACC / Use this version in ACC ("library", "game folder", "to library" no longer used in the UI). "Duplicate groups" → "sets of near-copies". "Values that don't count" → "ignored settings". "Ticked" → "selected". Top bar: Fuel calculator · Manual · Settings; the kerb stripe is gone. Start page: one-time Welcome pop-up with the features; Recent changes beside the game tiles. Setup page tabs: Setup · History · Lap times · Notes & details; History = version timeline with "What changed?" per version, compare any two, where it came from. Track page tabs: Setups (sortable columns, select all, select older near-copies, bulk show/hide/tidy names/download, drop area) · Compare · Similarity map · Families (every family tree of the track). A Manual page explains everything. |
+| D-99 | Pit window in minutes | The pit window is "from X to Y minutes into the race", as race rules define it. Stops start from an even split; a stop that would fall before the window moves to the first lap after it opens, one after the window to the last lap before it closes; remaining laps are spread evenly. Empty = stop any time. The fuel calculator also works on its own (top bar), with one remembered set of inputs. |
+| D-100 | Network access (Q-U12) | Opt-in Settings switch "Allow other computers on my network". Other PCs open http://<ip>:<port> and enter a PIN shown in Settings once (remembered in that browser). SetupMan lists other SetupMans it finds on the network. Off by default; the PC itself never needs the PIN. |
+| D-101 | In-game values (Q-U13) | Show real values only where they are the same for every car: tyre pressures in psi (20.3 + 0.1 per click), fuel in litres. Everything else stays in clicks until per-car data is available, car by car. |
+| D-102 | Delete into a bin (Q-U14) | "Delete" (single or bulk) removes the setup from ACC (if shown) and from SetupMan's lists after confirmation, but keeps it in a Bin for 30 days with all versions; Restore brings it back (hidden from ACC). After 30 days it is removed for good. |
+| D-103 | Game version from the file date (Q-U15) | Claude looks up ACC's patch release dates and builds a date → version table (the Settings table for corrections was removed by D-118). A setup whose name has no game version gets the version that was current on its file date (marked as a guess). |
+| D-104 | Game logo (Q-U16) | The ACC logo comes from Wikimedia Commons ("Assetto Corsa Competizione.png", Kunos Simulazioni, CC BY-SA 4.0), downloaded and cached on the user's PC like the car logos; not bundled in the app. Without it the tile shows the short name. |
+| D-105 | Port number in Settings | Settings → Network → Port number (default 8765, 1024–65535). Changing it restarts SetupMan and the open page moves to the new address. The --port start option still overrides it (development, test instances). |
+| D-106 | Remove duplicates | "Remove duplicates…" on the track page (one track) and the game page (all tracks) opens one list of every duplicate set. Default: identical only (all scored settings equal); option: also near-duplicates (≥ the threshold). Per set the newest setup is selected to keep; the others go to the bin (D-102) in one action. Removing setups from the game's setups folder requires folder management (D-73); the dialog offers Enable folder management in place (D-117). Which setup is proposed to keep: D-112. |
+| D-107 | Professional wording | No casual phrases. Terms: "duplicates" / "near-duplicates" / "duplicate sets" (not near-copies), "naming standard" / "Apply naming standard" (not tidy names), "Unassigned sessions", "Show changes", "Change parent", "Standalone setups", "Share…", "Search network". |
+| D-108 | Settings in tabs | Settings has tabs: General (appearance, start with Windows, brand logos, about) · Games (per game: visibility, folder, folder management, new saves, naming standard, endurance, game versions) · Comparing & history (duplicate threshold, history thresholds) · Backups & bin · Network (access, PIN, port; the search for other SetupMans was removed by D-109). The tab is in the address (?tab=games), so links elsewhere open the right tab. |
+| D-109 | Full use over the network | The request was only "SetupMan is reachable from other devices on the LAN", not finding other SetupMans: the network search is removed. A device that entered the PIN has full use, Settings included (network access, PIN, port). Switching network access off from another device asks first, because that device loses access. |
+| D-110 | Version number | SetupMan shows its version, build (git commit) and build date only in Settings → General → About (user: version info only there), and writes it to the log at start. The number is raised with every build that goes to the rig or to users (internal/version). |
+| D-111 | AC, AC EVO and AC Rally (from the rig's sample setups) | **AC**: INI files in Documents\Assetto Corsa\setups\<car>\<track>\ (track "generic" = Any track; .sp files are AC's pit-stop presets and are skipped); values are clicks except tyre pressure (psi) and fuel (L); car/track names from the installed game's ui_car.json / ui_track.json, else made from the folder name; driving detected from the same shared memory as ACC (program acs.exe). **AC EVO**: protobuf .carsetup files in Saved Games\ACE\Car Setups\<car name>\<track name>\; values are real units; the file has no setting names, so names were worked out by comparing five cars – settings whose meaning is unclear get a neutral name with the field number (e.g. "Alignment value 4.4"), values the game works out itself are not compared. **AC Rally**: every setup lives in one save file (%LOCALAPPDATA%\acr\Saved\SaveGames\CarSetupsDataSaveSlot.sav), read record by record; **read-only**: never managed, renamed, deleted or imported, downloads give the settings as text. All three: compared, versioned and named like ACC; changing values and lap recording are ACC-only for now. Pages and messages use the game's short name (ACC, AC, AC EVO, AC Rally) and file type. |
+| D-112 | Which duplicate to keep | Remove duplicates proposes keeping a setup whose name has no copy mark ("(2)", "(1)", "- Copy", "copy 2"); among those the newest; if every name has a mark, the newest. You can still pick another per set. |
+| D-113 | Compare uses your selection | Nothing is pre-selected on a track page. Compare shows exactly the selected setups; with fewer than two selected it shows the most similar pair, with a note. Switching tabs keeps the selection (pages are no longer rebuilt when only the tab changes). |
+| D-114 | What counts as a save from the game (found when a library was copied into a managed folder) | A new file only counts as saved in the game while that game is running. Only those are marked "new from the game" (D-80) and renamed automatically. Files copied in while the game is closed keep their names and are not tidied away. |
+| D-115 | Management belongs to one folder (same finding) | SetupMan remembers the folder for which folder management was enabled, because that is the folder it backed up and verified (D-74). If the setups folder setting changes, folder management is disabled for the new folder until it is enabled again (new backup + verification). Older settings take the folder from the "before managing" backup. |
+| D-116 | Friendly address | On its own PC SetupMan opens at http://setupman.localhost (browsers send *.localhost to the PC itself, no setup needed). It also listens on port 80 on this PC when that port is free on both IPv4 and IPv6 (browsers may use either; a local web server such as Docker often holds one half); otherwise the address includes the port (http://setupman.localhost:8765). Other computers keep using the IP address (D-100). No HTTPS: a trusted certificate for a local name requires installing a certificate authority in Windows, and the traffic never leaves the PC. |
+| D-117 | Bulk actions on large libraries | Remove duplicates and Apply naming standard process all setups under one folder lock and rescan once at the end. The game page offers Apply naming standard for all cars, with a full list of proposed names (each can be deselected) before anything is renamed. Actions that need folder management show a notice with an Enable folder management button in place. The feature is called Folder management (Enable / Disable) throughout. |
+| D-118 | Game version in the setup list | The track page's setup table has a Game version column: the version in the setup name, else the ACC release current on the date the setup was last saved (shown in italics as an estimate). The Game versions table and manual date corrections in Settings are removed; the user verifies SetupMan's release dates once (Q-U17, answered in D-119) and they are fixed in the program. |
+| D-119 | Release dates (Q-U17) | Built-in release lists for all four games from the user's lists: ACC 1.7.12 (29 Jun 2021) … 1.10.3 (28 Aug 2024), AC 0.3 (6 Dec 2013) … 1.16 (20 Dec 2017), AC EVO 0.1.1 (16 Jan 2025) … 0.10 (9 Dec 2026, announced), AC Rally 0.2 (18 Dec 2025) … 0.7 (19 Nov 2026). Unnumbered hotfixes, livery/sponsor updates and AC's 1.0.0 release candidate are left out (a setup saved after them keeps the previous version). ACC 1.9 (13 Apr 2023) and 1.10.4 (1 Mar 2025) are not in the user's list and stay as estimates; correct them when known. New releases are added to the lists as the user reports them. |
+| D-120 | Named values (audit) | Values that mean the same on every car are shown by name: ACC tyre compound Dry / Wet, brake pads Pad 1 … Pad 4 (stored as 0 … 3). Caster is labelled FL / FR like every other setting. Other settings stay in clicks (D-101). |
+| D-121 | Audit for competition use (2026-11-19) | Performance: all games share one process list, refreshed at most every 5 s, and only new processes are looked up (9 ms → 0.06 ms per check; idle CPU 0.42% → 0.14%); comparisons keep a short summary instead of every difference (memory after a scan of 1000 setups 150 MB → 29 MB); JSON answers are gzip-compressed (largest track page 3.1 MB → 186 KB, for other devices on the network). Robustness: the live-data reader, lap recorder and rescans log an unexpected error instead of stopping SetupMan. Setups put back in the game folder keep their original save date. A name that is only initials (up to 4 letters, e.g. "BGK") keeps them in front. Wording: Network access (was "Allow other computers on my network"), Generate new PIN, Folder management enabled, Similarity, permanently deleted, and error messages without casual phrasing. Shared-memory offsets checked against Kunos' published layout (still to be confirmed on the rig, R-6). |
+| D-122 | Folder changes during a race (Q-L1) | Unchanged from D-38: the pit box counts as not driving, so a setup saved there during a race is read straight away (about 1 s of CPU on one core for ~800 setups). |
+| D-123 | Game program names (Q-G2) | SetupMan knows a game runs from its program: ACC AC2-Win64-Shipping.exe (acc.exe is only the launcher), AC acs.exe or acs_x86.exe (old 32-bit version), AC EVO AssettoCorsaEVO.exe, AC Rally acr.exe (does not work with 0.7, to be checked: D-136, R-14). The earlier guesses are removed. |
+| D-124 | Pit stop advice (Q-N1, 2026-11-19) | A **Pit stop** page (top bar), made for a second screen or tablet, advises the pit-menu values during an ACC session from live telemetry. **Tyres:** average hot pressure per tyre over the last 3 laps that are not out-laps, in-laps or stops, on the tyres now fitted; target 27.0 psi on dry tyres and 30.0 psi on wets (adjustable in Settings → Games); advice = current pit-menu pressure + (target − average), per tyre, in 0.1 psi (D-126). **Fuel:** average fuel use and lap time over the last 5 valid laps that are not out-laps, in-laps or stops (3 at least for a firm advice); laps to go from the session time left (timed race: the current lap plus every lap started before the clock reaches zero) or the session's lap count; fuel needed = laps to go × fuel per lap + safety margin (the fuel calculator's margin for that car and track, default 2 L); fuel to add = fuel needed − fuel in the tank, rounded up to whole litres; spread over the stops as in D-125. The page shows what it is based on and the pit-menu values now set. SetupMan does not change the pit menu itself (no interface for that). Pressures per lap are stored with the lap times. New shared-memory values are checked on the rig (R-12). |
+| D-125 | Stint plan for the fuel advice (Q-PS1) | Nothing is chosen during the race; everything follows from what is known in advance. The plan follows the session of the setup being driven: a **race (R)** setup gets **equal stints** (the fuel still needed split evenly over the stops still needed); an **Endurance** setup gets the **longest stints** the tank and the server's stint limit allow, with the **last two stints equal**. An unrecognised setup gets equal stints. The server's maximum stint time and the car's tank size come from ACC during the race (DriverStintTimeLeft, maxFuel), so nothing is saved per car or track. Stops needed = the mandatory stops left, or more when one stop can't add enough. Race length is not reported by ACC in practice or qualifying, but is not needed: in the race ACC reports the time left. |
+| D-126 | Pit-menu pressure vs hot pressure (Q-PS2) | A change of 0.1 psi in the pit menu (cold) gives about 0.1 psi hot, so the tyre advice adds the difference between target and hot average 1:1, without a correction factor. |
+| D-127 | Session report (Q-N2 c) | Every recorded session (practice, qualifying, race) has its own page, opened from a setup's Lap times tab or from Unassigned sessions on the track page. **Summary:** laps (clean), best lap, average of clean laps, consistency (standard deviation of clean laps), fuel per lap, driving time, track and air temperature, average hot tyre pressures. **Stints** (shown when there is more than one): split at pit stops, each with laps, best, average, fuel per lap, time and average pressures. **Laps:** time, gap to the best lap, fuel used, track and air temperature, hot pressures per tyre, setup version (when it changed during the session) and a note (out-lap, in-lap, pit stop, invalid). A lap in the pit lane on its own at the start is the out-lap; in a group, the first is the in-lap and the rest out-laps; on its own later it is a stop where the timing line lies in the pit lane. |
+| D-128 | No automatic pressure model (Q-N2 a) | Starting-pressure correction and learning pressure per °C are not built. The user adjusts pressures by hand and names setups with the temperature they were made for. Rules of thumb from the user (ACC, averages only): 1 brake duct click ≈ 0.5 psi, 1 °C ≈ 0.1 psi; neither is linear, and both depend on driving style, electronics and the duct setting itself (with a lot of brake duct the rotors run cold and one more click changes tyre temperature very little, and vice versa). The session report and Pit stop page show the hot averages needed to adjust by hand. |
+| D-129 | Network name via reverse proxy | Settings → Network has **Network name** (e.g. setupman.lan; empty by default). SetupMan accepts that name as well as IP addresses from other devices; other names stay refused (DNS rebinding protection, D-100). Requests through the name always need the PIN, even from this PC, because a proxy on this PC would otherwise give every device access without it. Requires network access; no restart. The event stream tells the proxy not to buffer and sends a keep-alive every 30 s, so live pages work through NPM without extra settings. Wrong-PIN pauses count per proxy address, so behind a proxy they apply to all devices together. The manual (Other devices and setupman.lan) explains the steps: fixed IP, local DNS record or hosts file, NPM proxy host, network name. No HTTPS (no public certificates for .lan, D-116). |
+| D-155 | Public GitHub version (Q-GH1 to Q-GH4, 2026-11-21) | Prepared in 0.23.0; nothing is pushed until the owner asks (D-24). **Q-GH1 fresh start**: the public repository starts with one commit of the cleaned files; the earlier history (123 commits, with the owner's email address on every commit and home-network details in old spec versions) stays local in branch `private-history` and is never pushed. **Q-GH2**: public commits carry the owner's GitHub username with GitHub's noreply address (set in this repository's git config). **Q-GH3**: Settings → About links to the SetupMan repository, its issues page ("Report a problem or idea") and lavaro.net; no personal profile (replaces part of D-148). **Q-GH4**: the spec and CLAUDE.md are published; decision titles keep only their question label and date instead of the owner's words, the few quotes in decision texts are rewritten neutrally, and rig details stay generic. README: an honest status (ACC tested on a rig, the other games need players' feedback), a Feedback section (what to put in an issue) and full credits. All four current games stay in. |
+| D-154 | Audit after round 3 (2026-11-21) | Built in 0.22.3. **Pit stop page**: the setup block is gone, and so is its extra request every 3 seconds; when the setup is unknown, the Manual setup select bar under the top bar shows on the Pit stop page too (it was hidden there). A recognised setup that is wrong is changed on that setup's Lap times tab ("Wrong setup?"). **Recognition in the pits**: the fuel counts in whole litres when SetupMan decides whether to look again, so driving down the pit lane (14.0, 13.9 L …) no longer starts a new look every 0.1 L (log 11:03–11:04). **ACC**: file times are not looked at nor logged at all any more (the "0 of 7 setups opened since" lines are gone); AC keeps them. **Clean-up**: the file-name variant of the folder watcher, only used by the removed probe, is gone again. Texts (Manual, Settings → Games → Setup recognition) now say the setup is recognised in the pit box before the first lap and that cold tyre pressures break a tie. Audit found no errors in the log, and the code changes of D-147 to D-153 hold up (locking, own writes, read-only reads of setup folders); the open risks are untested areas: AC recognition by file time (Content Manager reads before AC starts don't count, only reads after the game started), the GT4s other than the 718 (Race Element's ride-height data may be off for more cars), and auto-rename of re-saved test setups without a parent session (D-150). |
+| D-153 | ACC does not record the loaded setup (Q-RIG5, 2026-11-21) | All files of the rig's `Documents\Assetto Corsa Competizione\Config` were read: none names a setup (seasonEntity.json holds assists, realism, the event's track, sessions and weather; menuSettings.json menu choices, last car per class, audio, graphics; its "carName" entries are livery files). Together with D-147 and D-149 (ACC opens setup files only to list them, and sometimes not at all), ACC keeps the loaded setup only in memory. Setup recognition therefore stays: values, pit-strategy pressures and tyre pressures (D-149, D-152), then manual setup select. The rig probe has answered its question and is removed in 0.22.2 (the log no longer lists changed files). The copied config files in the dev PC's Logs folder are git-ignored; they include saved server password hashes, so delete them when done. Q-RIG6 (2026-11-21: the rig runs 1.10.4, and versions come from release dates): the rig runs 1.10.4; the "update1.12" news id means nothing for versions, and versions keep coming from release dates (D-103). No change. |
+| D-152 | Round 3, first results (2026-11-21) | Built in 0.22.1. **Recognised in the pits**: before the first lap of a session, SetupMan already looks in the pit box and pit lane as soon as the car reports fuel, and again whenever fuel, TC, ABS, map or the pit menu change (a setup loaded in the pit box); leaving the pits looks once more. A pick by hand still stays. **Tyre pressures break a tie** (ACC): in the pits and just out of them the tyres are still near the setup's cold pressures (log: car 26.0 25.5 25.8 25.5, loaded "2027" 26.1 25.6 25.8 25.5 psi); among equally likely setups the closest wins when it is within 0.2 psi per tyre on average and at least 0.1 psi per tyre closer than the next; otherwise Manual setup select as before. **Log findings**: ACC opened no setup file at all in this run (0 of 7) and still drove "2027", so it keeps the loaded setup somewhere else; the probe shows ACC writing Config\seasonEntity.json and Config\menuSettings.json just before the session loaded (plus hud, assists, realism and other Config files at start-up, and Customs\Drivers\driver1.json). Brake bias reads 0.632 for 58.2 % on the dash (a per-car offset; logged only). Q-RIG5 asks for those two files. Checklist: 3-P, 3-AERO, 3-PREP passed; 3-R23 works with manual select (now improved); 3-R22, 3-R7 skipped. |
+| D-151 | Rig test round 2 results from the checklist page (2026-11-21) | Fixed in 0.22.0. **Aero columns**: Rear first, then Front, as in ACC's Aero tab (ride height and brake ducts). **Porsche 718 Cayman GT4 ride height**: front base 111 mm, rear 99 mm (Race Element's data said 96 and 84; the game showed 111 / 105 for 0 / 6 clicks); other GT4s not checked yet. **Pit stop page**: per tyre the pressure to set plus the change as a big coloured value (red ▲ up, blue ▼ down, grey ±0.0); the target hot pressure in bold next to the title. **Race prep while driving**: opened during a recorded session (and not from a track page), it takes the session's game, car, track, session kind (race or qualifying; practice keeps your choice), the current air or track temperature and the setup being driven, with a note "Filled in from your ACC session …". **Checklist page**: rebuilt to show only what is open (round 3), short cards, the note field only when needed; earlier rounds are summed up in one line (their results stay in its database and in this spec). |
+| D-150 | Rig test round 2, first part (2026-11-21) | Fixed in 0.21.1. **Seen in the log**: lap recording works (4 laps, valid flags, about 2.6 L per lap, air 20.4 / track 22 °C, hot psi about 27; R-6); the pit-strategy fingerprint narrowed 8 setups to 2 ("BGK R 1.10.3 1924" and "2027" have the same fuel, TC, ABS, map and pit-strategy pressures; R-23 partial); **manual setup select** was used and the laps went to 2027 (R-24); auto-rename gave initials, session and version (R-7). **Problems, fixed**: (1) the rig probe only saw ACC's MoTeC export (written at every pit entry), which used up the 60 lines before the setup saves: the MoTeC folder is now left out (R-25 again). (2) Saves made in ACC's setup screen during a session got the parent setup's temperatures (air 20 / track 27 from "2027") instead of the session's (20 / 21), because the setup screen reports no live session: during a recorded session the session's latest temperatures and kind now count. (3) Race prep: the grey "60" in Length and "22" in Expected temperature were placeholders that looked like values, so the fuel plan asked for a length: an empty Length now uses the length shown (60, or 15 for qualifying), and the temperature box says "optional". **Added for the next log**: ACC's brake bias (physics page, offset 564; the physics read grows from 296 to 568 bytes) and the tyre pressures when the car leaves the pits, logged only, to see whether they can separate setups like 1924 and 2027 (in this case the brake bias is the same, 58.2 %, matching the dash's BBAL). Minor, to watch: two renames of re-saved test setups found no parent session. **Not in the log**: section C (AC), R-20 (GT4), and what was seen for R-9, R-10, R-12 and R-18. |
+| D-149 | ACC setup recognition after the rig finding (Q-RIG4, 2026-11-21) | Built in 0.21.0. **(a) Pit-strategy fingerprint**: ACC's pit menu takes the loaded setup's first pit-stop strategy, so its four tyre pressures (to 0.1 psi) count strongly (+3, like the start fuel); a strategy "fuel to add" above 0 counts +1; then TC, ABS and engine map +1 each. The matcher returns every setup with the best score: one = recognised, several = equally likely. **The last-opened time no longer decides for ACC** (ACC reads all setups when listing, none when loading); it is still logged, and still used for AC and AC EVO until tested there. **(b) Manual setup select**: while a session is recorded and the setup is unknown, a bar under the top bar (every page except Pit stop) and the Pit stop page show "Manual setup select": the equally likely setups as buttons (one click), or every setup as buttons when there are at most four; the others in a list (two clicks). When recognised, the Pit stop page shows the setup with a "Change…" list. A pick is stored as set by hand and is not overridden when leaving the pits again. **(c) Rig probe**: while a game runs, setupman.log names the files it changes around its setups folder (Documents\Assetto Corsa Competizione for ACC; the setups folder left out; each file at most once a minute, at most 60 lines per run), no polling. The rig log now also lists the pit-menu values and the equally likely setups. **Checklist**: section 6 has one run order for round 2. |
+| D-148 | About tab (2026-11-21) | Settings gets an **About** tab (was a section under General): version, build and computer; links to lavaro.net and the owner's GitHub profile (placeholders the user asked for, an explicit exception to D-135); a **Features per game** table (ACC, AC, AC EVO, AC Rally; ✓, –, or a short remark); credits (Wikimedia Commons logos, Race Element values). |
+| D-147 | Setup recognition from the last-opened time (Q-LA1, 2026-11-21) | Built in 0.20.0. **Primary method**: when a session starts and each time the car leaves the pits, SetupMan takes the setup file for that car and track that the game **opened last since its program started** (Windows' last-access time; measured on the dev PC: every read is recorded, a folder listing is not). Files opened within 2 s of the newest count as opened together (a game that reads several at once); then the car's values decide among those. No file opened since the game started, or the Windows setting off: the values decide among all setups, as before. A setup set by hand for a session stays. When the values point to another setup than the opened file, the file wins and the log says so (values can be changed in the game after loading). **SetupMan leaves no trace**: every read of a game's setups folder (scans, backups, renames, staging checks) goes through `internal/lastopened`, which tells Windows not to update the time for its own handle; a file SetupMan puts in the folder (staging) is ignored until the game opens it. **Windows setting**: SetupMan reads it (registry, no administrator rights needed). When it is off, the Games overview and Settings → Games → Setup recognition explain how to enable it: Command Prompt as administrator, `fsutil behavior set disablelastaccess 0`, reload the page (on the rig it took effect immediately, "no reboot required"; older Windows may ask for a restart). Last-opened times were off on the rig and enabled by the user on 2026-11-21. SetupMan never changes the setting itself. The rig log lists when the game started and which setups it opened since, with the times, and which method decided. To verify on the rig: R-21, R-22. **0.20.1** (rig, 2026-11-21: the Games overview showed no games): when the notice showed (last-opened times off on the rig), the Games overview hid every game; fixed. **Rig finding (log 2026-11-21, R-21)**: ACC reads **every** setup of the car and track within 15 ms, about 3 s after a session loads (8 of 8 files at 09:21:20.906–.919), and does **not** read a file again when a setup is loaded, also not in a later session (it keeps them in memory). For a Porsche GT4 session it read no file at all. So the last-opened time cannot tell which setup ACC uses; ACC always falls back to the values. The values then tied: the car reported 13.9 L, TC 6, ABS 2, map 0, which fits two setups equally (fuel 12 + 2 L, TC 6, ABS 2). Clue found in the same log: at the start of the next session, ACC's pit-menu pressures (25.8 25.4 25.0 24.6 psi) equal the cold pressures of exactly one setup on the PC ("BGK R NEW 2328"). **Q-RIG3 answered** (the setup loaded was "BGK R 1.10.3 2027"): those pressures are exactly 2027's **pit-stop strategy** pressures (raw 55 51 47 43), and the fuel (13.9 L = 12 + 2 L) is 2027's too; the other candidate (1616) has other strategy pressures. So ACC's pit menu at the start reflects the loaded setup's pit strategy. **Research 2026-11-21** (web, GitHub): no ACC tool is known to detect the active setup. Shared memory has no setup name (the PyAccSharedMemory field list, Kunos documentation); Coach Dave Delta states that ACC doesn't support automatic setup detection and makes the user pick the file (with an "I've changed my setup" button); Race Element (setup browser) and SimHub (no setup-name property) don't detect it either. Unverified: whether ACC writes something in Documents\Assetto Corsa Competizione\Config when a setup is loaded. Next step: Q-RIG4. |
+| D-146 | Temperature labels per author (2026-11-20) | How temperatures in setup names are read is set **per author** in Settings → General → Naming standard → **Temperatures in setup names** (settings.json `tempRules`). Per author two choices: **two numbers** ("3040", "30 40") = *air, then track* (default) or *a range*; **one number** ("23C") = *air temperature* (default), *track temperature* or *not said* (compared with air or track, whichever Race prep asks). A dash ("23-27C") is always a range. An author is recognised by the **initials at the front** of the name, or by **any word in the name** the user adds a rule for (authors who put their code elsewhere, e.g. "R 2327 1.10.4 CDA M LFM"); initials win over words. Names matching no author follow the default rule ("Everyone else, and names without initials"), which can be changed too. The overview lists every author whose names carry a temperature (the driver's own initials first, then by number of setups) with up to four example names and how each is read now, and, where laps were recorded with those setups, how many fit air and track, a range, the air or the track temperature (within 3 °C of the laps' average; a hint, never applied by itself). For names matching no author it suggests words that recur in at least 3 of them (sessions, wet/dry, codes such as TC25, track names and their first three letters left out), each addable as a rule with one click, plus a field for any other word. A change re-reads the details of all setups straight away (as for the endurance limit), except details edited by hand on a setup's Notes & details tab. Names SetupMan writes keep the author's way: air and track as "3040", only air or only track as "23C" (read back by the author's rule), a range as "2327" for an author set to ranges. Checked on the rig's 750 sample setups: 430 names had no initials in front; adding "CDA" grouped 135 of them. |
+| D-145 | Temperatures in names (Q-RIG2, 2026-11-20) | Four digits in a setup name are **air then track temperature as ACC shows them**: "3040" = air 30 °C, track 40 °C (was read as a range of 30–40 °C, D-49). The same for "R3040" / "3040R" (with the session) and two numbers in a row ("30 40", "30_40", "30c 40c"). Accepted: air 5–45 °C, track 5–65 °C, and the track not more than 5 °C colder than the air (so a year such as "2014" is not a temperature). A range with a dash ("23-27C") stays a range, and one temperature ("23C") stays one temperature whose kind the name doesn't say. Existing setups are re-read automatically (details edited by hand stay). **Naming new saves**: the air and track temperature at the moment of saving, rounded (air 30.7 °C, track 39.1 °C → "3139"); outside a session those of the setup it was made from (replaces D-144's range rule). Names SetupMan suggests write the temperatures the same way ("ABC R 3040 1.10.4"). **Race prep**: the expected temperature is compared with the same kind in the names (Air or Track, as chosen in Race prep); within 1 °C counts as made for it (names hold whole degrees), then ≤ 2, ≤ 5 °C and further as before; a range or single temperature is compared as before. Reasons say e.g. "Made for air 30 °C, track 40 °C". **Adjust for another temperature**: asks for the target air and track temperature; learns from the user's setups per °C of **track** temperature (the track value in names, else the middle of a range) and puts both temperatures in the new name. **Notes & details**: Air temperature and Track temperature fields (the range fields only when a name has a range). **Lap times graph**: a line at the name's track temperature (the graph's axis is track temperature). Duplicates count air/track as a naming-standard part. |
+| D-144 | First ACC rig test (2026-11-20) | Fixed in 0.19.0. **Setup page = the game's setup screens (R-9, R-18)**: ACC setups are shown in ACC's six tabs in the game's order and with the game's names, checked against the screenshots: *Tyres* (psi, toe, camber, caster per wheel), *Electronics* (TC, ABS, ECU map, telemetry laps, TC2), *Fuel & strategy* (box Fuel and tyre: fuel, tyre, tyre set, front brakes, rear brakes, fuel per lap; box Pitstop strategy: N° pitstop, fuel to add, tyre, left front … right rear, front brakes, rear brakes), *Mechanical grip* (box Front: antiroll bar, brake power, brake bias, steer ratio; wheel rate, bumpstop rate, bumpstop range per wheel; box Rear: antiroll bar, preload differential), *Dampers* (bump, fast bump, rebound, fast rebound per wheel), *Aero* (ride height front/rear, splitter, rear wing, brake ducts front/rear). Per-wheel settings are shown side by side (columns Left front, Right front, Left rear, Right rear; units in the row name), as in the game; while changing values every setting has its own row. Only "ECUMap" is written "ECU map" and "psi" stays lowercase as in the game. Settings the game doesn't show (fuel mix, the second bump stop rate, ride height entries 2 and 4, static camber, toe out, rod length, car name, track BoP, the pit strategy's tyre set) are **hidden** ("Also show hidden settings"); they are still compared and scored as before, so no setup gets a new version from this change. Settings the game shows but SetupMan doesn't score (telemetry laps, tyre set, fuel per lap) are shown in grey. **Values as the game shows them**: the file stores fuel 2 L below the game (12 = 14 L, the game's minimum is 2 L), ECU map, tyre set and N° pitstop from 0 (the game counts from 1), brake pads as 1–4 (was "Pad 1"). Camber, toe, caster, wheel rate, bump stops, brake power and bias, steer ratio, antiroll bars, preload, ride heights, wing, splitter, ducts, dampers and pressures already matched (R-5 and most of R-18 confirmed on the Ferrari 296 GT3). Labels elsewhere (Compare, change summaries) use the same names, e.g. "psi FL", "Pitstop strategy 1: Fuel to add". AC, AC EVO and AC Rally pages are unchanged. **Setup recognition (R-2, R-6)**: the log showed that ACC reports placeholders when a session loads (0 L fuel, ABS 5, map 2, temperatures 0 °C) and SetupMan looked only then, so the setup stayed unknown for the whole race. SetupMan now looks as soon as the car is out of the pits with a fuel reading (also at a grid start, which never leaves the pits), and again each time it leaves the pits; it compares the fuel the car has with the setup's fuel + 2 L. Temperatures of 0 °C for both air and track count as not reported (lap 1 averaged 21.6 °C instead of 30.7 °C), and the first lap's fuel use is counted from the first real fuel reading. The car reports the engine map from 0, as the file stores it (log: file 0, car 0, game screen 1). **Naming new saves (R-7)**: Settings → General gets **Your initials** (2–6 letters, kept in settings.json); a new in-game save without initials gets them. Session: from the name, else the live session (race → R, qualifying or superpole → Q), else (practice, or saved outside a session) the session of the setup it was made from. Temperature: see D-145 (air and track at the moment of saving, e.g. "3139"; outside a session those of the setup it was made from). The log now says what auto-rename did and why. **Duplicates (R-10)**: the setup proposed to keep is the one with the fewest copy marks, then the one whose name has the most parts of the naming standard (initials, session, temperature, version), then the newest ("ABC R 1.10.3 3040" over "1.10.4 setupman test"). **Pit stop page (R-12)**: rebuilt to fit one phone screen without scrolling (checked at 393 × 760 CSS px, the iPhone 16 width: content ends at 648 px): session, car, track and time left on one line; fuel to add as one big number with the pit-menu value next to it; the four pressures to set in a 2 × 2 block named like the game's pit strategy (left front …), each with the change, the pit-menu value and the hot average; laps to go, fuel per lap, fuel in the tank, needed, stops, average lap, tank, maximum stint and stint plan in a compact grid; the explanations folded under "How this is worked out". A value already set in the pit menu is green. On phones the breadcrumb row is left out on this page. **Program names (R-14)**: ACC AC2-Win64-Shipping.exe, AC EVO AssettoCorsaEVO.exe and AC Rally acr.exe confirmed (AC Rally was detected this time, so D-136's mismatch no longer occurs); AC showed only AssettoCorsa.exe (32-bit), which is AC's launcher or Content Manager, not the sim (acs.exe): AC was not driven, so acs.exe is still to be seen (R-14, R-15). |
+| D-143 | LFM race list fixes (2026-11-20) | **Next race in series** replaces that race card with the next one instead of adding a card. Every race card has **Remove** (the list is per visit; races asked for by number are not remembered). Your next races are asked from LFM without the cache when Race prep opens or on **Refresh** (next to Show race), and a race whose entry list no longer has you (signed off) is left out; a race without an entry list yet is still shown. Races asked for by number keep the few-minute cache. Version 0.18.1. |
+| D-142 | LFM in Race prep (Q-LFM1, 2026-11-20) | Settings → General gets **LFM ID** (digits; kept in settings.json, sent only to LFM). Race prep shows the driver's **next LFM race** (and any race by its number; the next race of a series is the number + 1, + 2, …): series, track, start time (LFM gives UTC; shown in the PC's time zone), session lengths and hours, mandatory stops and the **weather settings exactly as LFM sets them** (ACC: temperature, cloud level, rain, randomness; other games: their weather fields as given). No weather model of SetupMan's own, and no rain risk or other conclusion drawn from the settings (2026-11-20: a proposed rain-risk label was dropped; SetupMan does not predict weather); a link to the Lenny's Lounge ACC weather simulator lets the user check the weather there. **Prepare for this race** fills in Race prep (car from the driver's entry, track, race length, the server temperature as air temperature, mandatory stops); filling in works for ACC now, the race details for any game LFM runs. LFM is only asked when Race prep is open (cached a few minutes). Data used: `api3.lowfuelmotorsport.com/api/race/<id>` (race details, no account data) and, for the next race, only the race numbers from `api.lowfuelmotorsport.de/api/licenseWidgetUserData/<id>`; the rest of that answer is dropped unread and never stored or logged, because it contains account fields: checked on the user's own ID, email, password and stripe_id are empty, but remember_token (a login secret), discord_id and steamid are filled; the user may report this to LFM. ACC car numbers → car names from LFM's car list (`api/lists/getCars`). |
+| D-141 | Next features (Q-NX1, 2026-11-20) | Build (a) **Race prep**, (b) **lap times in Compare** and (c) **real units** for every car of the four Assetto Corsa games, from public sources or the installed game, never mapped by hand by the user. Le Mans Ultimate and iRacing later. Built in 0.17.0: **(a) Race prep** (top bar and track page): car, track, session (Q / R / Endurance), length and expected temperature, plus whether the temperatures in setup names mean air or track temperature (asked, not assumed; remembered in SetupMan for all devices). Ranking: session match first, then the name's temperature band (inside, ≤ 2 °C off, ≤ 5 °C, further, none), then the fastest average of your clean laps within 3 °C, then the closest temperature, then best lap ever, then newest; each setup lists its reasons. The chosen setup gets a fuel plan from the existing calculator (its own laps at that temperature, else all its laps, else the track's; pit loss, safety, tank and window from the fuel calculator's saved inputs) and, with folder management, **Show in the game** / **Show only this one**. **(b) Lap times in Compare**: best and average lap, clean laps and track-temperature range above each compared setup (track page) and version (History tab); fastest marked. **(c) Real units**: *ACC*: per-car numbers (base and step per click, or lookup tables for caster and wheel rate) for all 54 car names, extracted from the open-source Race Element project (GPL-3.0; only the numbers are used, stored in `internal/games/acc/carunits.json`, regenerated by reading its `SetupParser/Cars` files); camber, toe, caster (°), ride height front/rear (mm), wheel rate (N/m), bump stop rate (N), brake power and bias (%), diff preload (Nm), steering ratio, anti-roll bars; dampers, ducts, wing and splitter are shown in clicks by the game itself. GT4-type tyres (GT4, GT2, Challenge, M2) start at 17.0 psi, not 20.3 (D-101 corrected). *AC*: read from each car's setup.ini in the installed game (data.acd, decrypted read-only as in the MIT-licensed Assetto Server Manager, or a data folder), applying SHOW_CLICKS as Content Manager does (0 = value itself, camber in tenths of a degree; 1 = × STEP; 2 = MIN + × STEP); gear ratio lists stay as stored; on a PC without AC nothing changes. *AC EVO* stores real values already; *AC Rally* shows the units its save file gives. Change summaries ("Camber FL +0.2°") use real units too. To verify on the rig: R-18. |
+| D-140 | Before the rig (Q-RIG1, 2026-11-20) | **(a) Rig-test log**: setupman.log gets a line when a game starts or stops and when driving starts or stops; for each recorded session its start (car, track, session, every value the game reports: fuel, tank, time left, stint left, stops left, pit menu, rain tyres, temperatures, hot pressures, TC/ABS/map), entering and leaving the pits, which setup was recognised (or that laps stay with the earlier one), and every lap (time, valid, pit, fuel used, temperatures, hot pressures); folder scans that changed something; folder changes and staging queued while driving. At most a few lines per lap. **(b) Phone-width check** in Chrome (a 390 px frame) on the Pit stop, track, setup and session pages with a simulated ACC race (a stand-in program that plays ACC's shared memory; it proves the pages and the reading path, not the offsets themselves, which stay for R-6/R-12). Fixed from it: the top bar no longer squeezes the breadcrumbs when a status badge shows (badges shrink with "…", the breadcrumbs move to their own line); status badges stay visible on phones; the lap-time graph is drawn narrower on phones so its labels stay readable. Also found: the Manual showed the backup folders without their backslashes (e.g. "%APPDATA%SetupManackups"); fixed, and the Manual now explains the log file (Backups section). Also found: other web sites could show SetupMan inside their own page (clickjacking); SetupMan now forbids that (X-Frame-Options DENY, frame-ancestors 'none'). **(c) Rig test sheet**: a private page with R-1 … R-17 in the order of a session plus preparation and the log, where results and notes are saved per check, so Claude can read them back afterwards. Version 0.16.0. |
+| D-139 | PIN opt-out (2026-11-20) | Settings → Network has **Require PIN** (shown when network access is on; **enabled by default**). Disabling it asks for confirmation and says that every device on the network then has full use of SetupMan, Settings included. Without the PIN, network access itself, the address check (IP address or the network name only, DNS rebinding protection) and the JSON-only rule for changes still apply; this also covers the network name (D-129). No restart. Enabling the PIN again (or Generate new PIN) keeps the device that did it signed in; other devices must enter the PIN. |
+| D-138 | Review fixes (Q-RV1, 2026-11-20) | Full code, function and UI review of 0.14.0, all findings fixed in 0.15.0. **Folder backup restore** always goes into the game's current setups folder, never into the folder written inside the backup; a backup of another folder (other PC, or before the folder setting changed) says so in the confirmation; backups of another game, or with file names pointing outside the folder, are refused. **PIN**: a try is counted before the PIN is checked, so many guesses at once still get only 5 tries per 5 minutes. **Setup names** follow Windows' file-name rules everywhere (no \ / : * ? " < > |, no CON/NUL/COM1 …, no space or dot at the end); imported and shared names are cleaned ("quali:v2" → "quali-v2"). **Staging never overwrites an unread game save**: if the file holds values SetupMan hasn't read yet, they are stored as a new version and the change is refused with an explanation. **Hiding** removes the file first; if Windows can't remove it, nothing changes in the library. **Queued changes that fail** appear in Recent changes with the reason. **Renaming** to other upper/lower case only keeps the name (no " (2)"). **Show / Hide in bulk** and tidying when the game closes use one folder lock and one rescan. **Auto-rename**: a later game save under the old name becomes a new version of the renamed setup (the renamed file gets the values, the old-name file is removed). **Stopping SetupMan** waits for a folder change in progress. **Memory** is given back to Windows after a scan (first import of ~900 setups: 232 MB → 115 MB in Task Manager; a scan itself holds ~32 MB). **Track page**: no reload on a tab switch or on every recorded lap (only pages that show laps reload then); clicking a row selects it; setups hidden from the game can be compared; Delete explains beforehand which setups can't be deleted without folder management and deletes the rest. Hidden setups show their last saved date (was: when SetupMan first stored them). Restore plans compare file dates to the millisecond (SetupMan's precision), so re-shown setups don't count as changed. |
+| D-137 | More features for the other games (2026-11-20) | **AC**: live data now read with AC's own layout of the shared memory (Kunos' AC documentation; the first part equals ACC's, the graphics page is shorter, pit-lane flag @276). That gives driving detection, lap recording, session reports and pit stop advice. AC has no lap-valid flag (all laps count as valid), no electronics in clicks (the setup is recognised by start fuel only; with several setups on that fuel the user picks), no pit menu, mandatory stops, stint limit or rain tyres (the Pit stop page shows the change per tyre instead of the value to set). Setups in AC's generic folder are not matched automatically. **AC values can be changed**: only the number of the changed setting is replaced, the rest of the file stays byte for byte; values may be below zero (camber); car, author and Custom Shaders Patch lines can't be changed; no per-car limits. Checked on the 55 rig sample setups (every value changed and back: identical files). Tyre targets in Settings → Games for every game that records laps. Messages name the game instead of "ACC". **AC EVO and AC Rally**: nothing added. Their live data interfaces are unknown and are not guessed; AC EVO editing waits for the setting names (Q-G1) and works in real units, not clicks; AC Rally stays read-only (D-111). All new live values are checked on the rig (R-15, R-16). |
+| D-136 | AC Rally running detection (Q-ACR1 a, 2026-11-20) | Most likely acr.exe is not the program that keeps running. Program names are **not guessed** (2026-11-20): the user reads the real name in Task Manager → Details while the game runs (R-14) and SetupMan is changed to it. Until then AC Rally stays on acr.exe. AC Rally has no live data (no driving detection, laps or pit stop advice); setups saved in 0.7 are untested (Q-ACR1 b unknown: nothing was saved). |
+| D-135 | Spec stays free of personal details (2026-11-19) | The spec and manual may be published, so they contain no IP addresses, machine names or home-network setup; examples use neutral addresses (192.168.1.x). Such details go in a git-ignored local file (`*.local.md`). Before a first public upload, the git history needs cleaning too, because older commits still hold these details. |
+| D-134 | Computer name in About (2026-11-19) | Settings → General → About shows "Running on computer <name>" (the Windows computer name), so instances on different PCs can be told apart. setupman.lan now forwards to the rig; development stays on the dev PC, and the rig's SetupMan.exe is only updated by the user, never by Claude. A local DNS record must point to the proxy, not to the SetupMan PC (nothing listens on port 80 there). |
+| D-133 | setupman.lan on all devices (Q-NW2, 2026-11-19) | Cause: devices get their DNS server from the router, which doesn't know local names kept on a separate DNS server. Fix: the router hands out that DNS server as local DNS server (IPv4 and IPv6), and phones don't use their own private DNS. The manual's troubleshooting says so. |
+| D-132 | Nothing more before the rig (Q-R1 d, 2026-11-19) | No live data check page or rig install steps are built. Rig testing (R-1 … R-13) happens on the weekend of 2026-11-21; findings are fixed afterwards. |
+| D-131 | setupman.lan in use (Q-NW1, 2026-11-19) | The user added the DNS record and the NPM proxy host; http://setupman.lan works, for now forwarding to the dev PC. When testing moves to the rig, only the Forward Hostname / IP in NPM changes to the rig; the rig's SetupMan needs network access on and the same network name (R-13). |
+| D-130 | Games settings in tabs | Settings → Games shows one tab per game (short name; "Not found" when the game isn't on this PC). The game is in the address (?tab=games&game=acc); without it, the first game found on this PC opens. Links to the settings of a game open its tab. |
+
+
+---
+
+## 4. MVP (Phase 1) – agreed (D-21)
+
+**Goal:** point SetupMan at a folder, see which setups are identical or near-identical.
+
+1. User starts `SetupMan.exe`; it opens the local web UI in the browser.
+2. User selects a folder (default: last used; for now `ACC Setups/`).
+3. SetupMan scans `<car>/<track>/*.json` read-only.
+   - Track folders are matched case-insensitively (`Spa` = `spa`).
+   - Non-JSON files and unreadable/invalid JSON are listed under "Ignored files" with the reason.
+   - Empty folders are skipped silently.
+4. For each car+track group, every pair of setups gets a similarity score.
+5. UI:
+   - Overview: list of car/track groups with counts (setups, exact-duplicate clusters, near-duplicate clusters).
+   - Group view: clusters. "Identical" (100%) and "Near-identical" (≥ slider threshold), each pair
+     with a short diff summary, e.g. `brakeBias +1, rearWing −1`.
+   - Slider for the threshold; clusters update live.
+   - Select 2+ setups → side-by-side table of all values, differences highlighted, values shown in clicks.
+6. Nothing is written to the source folder. (Scan results may be cached in SetupMan's own DB.)
+
+### Similarity score – agreed (D-20)
+
+- Each setup is flattened into fields; every array element is its own field
+  (e.g. `tyrePressure[0..3]` = 4 fields).
+- Included: all click values + strategy (fuel, nPitStops, tyreSet, pads, fuelPerLap, distinct pit
+  strategies).
+- Excluded from score (still shown in the table): filename, `carName`, `telemetryLaps`, `trackBopType`,
+  derived floats `staticCamber`, `toeOutLinear`, `rodLength`.
+- Score = % of fields that are identical. The total click difference is shown next to it as extra info.
+
+### Out of MVP
+
+Library, versioning, notes, editing, staging, auto-detect games, telemetry, renaming,
+temperature adjust, import/export, backup, sharing, other games.
+
+---
+
+## 5. Roadmap – agreed order (D-21)
+
+| Phase | Content |
+|-------|---------|
+| 1 | MVP: scan + compare + duplicates (above) |
+| 2 | Library in SQLite: import setups, version history (D-02), notes, lineage + changelog (D-12, D-18) |
+| 3 | Staging into the game folder (D-06), auto-detect ACC + setup folder, watch folder for saves |
+| 4 | Lightweight telemetry: laps per setup, fuel/lap, best/avg lap, conditions; active-setup matching |
+| 5 | Editing setups, opt-in auto-renaming, metadata/tags |
+| 6 | Temperature auto-adjust |
+| 7 | Batch import/export, backup (local → cloud) |
+| 8 | Sharing; other games |
+
+Note (2026-11-18): parts of Phase 3 and 4 were pulled forward into Phase 1b because of D-31/D-32/D-38:
+ACC + setup-folder detection, folder watching, and driving detection. Staging itself stays in Phase 3,
+telemetry metrics stay in Phase 4.
+
+### UX and management round status (2026-11-18): built
+
+- D-98 wording and layout, D-99 pit window in minutes + standalone fuel calculator, Manual page.
+- Track page tabs, sortable columns, bulk actions (show/hide in ACC, tidy names, download, delete),
+  "Select older near-copies", full family trees per track.
+- D-101 psi / litres; D-102 bin (30 days, schema v6); D-103 game version from patch dates (built-in list:
+  1.8 2021-11-24, 1.9 ~2023-04 (not sure), 1.9.1 2023-04-25, 1.9.2 ~2023-05-05 (not sure), 1.10 2024-04-01,
+  1.10.4 ~2025-03 (not sure); replaced by the user's verified lists, D-119).
+- D-100 network access with PIN (the discovery of other SetupMans was later removed, D-109). Tested with unit
+  tests and on the dev PC; the check from a second PC is R-8.
+- ACC game logo: decided and built (D-104).
+- Not yet: in-game values for settings other than tyre pressure and fuel (needs per-car data, D-101).
+
+### Phase 8 status (2026-11-18): sharing built; other games wait for setup files (D-95)
+
+- **Sharing** (D-94): setup page → "Share…" → one `.setupman` file (plain JSON: the exact game setup file,
+  name, session, details read from the name, optional notes, optional lap time summary of that version;
+  notes are off by default, lap times on). Start page → "Open a shared setup…" imports it into the library
+  under the car and track in the file (never into the game folder) and opens it; the sender's notes and lap
+  times go into the setup's notes. Track page import also accepts `.setupman` files for that track.
+  Already-present setups are recognised. Verified in tests (two separate libraries) and in Chrome.
+
+### Phase 7 status (2026-11-18): built (cloud backup not yet)
+
+- **Export / import** (D-91) on the track page. Export verified (ZIP with exact bytes); import verified
+  in tests (new / duplicate / other car / other track / non-setup) and in Chrome (skip reasons shown).
+- **Full SetupMan backups** (D-92). Verified on the test instance: backup → note changed → restore →
+  SetupMan restarted itself, note back; restoring the automatic "before restoring" backup undid it.
+- Cloud backup (original feature list) is not built: postponed by the user (D-93, D-97).
+
+### Phases 4–6 status (2026-11-18): built (D-84 order)
+
+- **Editing** (D-85): setup page → "Change values": steppers in clicks, save as new version or as a new
+  setup. All 143 dump files round-trip byte-identical through the editor.
+- **Fuel calculator** (D-56 … D-63): track page / setup page → "Fuel calculator", race and qualifying plans,
+  inputs remembered per car/track, "Use my recorded numbers" (D-88).
+- **Laps per setup** (D-87): recording, lap times per setup version (best, average of clean laps, fuel per
+  lap), lap time vs track temperature graph with the name's temperature band, sessions list with
+  "Wrong setup?", unknown sessions on the track page. **Shared-memory offsets are not verified on a real
+  ACC install yet** (R-6). Checked with simulated laps on the test instance only.
+- **Renaming** (D-89): suggested name with "Use this name", "Rename…", opt-in auto-rename of new saves.
+- **Temperature adjust** (D-90): setup page → "Adjust for temperature…". On the dump, 32 variant pairs on
+  Ferrari 296 / Hungaroring give +6 pressure clicks going from 25–30 °C to 18–22 °C.
+
+### Phase 3 status (2026-11-18): built
+
+- **Opt-in per game** (D-73): Settings → Games → Folder management (originally labelled "Let SetupMan manage my
+  setups folder"). Enabling it scans,
+  makes an ACC setups folder backup ("Before SetupMan started managing this folder") and checks every file
+  against the library byte for byte; any mismatch → stays disabled, with the reasons shown (D-74).
+- **Staging** (D-75 … D-77): track page shows "In game folder" / "In the library only", "To library",
+  "Put in game folder", and "Keep only the ticked setups in the game folder" (makes the car/track managed).
+  Setup page: Move to library / Put in game folder / put any older version back (recorded as a "restored"
+  version). Names are kept; a number is added when taken. Other files are never overwritten; a file is
+  only deleted after its exact bytes are in the library.
+- **In-game saves** (D-80): new files in a managed car/track are marked; the track page and the game tile
+  show "New setups saved in ACC" with Keep in game folder / Move to library. Optional per game: "Tidy up
+  when ACC closes".
+- **While driving** (D-79): changes are queued (survive a restart) and run when driving stops; a toast
+  reminds that ACC may need its setup screen reopened when the game is running.
+- **ACC setups folder backups** (D-81 … D-83): Settings → Backups, list + Create backup now + Restore with
+  a confirmation that counts changed / removed / returning files. Restore = exact: bytes, names (incl.
+  upper/lower case), folders and file dates; an automatic backup is made just before; the result is
+  verified against the backup. Full SetupMan backups: Phase 7.
+- Returning files (restore, copied back) re-attach to their library setup; no duplicates.
+- **Verified** on an isolated test instance with a copy of the dump: manage on (144 checked), keep-only on
+  Hungaroring (2 left, 9 to library, other tracks untouched), simulated ACC save → move to library, older
+  version put back byte-identical, restore → all 910 files/folders identical to the original dump incl.
+  dates, 145 setups in the library (no duplicates). The real dump was not changed.
+- Visually checked in Chrome later (2026-11-18/19), including on the user's full ACC library (1012 setups).
+
+### Phase 2 status (2026-11-18): built
+
+- Library database `%APPDATA%\SetupMan\library.db` (SQLite, pure Go). Stores every setup, every version
+  (full file content), parent links and a changelog. The game folder is still only read.
+- On first start the current setups folder is imported (D-46) and a probable history is built: oldest
+  first, parent = most similar older setup ≥ 80%, or ≥ 65% when names match (D-53, D-61). On the dump:
+  80 families, 64 linked setups, longest line 4 steps; `LA 296 HUN Q/R` are one family.
+- After every automatic scan: new version (scored values changed, D-52), branch (old file still there,
+  D-51), rename/continuation (old file gone in the same scan), removal (setup kept, marked).
+- Setup page: notes (D-45), session with manual override (D-47), fields read from the name (editable,
+  D-49), "where it came from" with Change/re-link, family tree (probable links dashed), versions with what
+  changed and side-by-side comparison, comparison with the parent, lap-time placeholder (Phase 4).
+- Overview: "Since your last visit" changelog (D-18). Settings → History: thresholds, preview, apply;
+  manual links are never changed (D-62).
+- Name parser `internal/naming` tested on all 144 dump names.
+- Endurance guess: replaced by a per-game setting (D-67), being built.
+- Known limitation: "save as" a new name and deleting the old file *minutes later* (separate scans) is
+  recorded as a branch, not a rename. The family tree still shows the connection; the user can re-link.
+- Verified on an isolated test instance (own settings + library, copy of the dump): version, branch,
+  rename, removal, re-link, rebuild with preview/apply. Dump unchanged; idle CPU 0.000%.
+
+### Phase 1b status (2026-11-18): built
+
+- Multi-game structure: `internal/game` interface, ACC in `internal/games/acc`.
+- Pages: Overview (game tiles) → game (car tiles by class) → car (track tiles) → track (setup list,
+  similarity grid, comparison); Settings page with automatic saving.
+- Readable names for all ACC cars and tracks; brand logos from Wikimedia Commons (18 brands; Ginetta has
+  none and shows initials).
+- Folder watching without polling; rescan 2 s after the last change; paused while driving.
+- The page updates itself on changes, shows a clear message when SetupMan isn't running, and reloads
+  itself after SetupMan restarts.
+- Vue 3.5.13 + Vue Router 4.5.0 vendored (no build step). Light, dark and "follow Windows" themes; works at phone width.
+- Measured: idle CPU 0.05% of one core with the UI open; ~30 MB RAM.
+- Verified: dump unchanged after all tests; live update tested on a copy of the dump.
+- **Not verifiable on the dev machine** (needs the sim rig, D-39): ACC install detection via Steam,
+  Documents folder detection, driving detection from shared memory.
+
+### Phase 1 status (2026-11-18): built
+
+- Go 1.27, standard library only, single `SetupMan.exe` (~11 MB). Web UI embedded, works offline.
+- No database yet: settings in `%APPDATA%\SetupMan\settings.json`. SQLite comes with Phase 2.
+- Server listens on 127.0.0.1 only; rejects non-localhost host names and non-JSON writes.
+- Measured: dump of 144 setups scans in ~0.25 s; idle CPU 0.000% over 20 s; ~80 MB RAM after a scan.
+- Verified: all 145 dump files byte-identical before and after scanning.
+- `ACC Setups/` is git-ignored (third-party setups); tests use own fixtures.
+
+---
+
+## 6. Open questions and pending checks
+
+### Open questions (need the user's answer)
+- Q-G1. AC EVO setting names: please check against the game's setup screen – which are "Differential coast / power", "Bump stop gap / rate", "Fast bump / Fast rebound", "Alignment value 4.4" (front only), "Electronics value 5.4 / 5.5", "Aero value 6.4", "Spring value 2.4 / 2.5" (GT4 and GT2 only)? Wheel order is assumed FL, FR, RL, RR. (The user will answer when possible; no reminders, 2026-11-19.)
+
+
+### Rig test round 4: what is still open (version 0.22.3)
+The checklist page (claude.ai artifact "SetupMan Rig Test") shows the same list; results are saved there.
+
+**A. ACC**
+1. Install 0.22.3 (Settings → About).
+2. R-12: Pit stop page during a session: no setup block any more; fuel to add and the ▲/▼ psi per tyre at a glance, nothing to scroll.
+3. R-20: Porsche 718 Cayman GT4: Aero ride heights match the game; check one other GT4 too.
+4. R-22: save the loaded setup under another name without changes, load the copy: Manual setup select (under the top bar) offers both.
+5. R-7: save a setup in the setup screen during a session: the name gets the session's air and track.
+
+**B. AC**
+6. R-14: while driving, Task Manager → Details: AC's program name (expected acs.exe).
+7. R-15: a few practice laps: top bar "Driving", Lap times and the Pit stop page fill in; the setup is recognised.
+8. R-16: with folder management on, change a few values (one below zero, e.g. camber) and check AC's setup screen.
+9. R-18: compare camber, toe, caster, ride height, brake bias and wheel rate of one AC setup with the game.
+
+**C. Afterwards**: send setupman.log.
+
+Round 3 (2026-11-21, 0.22.0–0.22.2, ACC only): passed install, Aero columns, Race prep filled in while driving, setup recognised in the pit box (2027, by the tyre-pressure tie-break, log 11:03). Problem: the Pit stop page's setup block is not wanted (fixed in 0.22.3). Skipped: R-22, R-7. Not done: R-20 (GT4), everything in AC.
+
+Round 2 (2026-11-21, 0.20.1–0.21.0, ACC only), from the checklist page and the log: passed P1–P3, R-22 (temperature rules), R-9 (remark: Aero column order), R-2 (Porsche 2126 recognised), R-6, R-7, R-10, R-12 (remark: make fuel and ± psi clearer), R-24 (manual setup select used). Problems: R-20 (Porsche GT4 ride heights 15 mm low), R-21 (Race prep not filled in from the session). Fixed in 0.21.1 and 0.22.0 (D-150, D-151). Not done: everything in AC.
+
+### Rig test round 1 (2026-11-20, version 0.18.0, ACC only)
+Passed: P-1, P-2, R-1, R-3, R-4, R-5, R-8, R-11 (via setupman.lan), R-13, R-14 (see D-144), R-17, R-19, L-1. Problems, fixed in 0.19.0 (D-144): R-2 (setup never recognised), R-7 (no initials, no session temperature), R-9 and R-18 (setup page differs from the game's tabs; fuel and ECU map off), R-10 (kept the worse name), R-12 (Pit stop page needs scrolling on a phone). Not done: R-6 (blocked by R-2), R-15 and R-16 (AC not played). For round 2: R-2, R-6, R-7, R-9, R-10, R-12, R-18 again, plus R-15, R-16, R-20, R-22, R-23, R-24 and R-25 (run order above). R-21 done 2026-11-21 (D-147: ACC reads every setup when listing, none when loading; D-149).
+
+### Sim rig test checklist (D-39, open)
+- R-1. ACC shows up on the overview without settings (Steam detection) and its setups folder is found.
+- R-2. In the pit box / menus the top bar says "Game running"; when driving it says "Driving, scanning paused".
+- R-3. Save a setup in-game while in a session: it appears in SetupMan once you're back in the pits/menu.
+- R-4. No FPS impact while driving (SetupMan reads ACC's shared memory once per second).
+- R-5. Check the wheel order assumption (FL, FR, RL, RR) against the in-game setup screen.
+- R-6. Drive a few laps: the top bar shows "Recording laps", and afterwards the setup page shows the laps,
+  fuel per lap and temperatures with plausible values (checks the shared-memory offsets, D-87).
+- R-7. Save a setup in-game with "Apply the naming standard to new saves" enabled: the file gets the suggested name. Then change a value in-game and save again under the same (old) name: SetupMan shows it as a new version of the renamed setup, the renamed file has the new value, and ACC's list has no second copy (D-138).
+- R-8. Enable **Network access** (Settings → Network) on one PC, open it from another PC with the PIN; check that
+  everything works there, Settings included. Allow SetupMan for private networks when Windows asks.
+- R-9. Compare a few tyre pressures and fuel values in SetupMan with ACC's setup screen (D-101).
+- R-10. Remove duplicates on the rig's real setups (identical only first) and check ACC's list afterwards.
+- R-11. Open http://setupman.localhost on the rig: without a port number if port 80 is free there (D-116).
+- R-12. During a session, open **Pit stop**: hot tyre pressures, fuel, time left and the pit-menu values (fuel to add, pressures) match what ACC shows, the tank size and maximum stint (if the server sets one) are right; after a stop with the advised pressures, the hot average is near the target (D-126).
+- R-13. In NPM, change the setupman.lan Forward Hostname / IP to the rig's address; on the rig enable network access and set the network name. Then open http://setupman.lan on a phone or tablet: the PIN is asked once, and the Pit stop page keeps updating during a session (D-129).
+- R-14. **Program names (remind the user whenever a game is about to be played on the rig)**: while each game runs, open Task Manager → Details and note the program name(s) of ACC, AC, AC EVO and AC Rally. SetupMan only knows a game runs from these names and they are not guessed (D-136). Round 1 confirmed ACC, AC EVO and AC Rally (acr.exe); for AC only the launcher (AssettoCorsa.exe) was seen: check again while driving in AC (expected acs.exe, D-123).
+- R-15. **AC live data** (D-137): in a practice session the top bar says AC is running and "Driving" on track; after a few laps the setup's Lap times tab shows the laps with plausible lap times, fuel, temperatures and tyre pressures; in the pits it says not driving. The Pit stop page shows fuel advice and a pressure change per tyre.
+- R-16. **Changing AC values** (D-137): change a few values (one below zero, e.g. camber) with folder management on, then check them on AC's setup screen.
+- R-17. **PIN opt-out** (D-139): with network access on, disable Require PIN on the PC; the phone opens SetupMan without a PIN. Enable it again on the phone: the phone stays signed in, another device is asked for the PIN.
+- R-18. **Real values** (D-141): open an ACC and an AC setup in SetupMan and compare camber, toe, caster, ride height, brake bias and wheel rate with the game's setup screen.
+- R-20. **Fuel and counters on another car** (D-144): open a GT4 setup (and one other GT3) in SetupMan and in ACC: fuel (SetupMan = file + 2 L), ECU map, tyre set and N° pitstop (+1) match the game. The +2 L was seen on the Ferrari 296 GT3 only.
+- R-21. **Setup recognition from the opened file** (D-147): first run `fsutil behavior query disablelastaccess` in a Command Prompt; it must say ENABLED (otherwise SetupMan shows how to enable it on the Games overview). Then in ACC load setup A in the setup screen, drive out: the top bar names A. Back in the pits load setup B, drive out: it names B. Afterwards send setupman.log: the lines "game started …; n of m setups opened since" show whether ACC reads only the setup it loads or every setup when the setup screen opens.
+- R-22. **Two setups with the same values** (D-149, was D-147): make a copy of a setup in ACC (save under another name, nothing changed). Load the copy and drive out: nothing can tell them apart, so manual setup select offers both (R-24).
+- R-23. **Pit-strategy fingerprint** (D-149): load a setup that shares fuel, TC and ABS with another (e.g. "BGK R 1.10.3 2027" and "1616"), leave the pit strategy alone, drive out: the top bar names the loaded one.
+- R-24. **Manual setup select** (D-149): when SetupMan isn't sure, a bar under the top bar (and the Pit stop page) shows the likely setups as buttons; one click sets it, the top bar then names it. When recognised, the Pit stop page's list changes it.
+- R-25. **Rig probe** (D-149): after an ACC run, setupman.log has "probe ACC: changed …" lines for files ACC changed in Documents\Assetto Corsa Competizione (outside Setups), especially around loading a setup.
+- R-19. **LFM next race** (D-142): enter your LFM ID in Settings → General. Race prep shows your next LFM race with your car, the start time in your time zone and the weather settings; "Prepare for this race" picks your car and the track. Sign off from a race on LFM and select Refresh: it disappears (D-143).
+
+### Backlog (decided, waiting)
+- Cloud backup (D-93, D-97): waits for the user's choice of OneDrive / Google Drive / Dropbox and a one-time
+  app registration.
+- AC, AC EVO, AC Rally (D-95, D-111, D-137): scanning, comparing, history and naming are built for all three;
+  AC also has changing values and lap recording. AC EVO: changing values waits for Q-G1; live data for
+  AC EVO and AC Rally waits for a known interface (not guessed).
+- Duplicate threshold default (D-09): still the built-in value; choose a default after real use.
+  Reference data from Phase 1 (before D-22/D-23): score distribution is two-humped, ~75–100% (variants of
+  one setup) and ~15–65% (different setups); 1 differing field ≈ 1.2%; at 95%: 5 near clusters, 90%: 18, 80%: 43.
+
+### Ideas, not decided (raise when relevant)
+- Real units for all settings (degrees, mm) via per-car tables: source and maintenance (D-85, D-101).
+- Per-car min/max limits when changing values.
+- Visual comparison beyond tables (graphs).
+- Further games (e.g. Le Mans Ultimate, iRacing, Automobilista 2); formats SetupMan can't read (iRacing
+  `.sto`) could be handled as "files + notes".
+- Install method: portable exe (current) or an installer.
+
+### Decided rounds (index; details in section 3)
+- Setup recognition: Q-LA1 → D-147; Q-RIG3 answered in D-147; Q-RIG4 → D-149; Q-RIG5, Q-RIG6 → D-153. About tab → D-148.
+- ACC rig test round 1 (2026-11-20) → D-144; Q-RIG2 → D-145; temperature labels per author → D-146.
+- Code review 2026-11-20: Q-RV1 → D-138. Rig preparation: Q-RIG1 → D-140. Next features: Q-NX1 → D-141. LFM: Q-LFM1 → D-142.
+- Game versions: Q-U17 → D-119.
+- Live data: Q-L1 → D-122.
+- Game programs: Q-G2 → D-123.
+- Work before the rig: Q-N1 → none of the options; D-124 instead.
+- Stint plan: Q-PS1 → D-125.
+- Pressure advice: Q-PS2 → D-126.
+- AC Rally 0.7 not detected: Q-ACR1 → D-136.
+- Further work: Q-N2 c → D-127; a, b → D-128 (not built).
+- Network name and Games tabs: user requests → D-129, D-130; Q-NW1 → D-131; Q-R1 d → D-132; Q-NW2 → D-133.
+- Phase 1 results: Q-P1, Q-P2 → D-22, D-23, D-25. Q-P3 → backlog above.
+- UI restructure: Q-U1 … Q-U11 → D-28 … D-33, D-36 … D-39. Later UI: Q-U12 … Q-U16 → D-100 … D-104.
+- Version history: Q-V1 … Q-V10 → D-40 … D-50; Q-V11 … Q-V13 → D-67 … D-69 (provisional, revisit after a few races).
+- History thresholds: Q-H1 … Q-H5 → D-51 … D-53, D-61, D-62. Threshold experiment on the dump: stable
+  between 70–85% (76–90 family trees), collapses from 90%.
+- Fuel calculator: Q-F1 … Q-F11 → D-54 … D-60, D-63 … D-66 (pit window later replaced by D-99).
+- Staging: Q-S1 … Q-S10 → D-73 … D-83.
+- Remaining features: Q-X1 … Q-X3 → D-84 … D-86; Q-X4 … Q-X6 → D-93 … D-95; Q-X7 → D-97 (postponed).

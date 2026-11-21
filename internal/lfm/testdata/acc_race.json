@@ -1,0 +1,88 @@
+{
+ "race_id": 352146,
+ "race_date": "2026-11-20 10:40:00",
+ "track": {
+  "track_name": "Circuit de Paul Ricard",
+  "acc_track_name": "paul_ricard_2024",
+  "sim_id": 1
+ },
+ "event": {
+  "event_id": 1138,
+  "event_name": "GO Setups GT3 Sprint Series",
+  "sim_id": 1
+ },
+ "server_settings": {
+  "server_settings": {
+   "event": {
+    "file": "event",
+    "data": {
+     "track": "paul_ricard_2024",
+     "preRaceWaitingTimeSeconds": 120,
+     "postRaceSeconds": 3600,
+     "sessionOverTimeSeconds": 180,
+     "ambientTemp": 15,
+     "cloudLevel": 0.28,
+     "rain": 0.12,
+     "weatherRandomness": 1,
+     "simracerWeatherConditions": 0,
+     "isFixedConditionQualification": 0,
+     "sessions": [
+      {
+       "hourOfDay": 15,
+       "dayOfWeekend": 1,
+       "timeMultiplier": 1,
+       "sessionType": "P",
+       "sessionDurationMinutes": 2
+      },
+      {
+       "hourOfDay": 15,
+       "dayOfWeekend": 3,
+       "timeMultiplier": 1,
+       "sessionType": "Q",
+       "sessionDurationMinutes": 7
+      },
+      {
+       "hourOfDay": 15,
+       "dayOfWeekend": 3,
+       "timeMultiplier": 1,
+       "sessionType": "R",
+       "sessionDurationMinutes": 40
+      }
+     ],
+     "configVersion": 1
+    }
+   },
+   "eventRules": {
+    "file": "eventRules",
+    "data": {
+     "qualifyStandingType": 1,
+     "pitWindowLengthSec": 2280,
+     "driverStintTimeSec": 0,
+     "mandatoryPitstopCount": 1,
+     "maxTotalDrivingTime": 0,
+     "maxDriversCount": 1,
+     "tyreSetCount": 50,
+     "isRefuellingAllowedInRace": true,
+     "isRefuellingTimeFixed": true,
+     "isMandatoryPitstopRefuellingRequired": true,
+     "isMandatoryPitstopTyreChangeRequired": false,
+     "isMandatoryPitstopSwapDriverRequired": false
+    }
+   }
+  }
+ },
+ "participants": {
+  "entries": [
+   {
+    "user_id": 111,
+    "car_model": 32,
+    "car_class": "GT3"
+   },
+   {
+    "user_id": 222,
+    "car_model": 30,
+    "car_class": "GT3"
+   }
+  ]
+ }
+}

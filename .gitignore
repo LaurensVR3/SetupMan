@@ -1,0 +1,24 @@
+# Third-party setup dump used for local testing - do not publish
+/ACC Setups/
+
+# Personal dev environment notes (IP addresses, machine names) - do not publish
+*.local.md
+
+# Build output
+*.exe
+/dist/
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.exe~
+
+# Sample setups from the rig (AC, ACC, AC EVO, AC Rally) for local testing - do not publish
+/SampleSetups/
+/SetupMan
+
+# Rig test material (logs and game screenshots contain personal setup names) - do not publish
+/Logs/
+/Game Screenshots/

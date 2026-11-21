@@ -1,0 +1,280 @@
+package library
+
+// Pit stop advice (spec D-124): during a session, propose the pit-menu values (fuel to add, tyre
+// pressures) from the laps driven so far and the live telemetry. Nothing here writes anything;
+// SetupMan can't change the game's pit menu.
+
+import (
+	"encoding/json"
+	"math"
+	"strconv"
+	"strings"
+
+	"setupman/internal/game"
+	"setupman/internal/naming"
+	"setupman/internal/store"
+)
+
+const (
+	pressureLaps     = 3    // laps averaged for tyre pressures
+	fuelLaps         = 5    // laps averaged for fuel use and lap time
+	firmFuelLaps     = 3    // fewer laps than this: the fuel advice is marked as provisional
+	defaultDryTarget = 27.0 // psi, hot (user, D-124)
+	defaultWetTarget = 30.0
+	defaultMargin    = 2.0 // litres, as the fuel calculator (D-55)
+)
+
+// PitAdvice is what the Pit stop page shows.
+type PitAdvice struct {
+	Active    bool        `json:"active"` // a session is being recorded
+	Game      string      `json:"game,omitempty"`
+	Short     string      `json:"short,omitempty"`
+	Car       string      `json:"car,omitempty"`
+	Track     string      `json:"track,omitempty"`
+	CarName   string      `json:"carName,omitempty"`
+	TrackName string      `json:"trackName,omitempty"`
+	Session   string      `json:"session,omitempty"`
+	Fuel      *FuelAdvice `json:"fuel,omitempty"`
+	Tyres     *TyreAdvice `json:"tyres,omitempty"`
+}
+
+// FuelAdvice is the fuel part of the pit stop advice.
+type FuelAdvice struct {
+	Laps       int     `json:"laps"`       // laps the averages are based on
+	Firm       bool    `json:"firm"`       // based on enough laps
+	FuelPerLap float64 `json:"fuelPerLap"` // litres
+	LapMs      int     `json:"lapMs"`      // average lap time
+	Timed      bool    `json:"timed"`      // session ends on time (else on laps)
+	TimeLeftMs float64 `json:"timeLeftMs"`
+	LapsToGo   float64 `json:"lapsToGo"`
+	FuelNow    float64 `json:"fuelNow"`
+	Margin     float64 `json:"margin"`
+	FuelNeeded float64 `json:"fuelNeeded"` // to the finish, including the margin
+	StopsLeft  int     `json:"stopsLeft"`
+	StopsKnown bool    `json:"stopsKnown"`
+	FuelToAdd  int     `json:"fuelToAdd"` // advice for the next stop, whole litres
+	// Stint plan (D-125): from the session of the setup being driven, without choices during the race.
+	Endurance    bool    `json:"endurance"`    // long stints, the last two equal; else equal stints
+	SetupName    string  `json:"setupName"`    // the setup the plan is based on ("" = not recognised)
+	StopsPlanned int     `json:"stopsPlanned"` // stops still needed: the mandatory ones, or more when the tank or stint limit requires it
+	TankSize     float64 `json:"tankSize"`     // 0 = unknown
+	MaxStintMs   int     `json:"maxStintMs"`   // the server's stint limit, 0 = none or unknown
+	StintFuel    float64 `json:"stintFuel"`    // the most one stop can add (tank and stint limit), 0 = no limit
+	PitMenuFuel  float64 `json:"pitMenuFuel"`
+	PitMenuKnown bool    `json:"pitMenuKnown"`
+	Reason       string  `json:"reason,omitempty"` // why there is no advice yet
+}
+
+// TyreAdvice is the tyre pressure part of the pit stop advice.
+type TyreAdvice struct {
+	Wet          bool       `json:"wet"`
+	Target       float64    `json:"target"`
+	Laps         int        `json:"laps"`
+	Average      [4]float64 `json:"average"` // hot, psi, FL FR RL RR
+	Change       [4]float64 `json:"change"`  // target − average
+	PitMenu      [4]float64 `json:"pitMenu"` // as now set in the pit menu
+	PitMenuKnown bool       `json:"pitMenuKnown"`
+	Advice       [4]float64 `json:"advice"` // pit menu + change
+	Live         [4]float64 `json:"live"`   // hot pressures right now
+	LiveKnown    bool       `json:"liveKnown"`
+	Reason       string     `json:"reason,omitempty"`
+}
+
+// PitAdvice returns the advice for the session being recorded now.
+func (l *Library) PitAdvice() PitAdvice {
+	if l.db == nil {
+		return PitAdvice{}
+	}
+	l.recMu.Lock()
+	var id string
+	var sessionID int64
+	var car, track, kind string
+	var setupID int64
+	var maxStint int
+	for g, r := range l.recs {
+		if r != nil && r.sessionID != 0 {
+			id, sessionID, car, track, kind, setupID, maxStint = g, r.sessionID, r.car, r.track, r.kind, r.setupID, r.maxStintMs
+			break
+		}
+	}
+	l.recMu.Unlock()
+	if sessionID == 0 {
+		return PitAdvice{}
+	}
+	g := l.game(id)
+	src, ok := g.(game.TelemetrySource)
+	if !ok {
+		return PitAdvice{}
+	}
+	t, running := src.Telemetry()
+	if !running {
+		return PitAdvice{}
+	}
+	laps, err := l.db.LapsForSession(sessionID)
+	if err != nil {
+		return PitAdvice{}
+	}
+	a := PitAdvice{Active: true, Game: id, Short: game.Short(g), Car: car, Track: track, Session: kind}
+	a.CarName, a.TrackName = l.readableNames(id, car, track)
+	cfg := l.Settings().GameOrDefault(id)
+	dry, wet := cfg.TyreTargetDry, cfg.TyreTargetWet
+	if dry == 0 {
+		dry = defaultDryTarget
+	}
+	if wet == 0 {
+		wet = defaultWetTarget
+	}
+	plan := stintPlan{maxStintMs: maxStint}
+	if setupID != 0 {
+		if s, err := l.db.Setup(setupID); err == nil && s != nil {
+			plan.setupName, plan.endurance = s.Name, s.Session == naming.SessionEndu
+		}
+	}
+	a.Fuel = fuelAdvice(laps, t, l.fuelMargin(id, car, track), plan)
+	a.Tyres = tyreAdvice(laps, t, dry, wet)
+	return a
+}
+
+// fuelMargin is the safety margin the user set in the fuel calculator for this car and track.
+func (l *Library) fuelMargin(gameID, car, track string) float64 {
+	raw, _ := l.db.GetKV("fuel/" + gameID + "/" + strings.ToLower(car) + "/" + strings.ToLower(track))
+	var saved struct {
+		Race struct {
+			Safety string `json:"safety"`
+		} `json:"race"`
+	}
+	if raw != "" && json.Unmarshal([]byte(raw), &saved) == nil {
+		if v, err := strconv.ParseFloat(strings.ReplaceAll(saved.Race.Safety, ",", "."), 64); err == nil && v >= 0 && v < 50 {
+			return v
+		}
+	}
+	return defaultMargin
+}
+
+// stintPlan is how the fuel is spread over the stops (D-125). It follows the session of the setup
+// being driven, so nothing has to be chosen during the race: a race setup gets equal stints, an
+// Endurance setup the longest stints the tank and the server allow, with the last two equal.
+type stintPlan struct {
+	endurance  bool
+	setupName  string
+	maxStintMs int // 0 = no limit or unknown
+}
+
+func fuelAdvice(laps []store.Lap, t game.Telemetry, margin float64, plan stintPlan) *FuelAdvice {
+	f := &FuelAdvice{FuelNow: t.Fuel, Margin: margin, StopsLeft: t.StopsLeft, StopsKnown: t.StopsKnown,
+		PitMenuFuel: t.PitFuel, PitMenuKnown: t.PitMenuKnown, TimeLeftMs: t.TimeLeftMs,
+		Endurance: plan.endurance, SetupName: plan.setupName, MaxStintMs: plan.maxStintMs}
+	if t.TankKnown {
+		f.TankSize = t.TankSize
+	}
+	var used []store.Lap
+	for i := len(laps) - 1; i >= 0 && len(used) < fuelLaps; i-- {
+		if l := laps[i]; l.Valid && !l.Pit && l.FuelUsed > 0 && l.LapMs > 0 {
+			used = append(used, l)
+		}
+	}
+	if len(used) == 0 {
+		f.Reason = "Fuel advice appears after the first valid lap that is not an out-lap or in-lap."
+		return f
+	}
+	var fuel, ms float64
+	for _, l := range used {
+		fuel += l.FuelUsed
+		ms += float64(l.LapMs)
+	}
+	f.Laps, f.Firm = len(used), len(used) >= firmFuelLaps
+	f.FuelPerLap, f.LapMs = fuel/float64(len(used)), int(ms/float64(len(used))+0.5)
+
+	done := 0.0 // part of the current lap already driven
+	if t.ProgressKnown {
+		done = t.LapProgress
+	}
+	switch {
+	case t.SessionLaps > 0: // the session ends after a number of laps
+		f.LapsToGo = math.Max(0, float64(t.SessionLaps-t.CompletedLaps)-done)
+	case t.TimeLeftKnown: // timed: every lap started before the clock reaches zero is finished
+		f.Timed = true
+		if t.TimeLeftMs <= 0 {
+			f.LapsToGo = 1 - done
+		} else {
+			f.LapsToGo = math.Ceil(done+t.TimeLeftMs/float64(f.LapMs)) - done
+		}
+	default:
+		f.Reason = "The session length is not known yet."
+		return f
+	}
+	f.FuelNeeded = f.LapsToGo*f.FuelPerLap + margin
+	extra := math.Max(0, f.FuelNeeded-t.Fuel) // still to be added at the stops
+
+	// The most one stop can add: the tank (arriving with the margin left) and the stint limit
+	// (whole laps that fit in one stint).
+	limit := math.Inf(1)
+	if f.TankSize > 0 {
+		limit = math.Max(1, f.TankSize-margin)
+	}
+	if plan.maxStintMs > 0 {
+		limit = math.Min(limit, math.Max(1, math.Floor(float64(plan.maxStintMs)/float64(f.LapMs)))*f.FuelPerLap)
+	}
+	if !math.IsInf(limit, 1) {
+		f.StintFuel = limit
+	}
+
+	// Stops still needed: the mandatory ones, or more when one stop can't add enough.
+	stops := 0
+	if t.StopsKnown {
+		stops = t.StopsLeft
+	}
+	if extra > 0 {
+		stops = max(stops, 1, int(math.Ceil(extra/limit-1e-9)))
+	}
+	f.StopsPlanned = stops
+	switch {
+	case stops == 0:
+		f.FuelToAdd = 0
+	case plan.endurance && stops > 2:
+		// Endurance: a full stint now; the last two stints share what is left equally.
+		f.FuelToAdd = int(math.Floor(math.Min(limit, extra) + 1e-9))
+	default:
+		f.FuelToAdd = int(math.Ceil(extra/float64(stops) - 1e-9))
+	}
+	return f
+}
+
+func tyreAdvice(laps []store.Lap, t game.Telemetry, dryTarget, wetTarget float64) *TyreAdvice {
+	a := &TyreAdvice{PitMenu: t.PitPressures, PitMenuKnown: t.PitMenuKnown, Live: t.Pressures, LiveKnown: t.PressuresKnown}
+	switch {
+	case t.WetKnown:
+		a.Wet = t.WetTyres
+	case len(laps) > 0:
+		a.Wet = laps[len(laps)-1].Wet
+	}
+	a.Target = dryTarget
+	if a.Wet {
+		a.Target = wetTarget
+	}
+	var used []store.Lap
+	for i := len(laps) - 1; i >= 0 && len(used) < pressureLaps; i-- {
+		if l := laps[i]; !l.Pit && l.HasPressures && l.Wet == a.Wet {
+			used = append(used, l)
+		}
+	}
+	if len(used) == 0 {
+		a.Reason = "Tyre advice appears after the first lap on these tyres that is not an out-lap or in-lap."
+		return a
+	}
+	a.Laps = len(used)
+	for i := 0; i < 4; i++ {
+		sum := 0.0
+		for _, l := range used {
+			sum += l.Pressures[i]
+		}
+		a.Average[i] = round1(sum / float64(len(used)))
+		a.Change[i] = round1(a.Target - a.Average[i])
+		if a.PitMenuKnown {
+			a.Advice[i] = round1(a.PitMenu[i] + a.Change[i])
+		}
+	}
+	return a
+}
+
+func round1(v float64) float64 { return math.Round(v*10) / 10 }

@@ -1,0 +1,71 @@
+{
+	"carName": "test_car_gt3",
+	"basicSetup":
+	{
+		"tyres":
+		{
+			"tyreCompound": 0,
+			"tyrePressure": [ 50, 50, 50, 50 ]
+		},
+		"alignment":
+		{
+			"camber": [ 4, 4, 2, 2 ],
+			"toe": [ 20, 20, 40, 40 ],
+			"staticCamber": [ -4.0, -4.0, -3.5, -3.5 ],
+			"toeOutLinear": [ 0.0002, 0.0002, -0.0001, -0.0001 ],
+			"casterLF": 10,
+			"casterRF": 10,
+			"steerRatio": 2
+		},
+		"electronics":
+		{
+			"tC1": 4,
+			"tC2": 2,
+			"abs": 3,
+			"eCUMap": 1,
+			"fuelMix": 0,
+			"telemetryLaps": 0
+		},
+		"strategy":
+		{
+			"fuel": 30,
+			"nPitStops": 0,
+			"tyreSet": 1,
+			"frontBrakePadCompound": 0,
+			"rearBrakePadCompound": 0,
+			"pitStrategy": [
+				{
+					"fuelToAdd": 10,
+					"tyres":
+					{
+						"tyreCompound": 0,
+						"tyrePressure": [ 45, 45, 45, 45 ]
+					},
+					"tyreSet": 2,
+					"frontBrakePadCompound": 1,
+					"rearBrakePadCompound": 1
+				}
+			],
+			"fuelPerLap": 3.0
+		}
+	},
+	"advancedSetup":
+	{
+		"mechanicalBalance":
+		{
+			"aRBFront": 3,
+			"aRBRear": 3,
+			"brakeTorque": 20,
+			"brakeBias": 40
+		},
+		"aeroBalance":
+		{
+			"rideHeight": [ 2, 6, 2, 18 ],
+			"rodLength": [ 36.2, 36.2, 35.0, 35.0 ],
+			"splitter": 0,
+			"rearWing": 6,
+			"brakeDuct": [ 3, 3 ]
+		}
+	},
+	"trackBopType": 1
+}

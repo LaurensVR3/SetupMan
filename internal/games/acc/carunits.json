@@ -1,0 +1,8931 @@
+{
+ "_source": "Per-car click-to-value conversions for ACC setups, taken from the open-source Race Element project (github.com/RiddleTime/Race-Element, Race_Element.Data.ACC/SetupParser/Cars). Only the numbers are used. Regenerate with the script described in the spec (D-141).",
+ "cars": {
+  "alpine_a110_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 45.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -5.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -5.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.3,
+      7.5,
+      7.7,
+      7.9,
+      8.1,
+      8.3,
+      8.5,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      10.0,
+      10.1,
+      10.3,
+      10.5,
+      10.7,
+      10.9,
+      11.1,
+      11.3,
+      11.5,
+      11.6,
+      11.8,
+      12.0,
+      12.2,
+      12.4,
+      12.6,
+      12.7,
+      12.9,
+      13.1,
+      13.3,
+      13.5,
+      13.7
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 95.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 85.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 12.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      62500.0,
+      72500.0,
+      82500.0,
+      92500.0
+     ]
+    },
+    "rear": {
+     "table": [
+      73300.0,
+      83300.0,
+      93300.0,
+      103300.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "amr_v12_vantage_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 57.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.3,
+      8.5,
+      8.7,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.9,
+      10.1,
+      10.3,
+      10.5,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.7,
+      13.0,
+      13.2,
+      13.4,
+      13.6,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.7,
+      14.9
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 55.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 55.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 14.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      115000.0,
+      120000.0,
+      125000.0,
+      130000.0,
+      135000.0,
+      140000.0,
+      145000.0,
+      150000.0,
+      155000.0,
+      160000.0,
+      165000.0,
+      170000.0,
+      175000.0,
+      180000.0,
+      185000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      95000.0,
+      100000.0,
+      105000.0,
+      110000.0,
+      115000.0,
+      120000.0,
+      125000.0,
+      130000.0,
+      135000.0,
+      140000.0,
+      145000.0,
+      150000.0,
+      155000.0,
+      160000.0,
+      165000.0,
+      170000.0,
+      175000.0,
+      180000.0,
+      185000.0,
+      190000.0,
+      195000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "amr_v8_vantage_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 57.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      10.7,
+      10.9,
+      11.1,
+      11.3,
+      11.5,
+      11.6,
+      11.8,
+      12.0,
+      12.2,
+      12.4,
+      12.5,
+      12.7,
+      12.9,
+      13.1,
+      13.3,
+      13.4,
+      13.6,
+      13.8,
+      14.0,
+      14.2,
+      14.3,
+      14.5,
+      14.7,
+      14.9,
+      15.0,
+      15.2,
+      15.4,
+      15.6,
+      15.7,
+      15.9,
+      16.1
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 55.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 55.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 14.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      115000.0,
+      125000.0,
+      135000.0,
+      145000.0,
+      155000.0,
+      165000.0,
+      175000.0,
+      185000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      105000.0,
+      115000.0,
+      125000.0,
+      135000.0,
+      145000.0,
+      155000.0,
+      165000.0,
+      175000.0,
+      185000.0,
+      195000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "amr_v8_vantage_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 45.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -4.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      10.7,
+      10.9,
+      11.1,
+      11.3,
+      11.5,
+      11.6,
+      11.8,
+      12.0,
+      12.2,
+      12.4,
+      12.5,
+      12.7,
+      12.9,
+      13.1,
+      13.3,
+      13.4,
+      13.6,
+      13.8,
+      14.0,
+      14.2,
+      14.3,
+      14.5,
+      14.7,
+      14.9,
+      15.0,
+      15.2,
+      15.4,
+      15.6,
+      15.7,
+      15.9,
+      16.1
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 93.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 97.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 14.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      80000.0,
+      90000.0,
+      100000.0,
+      110000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      70000.0,
+      75000.0,
+      80000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "audi_r8_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpFast": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.6,
+      6.8,
+      7.0,
+      7.2,
+      7.4,
+      7.6,
+      7.8,
+      8.0,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      10.0,
+      10.2,
+      10.4,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      12.0,
+      12.2,
+      12.3,
+      12.7,
+      12.9,
+      13.1,
+      13.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "ReboundFast": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "ReboundSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 105.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 112.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 14.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      142000.0,
+      160000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      146000.0,
+      163000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "audi_r8_lms": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.8,
+      9.1,
+      9.3,
+      9.6,
+      9.8,
+      10.0,
+      10.3,
+      10.5,
+      10.8,
+      11.0,
+      11.2,
+      11.5,
+      11.7,
+      11.9,
+      12.2,
+      12.4,
+      12.6,
+      12.9,
+      13.1,
+      13.3,
+      13.6,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.7,
+      15.0,
+      15.2,
+      15.4,
+      15.7,
+      15.9,
+      16.1,
+      16.3,
+      16.6,
+      16.8
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 12.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      112000.0,
+      132000.0,
+      153000.0,
+      174000.0,
+      185000.0,
+      195000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      124000.0,
+      144000.0,
+      163000.0,
+      173000.0,
+      183000.0,
+      202000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "audi_r8_lms_evo": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.8,
+      9.1,
+      9.3,
+      9.6,
+      9.8,
+      10.0,
+      10.3,
+      10.5,
+      10.8,
+      11.0,
+      11.2,
+      11.5,
+      11.7,
+      11.9,
+      12.2,
+      12.4,
+      12.6,
+      12.9,
+      13.1,
+      13.3,
+      13.6,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.7,
+      15.0,
+      15.2,
+      15.4,
+      15.7,
+      15.9,
+      16.1,
+      16.3,
+      16.6,
+      16.8
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 12.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      112000.0,
+      132000.0,
+      153000.0,
+      174000.0,
+      185000.0,
+      195000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      124000.0,
+      144000.0,
+      163000.0,
+      173000.0,
+      183000.0,
+      202000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "audi_r8_lms_evo_ii": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.8,
+      9.1,
+      9.3,
+      9.6,
+      9.8,
+      10.0,
+      10.3,
+      10.5,
+      10.8,
+      11.0,
+      11.2,
+      11.5,
+      11.7,
+      11.9,
+      12.2,
+      12.4,
+      12.6,
+      12.9,
+      13.1,
+      13.3,
+      13.6,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.7,
+      15.0,
+      15.2,
+      15.4,
+      15.7,
+      15.9,
+      16.1,
+      16.3,
+      16.6,
+      16.8
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 12.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      112000.0,
+      132000.0,
+      153000.0,
+      174000.0,
+      185000.0,
+      195000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      124000.0,
+      144000.0,
+      163000.0,
+      173000.0,
+      183000.0,
+      202000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "audi_r8_lms_gt2": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpFast": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -3.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.6,
+      6.8,
+      7.0,
+      7.2,
+      7.4,
+      7.6,
+      7.8,
+      8.0,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      10.0,
+      10.2,
+      10.4,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      12.0,
+      12.2,
+      12.3,
+      12.5,
+      12.7,
+      12.9,
+      13.1,
+      13.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "ReboundFast": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "ReboundSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 80.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 12.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      142000.0,
+      160000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      146000.0,
+      163000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "bentley_continental_gt3_2016": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 57.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.3,
+      8.5,
+      8.8,
+      9.0,
+      9.2,
+      9.5,
+      9.7,
+      10.0,
+      10.2,
+      10.5,
+      10.7,
+      10.9,
+      11.2,
+      11.4,
+      11.7,
+      11.9,
+      12.1,
+      12.4,
+      12.6,
+      12.9,
+      13.1,
+      13.3,
+      13.6,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.8,
+      15.0,
+      15.2,
+      15.5
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      115000.0,
+      120000.0,
+      125000.0,
+      130000.0,
+      135000.0,
+      140000.0,
+      145000.0,
+      150000.0,
+      155000.0,
+      160000.0,
+      165000.0,
+      170000.0,
+      175000.0,
+      180000.0,
+      185000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      95000.0,
+      100000.0,
+      105000.0,
+      110000.0,
+      115000.0,
+      120000.0,
+      125000.0,
+      130000.0,
+      135000.0,
+      140000.0,
+      145000.0,
+      150000.0,
+      155000.0,
+      160000.0,
+      165000.0,
+      170000.0,
+      175000.0,
+      180000.0,
+      185000.0,
+      190000.0,
+      195000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "bentley_continental_gt3_2018": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 57.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.3,
+      8.5,
+      8.8,
+      9.0,
+      9.2,
+      9.5,
+      9.7,
+      10.0,
+      10.2,
+      10.5,
+      10.7,
+      10.9,
+      11.2,
+      11.4,
+      11.7,
+      11.9,
+      12.1,
+      12.4,
+      12.6,
+      12.9,
+      13.1,
+      13.3,
+      13.6,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.8,
+      15.0,
+      15.2,
+      15.5
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      115000.0,
+      120000.0,
+      125000.0,
+      130000.0,
+      135000.0,
+      140000.0,
+      145000.0,
+      150000.0,
+      155000.0,
+      160000.0,
+      165000.0,
+      170000.0,
+      175000.0,
+      180000.0,
+      185000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      95000.0,
+      100000.0,
+      105000.0,
+      110000.0,
+      115000.0,
+      120000.0,
+      125000.0,
+      130000.0,
+      135000.0,
+      140000.0,
+      145000.0,
+      150000.0,
+      155000.0,
+      160000.0,
+      165000.0,
+      170000.0,
+      175000.0,
+      180000.0,
+      185000.0,
+      190000.0,
+      195000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "bmw_m2_cs_racing": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 56.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpFast": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 0.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -5.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.5
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "ReboundFast": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "ReboundSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 125.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 125.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      162000.0,
+      180000.0,
+      198000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      103000.0,
+      117000.0,
+      131000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "bmw_m4_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 48.5,
+     "step": 0.3
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 200.0,
+     "step": 50.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.1,
+      6.3,
+      6.5,
+      6.7,
+      6.9,
+      7.1,
+      7.3,
+      7.5,
+      7.7,
+      7.9,
+      8.1,
+      8.3,
+      8.5,
+      8.7,
+      8.9,
+      9.1,
+      9.3,
+      9.5,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.4,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      12.0,
+      12.2,
+      12.4,
+      12.6,
+      12.8,
+      13.0,
+      13.2,
+      13.4,
+      13.6,
+      13.7,
+      13.9
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 50.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 50.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      105000.0,
+      120000.0,
+      135000.0,
+      150000.0,
+      165000.0,
+      180000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      90000.0,
+      105000.0,
+      120000.0,
+      135000.0,
+      150000.0,
+      165000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "bmw_m4_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 49.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.4
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 70.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 65.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      165888.0,
+      184320.0,
+      202752.0
+     ]
+    },
+    "rear": {
+     "table": [
+      103335.0,
+      117113.0,
+      130891.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "bmw_m6_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.5,
+     "step": 0.3
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.7,
+      6.9,
+      7.1,
+      7.4,
+      7.6,
+      7.8,
+      8.0,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.5,
+      10.7,
+      10.9,
+      11.1,
+      11.3,
+      11.5,
+      11.7,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.7,
+      12.9,
+      13.1,
+      13.3,
+      13.5,
+      13.7,
+      13.9,
+      14.2,
+      14.4,
+      14.6,
+      14.8,
+      15.0
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 52.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 52.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      136000.0,
+      146000.0,
+      156000.0,
+      166000.0,
+      176000.0,
+      186000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      96000.0,
+      106000.0,
+      116000.0,
+      126000.0,
+      136000.0,
+      146000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "chevrolet_camaro_gt4r": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -5.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.1
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 115.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 123.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      165888.0,
+      184320.0,
+      202752.0
+     ]
+    },
+    "rear": {
+     "table": [
+      90000.0,
+      102000.0,
+      114000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "ferrari_296_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "front": {
+     "base": 300.0,
+     "step": 100.0
+    },
+    "rear": {
+     "base": 400.0,
+     "step": 200.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.5,
+      8.7,
+      8.9,
+      9.1,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      9.9,
+      10.1,
+      10.3,
+      10.5,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.3,
+      11.5,
+      11.7,
+      11.9,
+      12.0,
+      12.2,
+      12.4,
+      12.6,
+      12.7,
+      12.9,
+      13.1,
+      13.3,
+      13.4,
+      13.6,
+      13.8
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 50.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 50.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 13.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      163769.0,
+      170068.0,
+      176367.0,
+      182666.0,
+      188964.0,
+      195263.0,
+      201562.0,
+      207861.0,
+      214160.0
+     ]
+    },
+    "rear": {
+     "table": [
+      122091.0,
+      129273.0,
+      136455.0,
+      143637.0,
+      150818.0,
+      158000.0,
+      165182.0,
+      172364.0,
+      179546.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "ferrari_488_challenge_evo": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 51.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 0.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.4,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.3,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      5.0,
+      5.1,
+      5.3,
+      5.5,
+      5.6,
+      5.8,
+      6.0,
+      6.1,
+      6.3,
+      6.5,
+      6.6,
+      6.8,
+      7.0,
+      7.1,
+      7.3,
+      7.5,
+      7.6,
+      7.8,
+      8.0,
+      8.1,
+      8.3,
+      8.5,
+      8.6,
+      8.8,
+      9.0,
+      9.1,
+      9.3,
+      9.5,
+      9.6,
+      9.8,
+      9.9,
+      10.1,
+      10.3,
+      10.4,
+      10.6,
+      10.8,
+      10.9,
+      11.1,
+      11.2,
+      11.4,
+      11.6,
+      11.7,
+      11.9,
+      12.1,
+      12.2,
+      12.4,
+      12.5,
+      12.7,
+      12.9,
+      13.0,
+      13.2,
+      13.3,
+      13.5,
+      13.7,
+      13.8,
+      14.0,
+      14.1,
+      14.3,
+      14.4,
+      14.6,
+      14.8,
+      14.9,
+      15.1,
+      15.2,
+      15.4,
+      15.5,
+      15.7,
+      15.9,
+      16.0,
+      16.2,
+      16.3,
+      16.5,
+      16.6,
+      16.8,
+      16.9,
+      17.1,
+      17.3,
+      17.4,
+      17.6,
+      17.7,
+      17.9,
+      18.2,
+      18.3,
+      18.5,
+      18.6,
+      18.8,
+      18.9,
+      19.1,
+      19.2,
+      19.4,
+      19.5,
+      19.7,
+      19.8,
+      20.0,
+      20.1,
+      20.3,
+      20.4,
+      20.6
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 0.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 59.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 103.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      151000.0,
+      163800.0
+     ]
+    },
+    "rear": {
+     "table": [
+      141000.0,
+      155000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "ferrari_488_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      5.0,
+      5.1,
+      5.3,
+      5.5,
+      5.6,
+      5.8,
+      6.0,
+      6.1,
+      6.3,
+      6.5,
+      6.6,
+      6.8,
+      7.0,
+      7.1,
+      7.3,
+      7.5,
+      7.6,
+      7.8,
+      8.0,
+      8.1,
+      8.3,
+      8.5,
+      8.6,
+      8.8,
+      9.0,
+      9.1,
+      9.3,
+      9.5,
+      9.6,
+      9.8,
+      9.9,
+      10.1,
+      10.3,
+      10.4,
+      10.6,
+      10.8,
+      10.9,
+      11.1,
+      11.2,
+      11.4,
+      11.6,
+      11.7,
+      11.9,
+      12.1,
+      12.2,
+      12.4,
+      12.5,
+      12.7,
+      12.9,
+      13.0,
+      13.2,
+      13.3,
+      13.5,
+      13.7,
+      13.8,
+      14.0,
+      14.1,
+      14.3,
+      14.4,
+      14.6,
+      14.8,
+      14.9,
+      15.1,
+      15.2,
+      15.4,
+      15.5,
+      15.7,
+      15.9,
+      16.0,
+      16.2,
+      16.3,
+      16.5,
+      16.6,
+      16.8,
+      16.9,
+      17.1,
+      17.3,
+      17.4,
+      17.6,
+      17.7,
+      17.9,
+      18.0,
+      18.2,
+      18.3,
+      18.5,
+      18.6,
+      18.8,
+      18.9,
+      19.1,
+      19.2,
+      19.4,
+      19.5,
+      19.7,
+      19.8,
+      20.0,
+      20.1,
+      20.3,
+      20.4,
+      20.6
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 55.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 55.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      94000.0,
+      101000.0,
+      107000.0,
+      113000.0,
+      120000.0,
+      126000.0,
+      138600.0,
+      151000.0,
+      163800.0,
+      176000.0,
+      189000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      106000.0,
+      113000.0,
+      120000.0,
+      127000.0,
+      134000.0,
+      141000.0,
+      155000.0,
+      169500.0,
+      183600.0,
+      198000.0,
+      212000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "ferrari_488_gt3_evo": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      5.0,
+      5.1,
+      5.3,
+      5.5,
+      5.6,
+      5.8,
+      6.0,
+      6.1,
+      6.3,
+      6.5,
+      6.6,
+      6.8,
+      7.0,
+      7.1,
+      7.3,
+      7.5,
+      7.6,
+      7.8,
+      8.0,
+      8.1,
+      8.3,
+      8.5,
+      8.6,
+      8.8,
+      9.0,
+      9.1,
+      9.3,
+      9.5,
+      9.6,
+      9.8,
+      9.9,
+      10.1,
+      10.3,
+      10.4,
+      10.6,
+      10.8,
+      10.9,
+      11.1,
+      11.2,
+      11.4,
+      11.6,
+      11.7,
+      11.9,
+      12.1,
+      12.2,
+      12.4,
+      12.5,
+      12.7,
+      12.9,
+      13.0,
+      13.2,
+      13.3,
+      13.5,
+      13.7,
+      13.8,
+      14.0,
+      14.1,
+      14.3,
+      14.4,
+      14.6,
+      14.8,
+      14.9,
+      15.1,
+      15.2,
+      15.4,
+      15.5,
+      15.7,
+      15.9,
+      16.0,
+      16.2,
+      16.3,
+      16.5,
+      16.6,
+      16.8,
+      16.9,
+      17.1,
+      17.3,
+      17.4,
+      17.6,
+      17.7,
+      17.9,
+      18.0,
+      18.2,
+      18.3,
+      18.5,
+      18.6,
+      18.8,
+      18.9,
+      19.1,
+      19.2,
+      19.4,
+      19.5,
+      19.7,
+      19.8,
+      20.0,
+      20.1,
+      20.3,
+      20.4,
+      20.6
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 55.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 55.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      94000.0,
+      101000.0,
+      107000.0,
+      113000.0,
+      120000.0,
+      126000.0,
+      138600.0,
+      151000.0,
+      163800.0,
+      176000.0,
+      189000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      106000.0,
+      113000.0,
+      120000.0,
+      127000.0,
+      134000.0,
+      141000.0,
+      155000.0,
+      169500.0,
+      183600.0,
+      198000.0,
+      212000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "ford_mustang_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 48.5,
+     "step": 0.3
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 200.0,
+     "step": 50.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      5.3,
+      5.5,
+      5.7,
+      5.9,
+      6.1,
+      6.2,
+      6.4,
+      6.6,
+      6.8,
+      6.9,
+      7.1,
+      7.3,
+      7.5,
+      7.6,
+      7.8,
+      8.0,
+      8.2,
+      8.3,
+      8.5,
+      8.7,
+      8.9,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.4,
+      10.6,
+      10.8,
+      10.9,
+      11.1,
+      11.3,
+      11.5,
+      11.6,
+      11.8,
+      12.0,
+      12.1,
+      12.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 50.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 50.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.1,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      105000.0,
+      120000.0,
+      135000.0,
+      150000.0,
+      165000.0,
+      180000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      90000.0,
+      105000.0,
+      120000.0,
+      135000.0,
+      150000.0,
+      165000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "ginetta_g55_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 46.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      3.7,
+      3.9,
+      4.2,
+      4.5,
+      4.7,
+      5.0,
+      5.3,
+      5.6,
+      5.8,
+      6.1,
+      6.4,
+      6.6,
+      6.9,
+      7.2,
+      7.4,
+      7.7,
+      7.9,
+      8.2,
+      8.5,
+      8.7,
+      9.0,
+      9.3,
+      9.5,
+      9.8,
+      10.1,
+      10.3,
+      10.6,
+      10.8,
+      11.1,
+      11.4,
+      11.6,
+      11.9,
+      12.1,
+      12.4,
+      12.7,
+      12.9,
+      13.2,
+      13.4,
+      13.7,
+      13.9,
+      14.2
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 75.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 76.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      80000.0,
+      90000.0,
+      100000.0,
+      110000.0,
+      120000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      60000.0,
+      70000.0,
+      80000.0,
+      90000.0,
+      100000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "honda_nsx_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      10.0,
+      10.2,
+      10.4,
+      10.6,
+      10.8,
+      10.9,
+      11.1,
+      11.3,
+      11.5,
+      11.7,
+      11.9,
+      12.1,
+      12.3,
+      12.4,
+      12.6,
+      12.8,
+      13.0,
+      13.2,
+      13.4,
+      13.6,
+      13.8,
+      13.9,
+      14.1,
+      14.3,
+      14.5,
+      14.7,
+      14.9,
+      15.0,
+      15.2
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      115000.0,
+      124000.0,
+      133000.0,
+      142000.0,
+      151000.0,
+      160000.0,
+      169000.0,
+      178000.0,
+      187000.0,
+      196000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      115000.0,
+      124000.0,
+      133000.0,
+      142000.0,
+      151000.0,
+      160000.0,
+      169000.0,
+      178000.0,
+      187000.0,
+      196000.0,
+      205000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "honda_nsx_gt3_evo": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 44.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 200.0,
+     "step": 50.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.2,
+      7.4,
+      7.6,
+      7.8,
+      8.0,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      8.9,
+      9.1
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      73000.0,
+      79080.0,
+      85160.0,
+      91240.0,
+      97320.0,
+      103400.0,
+      109480.0,
+      115560.0,
+      121640.0,
+      127720.0,
+      133800.0,
+      139880.0,
+      145960.0,
+      152040.0,
+      158120.0,
+      164200.0,
+      170280.0
+     ]
+    },
+    "rear": {
+     "table": [
+      126800.0,
+      134700.0,
+      142600.0,
+      150500.0,
+      158400.0,
+      166300.0,
+      174200.0,
+      182100.0,
+      190000.0,
+      197900.0,
+      205800.0,
+      213700.0,
+      221600.0,
+      229500.0,
+      237400.0,
+      245300.0,
+      253200.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "jaguar_g3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 57.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      4.0,
+      4.1,
+      4.3,
+      4.5,
+      4.7,
+      4.9,
+      5.1,
+      5.3,
+      5.5,
+      5.6,
+      5.8,
+      6.0,
+      6.2,
+      6.4,
+      6.6,
+      6.8,
+      6.9,
+      7.1,
+      7.3,
+      7.5,
+      7.7,
+      7.9,
+      8.0,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.1,
+      9.3,
+      9.5,
+      9.7,
+      9.9,
+      10.1,
+      10.2,
+      10.4,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 60.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 60.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      100000.0,
+      105000.0,
+      110000.0,
+      115000.0,
+      120000.0,
+      125000.0,
+      130000.0,
+      135000.0,
+      140000.0,
+      145000.0,
+      150000.0,
+      155000.0,
+      160000.0,
+      165000.0,
+      170000.0,
+      175000.0,
+      180000.0,
+      185000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      120000.0,
+      125000.0,
+      130000.0,
+      135000.0,
+      140000.0,
+      145000.0,
+      150000.0,
+      155000.0,
+      160000.0,
+      165000.0,
+      170000.0,
+      175000.0,
+      180000.0,
+      185000.0,
+      190000.0,
+      195000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "ktm_xbow_gt2": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 44.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -3.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      3.2,
+      3.4,
+      3.6,
+      3.9,
+      4.1,
+      4.3,
+      4.5,
+      4.7,
+      4.9,
+      5.2,
+      5.4,
+      5.6,
+      5.8,
+      6.0,
+      6.2,
+      6.5,
+      6.7,
+      6.9,
+      7.1,
+      7.3,
+      7.5,
+      7.8,
+      8.0,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.5,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.5,
+      10.7,
+      10.9,
+      11.1,
+      11.4,
+      11.6,
+      11.8
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 75.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 200.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      87000.0,
+      97000.0,
+      107000.0,
+      117000.0,
+      127000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      81000.0,
+      91000.0,
+      101000.0,
+      111000.0,
+      121000.0,
+      131000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "ktm_xbow_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 44.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -2.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -2.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      1.7,
+      1.9,
+      2.1,
+      2.3,
+      2.5,
+      2.7,
+      2.9,
+      3.1,
+      3.3,
+      3.5,
+      3.7,
+      3.9,
+      4.1,
+      4.3,
+      4.5,
+      4.7,
+      4.8,
+      5.0,
+      5.2,
+      5.4,
+      5.6,
+      5.8,
+      6.0,
+      6.2,
+      6.4,
+      6.6,
+      6.8,
+      7.0,
+      7.1,
+      7.3,
+      7.5,
+      7.7,
+      7.9,
+      8.1,
+      8.3,
+      8.5,
+      8.7,
+      8.9,
+      9.1,
+      9.2,
+      9.4
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 110.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 110.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      87000.0,
+      97000.0,
+      107000.0,
+      117000.0,
+      127000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      81000.0,
+      91000.0,
+      101000.0,
+      111000.0,
+      121000.0,
+      131000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "lamborghini_gallardo_rex": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      4.9,
+      5.1,
+      5.3,
+      5.5,
+      5.8,
+      6.0,
+      6.2,
+      6.4,
+      6.6,
+      6.8,
+      7.0,
+      7.2,
+      7.4,
+      7.6,
+      7.9,
+      8.1,
+      8.3,
+      8.5,
+      8.7,
+      8.9,
+      9.1,
+      9.3,
+      9.5,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      12.0
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      121000.0,
+      126000.0,
+      131000.0,
+      136000.0,
+      141000.0,
+      146000.0,
+      151000.0,
+      156000.0,
+      161000.0,
+      166000.0,
+      171000.0,
+      176000.0,
+      181000.0,
+      186000.0,
+      191000.0,
+      196000.0,
+      201000.0,
+      206000.0,
+      211000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      117000.0,
+      122000.0,
+      127000.0,
+      132000.0,
+      137000.0,
+      142000.0,
+      147000.0,
+      152000.0,
+      157000.0,
+      162000.0,
+      167000.0,
+      172000.0,
+      177000.0,
+      182000.0,
+      187000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "lamborghini_huracan_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.2,
+      6.5,
+      6.7,
+      7.0,
+      7.3,
+      7.5,
+      7.8,
+      8.1,
+      8.3,
+      8.6,
+      8.9,
+      9.1,
+      9.4,
+      9.6,
+      9.9,
+      10.2,
+      10.4,
+      10.7,
+      10.9,
+      11.2,
+      11.5,
+      11.7,
+      12.0,
+      12.2,
+      12.5,
+      12.8,
+      13.0,
+      13.3,
+      13.5,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.8,
+      15.0
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      121000.0,
+      144000.0,
+      167000.0,
+      190000.0,
+      201000.0,
+      212000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      117000.0,
+      136000.0,
+      154000.0,
+      164000.0,
+      173000.0,
+      191000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "lamborghini_huracan_gt3_evo": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.2,
+      6.5,
+      6.7,
+      7.0,
+      7.3,
+      7.5,
+      7.8,
+      8.1,
+      8.3,
+      8.6,
+      8.9,
+      9.1,
+      9.4,
+      9.6,
+      9.9,
+      10.2,
+      10.4,
+      10.7,
+      10.9,
+      11.2,
+      11.5,
+      11.7,
+      12.0,
+      12.2,
+      12.5,
+      12.8,
+      13.0,
+      13.3,
+      13.5,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.8,
+      15.0
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      121000.0,
+      144000.0,
+      167000.0,
+      190000.0,
+      201000.0,
+      212000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      117000.0,
+      136000.0,
+      154000.0,
+      164000.0,
+      173000.0,
+      191000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "lamborghini_huracan_gt3_evo2": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.2,
+      6.5,
+      6.7,
+      7.0,
+      7.3,
+      7.5,
+      7.8,
+      8.1,
+      8.3,
+      8.6,
+      8.9,
+      9.1,
+      9.4,
+      9.6,
+      9.9,
+      10.2,
+      10.4,
+      10.7,
+      10.9,
+      11.2,
+      11.5,
+      11.7,
+      12.0,
+      12.2,
+      12.5,
+      12.8,
+      13.0,
+      13.3,
+      13.5,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.8,
+      15.0
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      121000.0,
+      144000.0,
+      167000.0,
+      190000.0,
+      201000.0,
+      212000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      117000.0,
+      136000.0,
+      154000.0,
+      164000.0,
+      173000.0,
+      191000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "lamborghini_huracan_st": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -5.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -5.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.2,
+      6.5,
+      6.7,
+      7.0,
+      7.3,
+      7.5,
+      7.8,
+      8.1,
+      8.3,
+      8.6,
+      8.9,
+      9.1,
+      9.4,
+      9.6,
+      9.9,
+      10.2,
+      10.4,
+      10.7,
+      10.9,
+      11.2,
+      11.5,
+      11.7,
+      12.0,
+      12.2,
+      12.5,
+      12.8,
+      13.0,
+      13.3,
+      13.5,
+      13.8,
+      14.0,
+      14.3,
+      14.5,
+      14.8,
+      15.0
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      121000.0,
+      144000.0,
+      167000.0,
+      190000.0,
+      201000.0,
+      212000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      117000.0,
+      136000.0,
+      154000.0,
+      164000.0,
+      173000.0,
+      191000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "lamborghini_huracan_st_evo2": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpFast": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BumpSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -3.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      10.7,
+      10.9,
+      11.1,
+      11.3,
+      11.5,
+      11.7,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.1,
+      12.9,
+      13.1,
+      13.3,
+      13.5,
+      13.7,
+      13.9,
+      14.1,
+      14.3,
+      14.5,
+      14.7,
+      14.9,
+      15.1,
+      15.3,
+      15.5,
+      15.7,
+      15.9,
+      16.1,
+      16.3,
+      16.5,
+      16.7,
+      16.8,
+      17.0,
+      17.2,
+      17.4
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "ReboundFast": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "ReboundSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 54.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 54.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      121000.0,
+      144000.0,
+      167000.0,
+      190000.0,
+      201000.0,
+      212000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      117000.0,
+      136000.0,
+      154000.0,
+      164000.0,
+      173000.0,
+      191000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "lexus_rc_f_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.9,
+      8.1,
+      8.3,
+      8.5,
+      8.7,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      10.0,
+      10.2,
+      10.4,
+      10.6,
+      10.8,
+      10.9,
+      11.1,
+      11.3,
+      11.5,
+      11.7,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.6,
+      12.8,
+      13.0,
+      13.2,
+      13.4,
+      13.6
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 50.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 65.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      96000.0,
+      115000.0,
+      134000.0,
+      154000.0,
+      173000.0,
+      192000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      87000.0,
+      112000.0,
+      136000.0,
+      154000.0,
+      175000.0,
+      210000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "maserati_mc20_gt2": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 55.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "front": {
+     "base": 300.0,
+     "step": 100.0
+    },
+    "rear": {
+     "base": 400.0,
+     "step": 200.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -3.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      8.5,
+      8.7,
+      8.9,
+      9.1,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      9.9,
+      10.1,
+      10.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 80.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      165180.0,
+      179540.0,
+      193900.0
+     ]
+    },
+    "rear": {
+     "table": [
+      173913.0,
+      189036.0,
+      204158.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "maserati_mc_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 49.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.3,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -2.8,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      3.4,
+      3.7,
+      3.9,
+      4.1,
+      4.3,
+      4.5,
+      4.7,
+      5.0,
+      5.2,
+      5.4,
+      5.6
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 80.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 105.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 14.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      116000.0,
+      151000.0,
+      186000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      113000.0,
+      138000.0,
+      163000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "mclaren_570s_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 60.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -5.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -5.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      5.3,
+      5.6,
+      5.8,
+      6.0,
+      6.3,
+      6.5,
+      6.8,
+      7.0,
+      7.3,
+      7.5,
+      7.8,
+      8.0,
+      8.2,
+      8.5,
+      8.7,
+      9.0,
+      9.2,
+      9.4,
+      9.7,
+      9.9,
+      10.2
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 0.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 100.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 100.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      140000.0,
+      175000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      162850.0,
+      175520.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "mclaren_650s_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      5.3,
+      5.6,
+      5.8,
+      6.0,
+      6.3,
+      6.5,
+      6.8,
+      7.0,
+      7.3,
+      7.5,
+      7.8,
+      8.0,
+      8.2,
+      8.5,
+      8.7,
+      9.0,
+      9.2,
+      9.4,
+      9.7,
+      9.9,
+      10.2,
+      10.4,
+      10.7,
+      10.9,
+      11.1,
+      11.4,
+      11.6,
+      11.8,
+      12.1,
+      12.3,
+      12.6,
+      12.8,
+      13.0,
+      13.3,
+      13.5,
+      13.7,
+      14.0,
+      14.2,
+      14.4,
+      14.7,
+      14.9
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 56.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 56.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.1
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      126000.0,
+      136000.0,
+      146000.0,
+      156000.0,
+      166000.0,
+      176000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      126000.0,
+      136000.0,
+      146000.0,
+      156000.0,
+      166000.0,
+      176000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "mclaren_720s_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      5.3,
+      5.6,
+      5.8,
+      6.0,
+      6.3,
+      6.5,
+      6.8,
+      7.0,
+      7.3,
+      7.5,
+      7.8,
+      8.0
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 50.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 64.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.48,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.1,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      118000.0,
+      134000.0,
+      150000.0,
+      166000.0,
+      182000.0,
+      198000.0,
+      214000.0,
+      230000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      114000.0,
+      128000.0,
+      142000.0,
+      156000.0,
+      170000.0,
+      184000.0,
+      198000.0,
+      212000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "mclaren_720s_gt3_evo": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      5.3,
+      5.6,
+      5.8,
+      6.0,
+      6.3,
+      6.5,
+      6.8,
+      7.0,
+      7.3,
+      7.5,
+      7.8,
+      8.0,
+      8.2,
+      8.5,
+      8.7,
+      9.0,
+      9.2,
+      9.4,
+      9.7,
+      9.9,
+      10.2,
+      10.4,
+      10.7,
+      10.9,
+      11.1,
+      11.4,
+      11.6,
+      11.8,
+      12.1,
+      12.3,
+      12.6,
+      12.8,
+      13.0,
+      13.3,
+      13.5,
+      13.7,
+      14.0,
+      14.2,
+      14.4,
+      14.7,
+      14.9,
+      15.1,
+      15.4,
+      15.6,
+      15.8,
+      16.0,
+      16.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 50.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 64.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.48,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.1,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      118000.0,
+      134000.0,
+      150000.0,
+      166000.0,
+      182000.0,
+      198000.0,
+      214000.0,
+      230000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      83000.0,
+      97000.0,
+      111000.0,
+      125000.0,
+      139000.0,
+      153000.0,
+      167000.0,
+      181000.0,
+      195000.0,
+      209000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "mercedes_amg_gt2": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 55.0,
+     "step": 0.3
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 1000.0,
+     "step": 0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -3.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      9.2,
+      9.4,
+      9.5,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.5,
+      10.7,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.7,
+      12.8,
+      13.0,
+      13.2,
+      13.4,
+      13.6,
+      13.7,
+      13.9,
+      14.1,
+      14.3,
+      14.5,
+      14.6,
+      14.8,
+      15.0,
+      15.2,
+      15.4,
+      15.5,
+      15.7,
+      15.9,
+      16.1,
+      16.2,
+      16.4
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 122.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 140.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      78000.0,
+      88000.0,
+      104000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      66000.0,
+      76000.0,
+      86000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "mercedes_amg_gt3": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.0,
+      6.2,
+      6.4,
+      6.6,
+      6.7,
+      6.9,
+      7.1,
+      7.3,
+      7.5,
+      7.7,
+      7.9,
+      8.1,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.5,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.5,
+      10.7,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.7,
+      12.8,
+      13.0,
+      13.2,
+      13.4,
+      13.6,
+      13.7,
+      13.9,
+      14.1
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 42.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 67.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      130000.0,
+      143000.0,
+      155000.0,
+      171000.0,
+      187000.0,
+      202000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      71000.0,
+      83000.0,
+      95000.0,
+      107000.0,
+      119000.0,
+      131000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "mercedes_amg_gt3_evo": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.0,
+      6.2,
+      6.4,
+      6.6,
+      6.7,
+      6.9,
+      7.1,
+      7.3,
+      7.5,
+      7.7,
+      7.9,
+      8.1,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.5,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.5,
+      10.7,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.7,
+      12.8,
+      13.0,
+      13.2,
+      13.4,
+      13.6,
+      13.7,
+      13.9,
+      14.1
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 42.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 67.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      130000.0,
+      143000.0,
+      155000.0,
+      171000.0,
+      187000.0,
+      202000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      71000.0,
+      83000.0,
+      95000.0,
+      107000.0,
+      119000.0,
+      131000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "mercedes_amg_gt4": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 51.0,
+     "step": 0.3
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      9.2,
+      9.4,
+      9.5,
+      9.7,
+      9.9,
+      10.1,
+      10.3,
+      10.5,
+      10.7,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.7,
+      12.8,
+      13.0,
+      13.2,
+      13.4,
+      13.6,
+      13.7,
+      13.9,
+      14.1,
+      14.3,
+      14.5,
+      14.6,
+      14.8,
+      15.0,
+      15.2,
+      15.4,
+      15.5,
+      15.7,
+      15.9,
+      16.1,
+      16.2,
+      16.4
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 103.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 101.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 10.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      78000.0,
+      88000.0,
+      104000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      66000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "nissan_gt_r_gt3_2017": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.5,
+     "step": 0.3
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.0,
+      6.2,
+      6.4,
+      6.6,
+      6.8,
+      7.0,
+      7.2,
+      7.3,
+      7.5,
+      7.7,
+      7.9,
+      8.1,
+      8.3,
+      8.5,
+      8.7,
+      8.9,
+      9.1,
+      9.3,
+      9.5,
+      9.7,
+      9.8,
+      10.0,
+      10.2,
+      10.4,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.7,
+      11.9,
+      12.1,
+      12.3,
+      12.5,
+      12.7,
+      12.9,
+      13.1,
+      13.2,
+      13.4,
+      13.6,
+      13.8,
+      14.0,
+      14.2,
+      14.4,
+      14.5,
+      14.7,
+      14.9,
+      15.1,
+      15.3,
+      15.5,
+      15.6,
+      15.8,
+      16.0,
+      16.2,
+      16.4,
+      16.5,
+      16.7,
+      16.9,
+      17.1,
+      17.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 55.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 55.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 12.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      122000.0,
+      132000.0,
+      142000.0,
+      152000.0,
+      162000.0,
+      172000.0,
+      182000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      94000.0,
+      104000.0,
+      114000.0,
+      124000.0,
+      134000.0,
+      144000.0,
+      154000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "nissan_gt_r_gt3_2018": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 47.5,
+     "step": 0.3
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      12.5,
+      12.6,
+      12.8,
+      13.0,
+      13.2,
+      13.4,
+      13.6,
+      13.8,
+      13.9,
+      14.1,
+      14.3,
+      14.5,
+      14.7,
+      14.9,
+      15.0,
+      15.2,
+      15.4,
+      15.6,
+      15.8,
+      16.0,
+      16.1,
+      16.3,
+      16.5,
+      16.7,
+      16.9,
+      17.0,
+      17.2,
+      17.4,
+      17.6,
+      17.8,
+      17.9,
+      18.1,
+      18.3,
+      18.5,
+      18.6,
+      18.8,
+      19.0,
+      19.2,
+      19.3,
+      19.5,
+      19.7
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 55.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 55.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 12.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.2,
+     "step": 0.01
+    },
+    "rear": {
+     "base": 0.0,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      136000.0,
+      146000.0,
+      156000.0,
+      166000.0,
+      176000.0,
+      186000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      96000.0,
+      106000.0,
+      116000.0,
+      126000.0,
+      136000.0,
+      146000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "porsche_718_cayman_gt4_mr": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 45.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -5.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -5.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.3,
+      7.4,
+      7.5,
+      7.6,
+      7.7,
+      7.8,
+      7.9,
+      8.0,
+      8.1,
+      8.2,
+      8.3,
+      8.4,
+      8.5,
+      8.6,
+      8.7,
+      8.8,
+      8.9,
+      9.0,
+      9.2,
+      9.3,
+      9.4,
+      9.5,
+      9.6,
+      9.7,
+      9.8,
+      9.9,
+      10.0,
+      10.1,
+      10.2
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 10.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 111.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 99.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 15.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      99000.0,
+      108000.0,
+      116000.0,
+      124000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      91000.0,
+      99000.0,
+      108000.0,
+      116000.0,
+      124000.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "porsche_935": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpFast": {
+    "all": {
+     "base": 0.0,
+     "step": 0
+    }
+   },
+   "BumpSlow": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 1000.0,
+     "step": 0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -3.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.3,
+      7.4,
+      7.5,
+      7.6,
+      7.7,
+      7.8,
+      7.9,
+      8.0,
+      8.1,
+      8.2,
+      8.3,
+      8.4,
+      8.5,
+      8.6,
+      8.7,
+      8.8,
+      8.9,
+      9.0,
+      9.1,
+      9.2,
+      9.3,
+      9.4,
+      9.5,
+      9.6,
+      9.7,
+      9.8,
+      9.9,
+      10.0,
+      10.1,
+      10.2,
+      10.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 0.0,
+     "step": 0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "ReboundFast": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "ReboundSlow": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 90.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 160.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      0.0,
+      1.0,
+      2.0,
+      3.0
+     ]
+    },
+    "rear": {
+     "table": [
+      0.0,
+      1.0,
+      2.0,
+      3.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "porsche_991_gt2_rs_mr": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpFast": {
+    "all": {
+     "base": 0.0,
+     "step": 0
+    }
+   },
+   "BumpSlow": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 1000.0,
+     "step": 0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -3.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.3,
+      7.4,
+      7.5,
+      7.6,
+      7.7,
+      7.8,
+      7.9,
+      8.0,
+      8.1,
+      8.2,
+      8.3,
+      8.4,
+      8.5,
+      8.6,
+      8.7,
+      8.8,
+      8.9,
+      9.0,
+      9.1,
+      9.2,
+      9.3,
+      9.4,
+      9.5,
+      9.6,
+      9.7,
+      9.8,
+      9.9,
+      10.0,
+      10.1,
+      10.2,
+      10.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 0.0,
+     "step": 0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "ReboundFast": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "ReboundSlow": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 100.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 167.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      0.0,
+      1.0,
+      2.0,
+      3.0
+     ]
+    },
+    "rear": {
+     "table": [
+      0.0,
+      1.0,
+      2.0,
+      3.0
+     ]
+    }
+   },
+   "compound": "GT4"
+  },
+  "porsche_991_gt3_r": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 43.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.3,
+      7.4,
+      7.5,
+      7.6,
+      7.7,
+      7.8,
+      7.9,
+      8.0,
+      8.1,
+      8.2,
+      8.3,
+      8.4,
+      8.5,
+      8.6,
+      8.7,
+      8.8,
+      8.9,
+      9.0,
+      9.1,
+      9.2,
+      9.3,
+      9.4,
+      9.5,
+      9.6,
+      9.7,
+      9.8,
+      9.9,
+      10.0,
+      10.1,
+      10.2,
+      10.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 60.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 60.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      83000.0,
+      100000.0,
+      116000.0,
+      133000.0,
+      149000.0,
+      166000.0
+     ]
+    },
+    "rear": {
+     "table": [
+      115000.0,
+      128000.0,
+      141000.0,
+      154000.0,
+      167000.0,
+      180000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "porsche_991ii_gt3_cup": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 1000.0,
+     "step": 0.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -6.5,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -5.0,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      7.3,
+      7.4,
+      7.5,
+      7.6,
+      7.7,
+      7.8,
+      7.9,
+      8.0,
+      8.1,
+      8.2,
+      8.3,
+      8.4,
+      8.5,
+      8.6,
+      8.7,
+      8.8,
+      8.9,
+      9.0,
+      9.1,
+      9.2,
+      9.3,
+      9.4,
+      9.5,
+      9.6,
+      9.7,
+      9.8,
+      9.9,
+      10.0,
+      10.1,
+      10.2,
+      10.3
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 0.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 60.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      0.0,
+      1.0,
+      2.0,
+      3.0
+     ]
+    },
+    "rear": {
+     "table": [
+      0.0,
+      1.0,
+      2.0,
+      3.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "porsche_991ii_gt3_r": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 43.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      4.4,
+      4.6,
+      4.8,
+      5.1,
+      5.3,
+      5.5,
+      5.7,
+      5.9,
+      6.1,
+      6.3,
+      6.5,
+      6.7,
+      6.9,
+      7.1,
+      7.3,
+      7.5,
+      7.7,
+      7.8,
+      8.0,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      10.0,
+      10.2,
+      10.4,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      12.0,
+      12.2,
+      12.4
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 53.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 55.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      100500.0,
+      110000.0,
+      114000.0,
+      119000.0,
+      127000.0,
+      137000.0,
+      141500.0,
+      146000.0,
+      155000.0,
+      173500.0
+     ]
+    },
+    "rear": {
+     "table": [
+      137000.0,
+      149500.0,
+      156000.0,
+      162000.0,
+      174500.0,
+      187000.0,
+      193000.0,
+      199500.0,
+      212000.0,
+      237000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "porsche_992_gt3_cup": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 50.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpFast": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BumpSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 1.0,
+     "step": 0.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -5.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -4.4,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      14.8
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 0.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "ReboundFast": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "ReboundSlow": {
+    "all": {
+     "base": 1.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 72.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 106.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "front": {
+     "base": -0.4,
+     "step": 0.01
+    },
+    "rear": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      1.0
+     ]
+    },
+    "rear": {
+     "table": [
+      1.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  },
+  "porsche_992_gt3_r": {
+   "AntiRollBarFront": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "AntiRollBarRear": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakeBias": {
+    "all": {
+     "base": 43.0,
+     "step": 0.2
+    }
+   },
+   "BrakeDucts": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BrakePower": {
+    "all": {
+     "base": 80.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRange": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "BumpstopRate": {
+    "all": {
+     "base": 300.0,
+     "step": 100.0
+    }
+   },
+   "Camber": {
+    "front": {
+     "base": -4.0,
+     "step": 0.1
+    },
+    "rear": {
+     "base": -3.5,
+     "step": 0.1
+    }
+   },
+   "Caster": {
+    "all": {
+     "table": [
+      6.5,
+      6.7,
+      6.9,
+      7.1,
+      7.3,
+      7.5,
+      7.7,
+      7.8,
+      8.0,
+      8.2,
+      8.4,
+      8.6,
+      8.8,
+      9.0,
+      9.2,
+      9.4,
+      9.6,
+      9.8,
+      10.0,
+      10.2,
+      10.4,
+      10.6,
+      10.8,
+      11.0,
+      11.2,
+      11.4,
+      11.6,
+      11.8,
+      12.0,
+      12.2,
+      12.4
+     ]
+    }
+   },
+   "PreloadDifferential": {
+    "all": {
+     "base": 20.0,
+     "step": 10.0
+    }
+   },
+   "RearWing": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "RideHeight": {
+    "front": {
+     "base": 53.0,
+     "step": 1.0
+    },
+    "rear": {
+     "base": 55.0,
+     "step": 1.0
+    }
+   },
+   "Splitter": {
+    "all": {
+     "base": 0.0,
+     "step": 1.0
+    }
+   },
+   "SteeringRatio": {
+    "all": {
+     "base": 11.0,
+     "step": 1.0
+    }
+   },
+   "Toe": {
+    "all": {
+     "base": -0.4,
+     "step": 0.01
+    }
+   },
+   "WheelRate": {
+    "front": {
+     "table": [
+      100500.0,
+      110000.0,
+      114000.0,
+      119000.0,
+      127000.0,
+      137000.0,
+      141500.0,
+      146000.0,
+      155000.0,
+      173500.0
+     ]
+    },
+    "rear": {
+     "table": [
+      137000.0,
+      149500.0,
+      156000.0,
+      162000.0,
+      174500.0,
+      187000.0,
+      193000.0,
+      199500.0,
+      212000.0,
+      237000.0
+     ]
+    }
+   },
+   "compound": "GT3"
+  }
+ }
+}
