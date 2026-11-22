@@ -16,6 +16,7 @@ import { ManualPage } from "./pages/ManualPage.js";
 import { PitPage } from "./pages/PitPage.js";
 import { SessionPage } from "./pages/SessionPage.js";
 import { PrepPage } from "./pages/PrepPage.js";
+import { TelemetryPage } from "./pages/TelemetryPage.js";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -30,6 +31,7 @@ const router = createRouter({
     { path: "/fuel", component: FuelPage },
     { path: "/pit", component: PitPage },
     { path: "/prep", component: PrepPage },
+    { path: "/telemetry", component: TelemetryPage },
     { path: "/session/:id", component: SessionPage },
     { path: "/manual", component: ManualPage },
   ],

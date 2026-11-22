@@ -59,6 +59,10 @@ type Library struct {
 	recMu sync.Mutex
 	recs  map[string]*recorder
 
+	// high-rate lap telemetry recorders (D-156)
+	traceMu   sync.Mutex
+	traceRecs map[string]*traceRecorder
+
 	// files SetupMan put in a game folder, with the last-opened time it left on them (D-147): until
 	// that time changes, the game has not opened the file
 	touchMu  sync.Mutex
@@ -106,6 +110,7 @@ func (l *Library) Start() {
 	l.purgeBin()              // setups deleted more than 30 days ago (D-102)
 	l.migrateManagedFolders() // settings from before D-115
 	l.Apply()
+	l.startTraceRecorders()
 	go l.liveLoop()
 }
 

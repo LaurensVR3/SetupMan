@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"path/filepath"
 	"time"
 
 	"setupman/internal/game"
@@ -59,6 +60,22 @@ func (g *Game) Live() game.LiveState { return g.live.State() }
 
 // Telemetry returns the latest live-data snapshot (false when ACC isn't running).
 func (g *Game) Telemetry() (game.Telemetry, bool) { return g.live.Telemetry() }
+
+// OnTrace registers a callback that receives ~20 Hz driving telemetry samples while on track.
+func (g *Game) OnTrace(fn func(game.TraceSample)) { g.live.SetTraceListener(fn) }
+
+// MoTeCFolder returns ACC's MoTeC logs directory if present on this PC.
+func (g *Game) MoTeCFolder() string {
+	docs := documentsDir()
+	if docs == "" {
+		return ""
+	}
+	dir := filepath.Join(docs, "Assetto Corsa Competizione", "MoTeC")
+	if isDir(dir) {
+		return dir
+	}
+	return ""
+}
 
 // CachesSetups: ACC reads every setup of the car and track when it lists them, and none when one is
 // loaded (rig log 2026-11-21, D-149).

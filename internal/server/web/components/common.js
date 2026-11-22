@@ -35,6 +35,10 @@ export const TopBar = {
           <i></i><span class="live-text">{{ store.liveGame || 'Game' }} running</span>
         </span>
         <nav class="mainnav" aria-label="SetupMan">
+          <router-link to="/telemetry" class="nav-link" :class="{ active: $route.path === '/telemetry' }" title="Lap telemetry comparison">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l4.5-6.5 4 4.5 4.5-8L21 13v2.5l-4.7-5.1-4.5 8-4-4.5L3 20.5V17Zm0-13h2v16H3V4Z"/></svg>
+            Telemetry
+          </router-link>
           <router-link to="/prep" class="nav-link" :class="{ active: $route.path === '/prep' }" title="Race prep">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 22V3h2v1h12l-2.5 4.5L19 13H7v9H5Zm2-11h8.6l-1.4-2.5L15.6 6H7v5Z"/></svg>
             Race prep

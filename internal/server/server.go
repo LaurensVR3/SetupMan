@@ -72,6 +72,7 @@ func New(lib *library.Library, store *settings.Store, logoStore *logos.Store) *S
 	s.registerNetwork()
 	s.registerPrep()
 	s.registerNaming()
+	s.registerTelemetry()
 	return s
 }
 

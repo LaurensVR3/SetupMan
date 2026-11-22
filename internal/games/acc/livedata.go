@@ -36,9 +36,17 @@ const (
 	graphicsReadSize = 1556
 	staticReadSize   = 420
 
+	offGas       = 4
+	offBrake     = 8
 	offFuel      = 12
+	offGear      = 16
+	offRPM       = 20
+	offSteer     = 24
 	offSpeedKmh  = 28
+	offAccG      = 44 // [3]float32: lat, vert, lon (G)
 	offPressures = 88
+	offTCAct     = 204 // float32 > 0 when TC intervenes
+	offABSAct    = 252 // float32 > 0 when ABS intervenes
 	offAirTemp   = 288
 	offRoadTemp  = 292
 	offBrakeBias = 564 // after tyreContactHeading[4][3] @516 (Kunos' physics page)
@@ -46,10 +54,15 @@ const (
 	offStatus        = 4
 	offSession       = 8
 	offCompletedLaps = 132
+	offCurrentTimeMs = 140
 	offLastLapMs     = 144
 	offTimeLeft      = 152
 	offSessionLaps   = 172
 	offLapProgress   = 248
+	offActiveCars    = 252
+	offCarCoords     = 256 // [60][3]float32 (x, y_up, z)
+	offCarIDs        = 976 // [60]int32
+	offPlayerCarID   = 1216
 	offRainTyres     = 1316
 	offStintLeft     = 1312
 	offStopsLeft     = 1484
@@ -71,6 +84,7 @@ const (
 	stationaryTimeout = 10 * time.Second // standing still this long = no longer driving
 	gameCheckEvery    = 5 * time.Second
 	sampleEvery       = 1 * time.Second
+	traceEvery        = 50 * time.Millisecond // 20 Hz only while actively driving on track
 )
 
 // sample is one reading of the live data.
@@ -80,6 +94,7 @@ type sample struct {
 	inPit  bool
 	speed  float32
 	t      game.Telemetry
+	tr     game.TraceSample
 }
 
 var sessionNames = map[int32]string{0: "practice", 1: "qualifying", 2: "race", 3: "hotlap", 4: "time attack", 7: "hotstint", 8: "superpole"}
@@ -194,7 +209,96 @@ func (lay layout) parse(phys, graph, stat []byte) sample {
 		}
 	}
 	s.t = t
+	s.tr = lay.parseTrace(t, phys, graph)
 	return s
+}
+
+func (lay layout) parseTrace(t game.Telemetry, phys, graph []byte) game.TraceSample {
+	gas := f32(phys, offGas)
+	if math.IsNaN(gas) || gas < 0 || gas > 1.1 {
+		gas = 0
+	}
+	brk := f32(phys, offBrake)
+	if math.IsNaN(brk) || brk < 0 || brk > 1.1 {
+		brk = 0
+	}
+	steer := f32(phys, offSteer) // ACC reports normalized -1..1 (multiply by ~240° typical GT3 half-lock)
+	if math.IsNaN(steer) || math.Abs(steer) > 10 {
+		steer = 0
+	}
+	gear := int(i32(phys, offGear)) - 1 // ACC: 0=R, 1=N, 2=1st -> normalize to -1=R, 0=N, 1=1st
+	if gear < -1 || gear > 8 {
+		gear = 0
+	}
+	rpm := int(i32(phys, offRPM))
+	if rpm < 0 || rpm > 25000 {
+		rpm = 0
+	}
+	spd := f32(phys, offSpeedKmh)
+	if math.IsNaN(spd) || spd < 0 || spd > 500 {
+		spd = 0
+	}
+	gLat := f32(phys, offAccG)
+	if math.IsNaN(gLat) || math.Abs(gLat) > 10 {
+		gLat = 0
+	}
+	gLon := f32(phys, offAccG+8)
+	if math.IsNaN(gLon) || math.Abs(gLon) > 10 {
+		gLon = 0
+	}
+	tcAct := f32(phys, offTCAct) > 0.01
+	absAct := f32(phys, offABSAct) > 0.01
+	curMs := int(i32(graph, offCurrentTimeMs))
+	if curMs < 0 || curMs > 3_600_000 {
+		curMs = 0
+	}
+
+	tr := game.TraceSample{
+		Live:          t.Live,
+		Car:           t.Car,
+		Track:         t.Track,
+		Session:       t.Session,
+		CompletedLaps: t.CompletedLaps,
+		CurrentTimeMs: curMs,
+		LastLapMs:     t.LastLapMs,
+		ValidLap:      !t.ValidKnown || t.ValidLap,
+		InPit:         t.InPit || (t.PitLaneKnown && t.InPitLane),
+		LapProgress:   t.LapProgress,
+		SpeedKmh:      spd,
+		Throttle:      math.Min(100, gas*100),
+		Brake:         math.Min(100, brk*100),
+		SteerDeg:      steer * 240.0,
+		Gear:          gear,
+		RPM:           rpm,
+		TCActive:      tcAct,
+		ABSActive:     absAct,
+		GLat:          gLat,
+		GLon:          gLon,
+	}
+
+	// Player 3D world coordinates in ACC graphics page (horizontal plane = X, Z).
+	if len(graph) >= offPlayerCarID+4 {
+		active := int(i32(graph, offActiveCars))
+		if active > 60 {
+			active = 60
+		}
+		playerID := i32(graph, offPlayerCarID)
+		idx := 0
+		for i := 0; i < active; i++ {
+			if i32(graph, offCarIDs+4*i) == playerID {
+				idx = i
+				break
+			}
+		}
+		if active > 0 {
+			x := f32(graph, offCarCoords+idx*12)
+			z := f32(graph, offCarCoords+idx*12+8)
+			if !math.IsNaN(x) && !math.IsNaN(z) && math.Abs(x) < 100000 && math.Abs(z) < 100000 && (x != 0 || z != 0) {
+				tr.X, tr.Y, tr.HasXY = x, -z, true
+			}
+		}
+	}
+	return tr
 }
 
 // pitAdvice reads the values the pit stop advice needs (D-124); each is checked for plausibility.
@@ -279,14 +383,30 @@ func (d *driveState) update(s sample, now time.Time) game.LiveState {
 	return game.LiveNotDriving
 }
 
-// liveReader watches ACC in the background: once per second while ACC runs,
-// otherwise a cheap check every few seconds.
+// liveReader watches ACC in the background: 20 Hz only while actively driving on track with
+// a trace listener, 1 Hz while ACC runs in menus/pits, otherwise a cheap check every 5 s.
 type liveReader struct {
-	lay   layout
-	exes  []string // the game's program file names, e.g. "AC2-Win64-Shipping.exe"
-	once  sync.Once
-	state atomic.Value // game.LiveState
-	tele  atomic.Value // *game.Telemetry (nil pointer = game not running)
+	lay     layout
+	exes    []string // the game's program file names, e.g. "AC2-Win64-Shipping.exe"
+	once    sync.Once
+	state   atomic.Value // game.LiveState
+	tele    atomic.Value // *game.Telemetry (nil pointer = game not running)
+	traceMu sync.RWMutex
+	onTrace func(game.TraceSample)
+}
+
+func (r *liveReader) SetTraceListener(fn func(game.TraceSample)) {
+	r.traceMu.Lock()
+	r.onTrace = fn
+	r.traceMu.Unlock()
+	r.start()
+}
+
+func (r *liveReader) getTraceListener() func(game.TraceSample) {
+	r.traceMu.RLock()
+	fn := r.onTrace
+	r.traceMu.RUnlock()
+	return fn
 }
 
 func newLiveReader() *liveReader { return newLiveReaderFor(accLayout, accProcess) }
@@ -361,9 +481,16 @@ func (r *liveReader) step(d *driveState) (wait time.Duration) {
 		*d = driveState{}
 		return gameCheckEvery
 	}
-	r.state.Store(d.update(s, time.Now()))
+	st := d.update(s, time.Now())
+	r.state.Store(st)
 	t := s.t
 	r.tele.Store(&t)
+	if fn := r.getTraceListener(); fn != nil {
+		fn(s.tr)
+		if st == game.LiveDriving && s.tr.Live && !s.tr.InPit {
+			return traceEvery
+		}
+	}
 	return sampleEvery
 }
 

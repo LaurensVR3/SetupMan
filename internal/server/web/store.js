@@ -10,6 +10,7 @@ export const store = reactive({
   liveGame: "", // short name of the running game, e.g. "ACC"
   version: 0,
   lapVersion: 0, // goes up when a lap is recorded (only pages that show laps reload, D-138)
+  telemetryVersion: 0, // goes up when a telemetry lap is saved or imported (D-156)
   offline: false, // true while SetupMan.exe is not reachable
   toast: "",      // short message at the bottom of the screen
   crumbs: [], // set by each page: [{ label, to }]
@@ -60,6 +61,7 @@ export async function listen() {
     const e = JSON.parse(msg.data);
     if (e.type === "live") { store.live = e.live; store.liveGame = e.liveGame || ""; }
     else if (e.type === "recording") store.lapVersion++;
+    else if (e.type === "telemetry") store.telemetryVersion++;
     else store.version++;
   };
   es.onerror = () => { store.offline = true; };

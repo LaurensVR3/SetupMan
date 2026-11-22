@@ -225,6 +225,7 @@ export const TrackPage = {
           </div>
           <div class="page-actions">
             <button v-if="!data.game.readOnly" type="button" class="btn" @click="dupDlg.open()">Remove duplicates…</button>
+            <router-link v-if="data.game.id === 'acc'" :to="{ path: '/telemetry', query: { track: data.track.id, car: data.car.id } }" class="btn">Telemetry</router-link>
             <router-link :to="{ path: '/prep', query: { game: data.game.id, car: data.car.id, track: data.track.id } }" class="btn">Race prep</router-link>
             <router-link :to="'/' + data.game.id + '/' + data.car.id + '/' + data.track.id + '/fuel'" class="btn">Fuel calculator</router-link>
           </div>

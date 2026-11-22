@@ -79,6 +79,42 @@ type TelemetrySource interface {
 	Telemetry() (Telemetry, bool) // false = the game isn't running
 }
 
+// TraceSample is a high-rate (~20 Hz) driving snapshot emitted while the player is on track,
+// used to record full distance-aligned lap telemetry for comparison.
+type TraceSample struct {
+	Live          bool
+	Car, Track    string
+	Session       string
+	CompletedLaps int
+	CurrentTimeMs int
+	LastLapMs     int
+	ValidLap      bool
+	InPit         bool
+	LapProgress   float64 // 0..1
+	SpeedKmh      float64
+	Throttle      float64 // 0..100
+	Brake         float64 // 0..100
+	SteerDeg      float64 // degrees
+	Gear          int     // 0=N, 1..6=forward
+	RPM           int
+	TCActive      bool
+	ABSActive     bool
+	GLat          float64 // G
+	GLon          float64 // G
+	X, Y          float64 // world horizontal coordinates (metres)
+	HasXY         bool
+}
+
+// TraceSource is implemented by games that can stream high-rate samples while driving.
+type TraceSource interface {
+	OnTrace(fn func(TraceSample))
+}
+
+// MoTeCFolderProvider reports where a game saves MoTeC .ld/.ldx logs on this PC.
+type MoTeCFolderProvider interface {
+	MoTeCFolder() string
+}
+
 // SetupMatcher guesses which of the candidate setups (file contents) is being driven, from a
 // telemetry snapshot taken when the car leaves the pits. It returns the indexes that fit best:
 // one = sure, several = equally likely (the user picks among them, D-149), none = nothing fits.

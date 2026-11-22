@@ -53,6 +53,9 @@ export const SessionPage = {
               <template v-else>Setup not known: select it under Unassigned sessions on the <router-link :to="'/' + data.session.game + '/' + data.session.car + '/' + data.session.track">track page</router-link>.</template></span>
             </p>
           </div>
+          <div v-if="data.session.game === 'acc'" class="page-actions">
+            <router-link :to="{ path: '/telemetry', query: { track: data.session.track, car: data.session.car } }" class="btn">Compare lap telemetry</router-link>
+          </div>
         </div>
 
         <p v-if="!data.laps.length" class="panel-hint">No laps were completed in this session.</p>

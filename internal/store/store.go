@@ -118,7 +118,7 @@ func (s *Store) Tx(fn func(q Q) error) error {
 	return tx.Commit()
 }
 
-const schemaVersion = 7
+const schemaVersion = 8
 
 func migrate(db *sql.DB) error {
 	var v int
@@ -128,14 +128,23 @@ func migrate(db *sql.DB) error {
 	if v >= schemaVersion {
 		return nil
 	}
+	if v == 7 {
+		return migrateV8(db)
+	}
 	if v == 6 {
-		return migrateV7(db)
+		if err := migrateV7(db); err != nil {
+			return err
+		}
+		return migrateV8(db)
 	}
 	if v == 5 {
 		if err := migrateV6(db); err != nil {
 			return err
 		}
-		return migrateV7(db)
+		if err := migrateV7(db); err != nil {
+			return err
+		}
+		return migrateV8(db)
 	}
 	if v < 1 {
 		if err := migrateV1(db); err != nil {
@@ -192,7 +201,39 @@ PRAGMA user_version = 5;`)
 	if err := migrateV6(db); err != nil {
 		return err
 	}
-	return migrateV7(db)
+	if err := migrateV7(db); err != nil {
+		return err
+	}
+	return migrateV8(db)
+}
+
+// migrateV8 (lap telemetry comparison, D-156): distance-aligned lap traces from live ACC shared
+// memory, imported MoTeC (.ld/.ldx) logs, and sample laps.
+func migrateV8(db *sql.DB) error {
+	_, err := db.Exec(`
+CREATE TABLE IF NOT EXISTS telemetry_laps (
+	id             INTEGER PRIMARY KEY,
+	game           TEXT NOT NULL,
+	car            TEXT NOT NULL COLLATE NOCASE,
+	track          TEXT NOT NULL COLLATE NOCASE,
+	source         TEXT NOT NULL,
+	source_file    TEXT NOT NULL DEFAULT '',
+	label          TEXT NOT NULL DEFAULT '',
+	lap_ms         INTEGER NOT NULL,
+	lap_number     INTEGER NOT NULL DEFAULT 1,
+	valid          INTEGER NOT NULL DEFAULT 1,
+	is_reference   INTEGER NOT NULL DEFAULT 0,
+	track_length_m REAL NOT NULL DEFAULT 0,
+	session_id     INTEGER NOT NULL DEFAULT 0,
+	setup_id       INTEGER NOT NULL DEFAULT 0,
+	recorded_at    INTEGER NOT NULL,
+	has_coords     INTEGER NOT NULL DEFAULT 0,
+	stats_json     TEXT NOT NULL DEFAULT '{}',
+	trace_gz       BLOB NOT NULL
+);
+CREATE INDEX IF NOT EXISTS telemetry_laps_track ON telemetry_laps(game, track, car);
+PRAGMA user_version = 8;`)
+	return err
 }
 
 // migrateV7 (pit stop advice, D-124): average hot tyre pressures per lap, and whether rain tyres

@@ -861,3 +861,210 @@ a.sr-name:hover { color: var(--link); text-decoration: underline; }
 .ss-strip { border-top: 1px solid var(--line); background: var(--dup-bg); }
 .ss-strip .setup-select { margin: 0; padding: 6px 0; background: none; border: 0; border-radius: 0; }
 .feedback-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+
+
+/* ---------- Lap telemetry comparison (D-156) ---------- */
+.tele-page { display: grid; gap: 16px; }
+.tele-live-pill { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; padding: 2px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 13px; font-weight: 600; vertical-align: middle; }
+.tele-live-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+
+.tele-empty { padding: 24px; }
+.tele-empty-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 22px; align-items: start; }
+.tele-empty h2 { margin: 0 0 8px; font: 600 20px var(--display); }
+.tele-empty-list { margin: 10px 0 18px; padding-left: 20px; display: grid; gap: 8px; color: var(--ink-2); }
+.tele-empty-list strong { color: var(--ink); }
+.tele-empty-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.tele-empty-tip { padding: 14px 16px; border-radius: 10px; background: var(--surface-2); border-left: 3px solid var(--kerb); font-size: 14px; color: var(--ink-2); }
+.tele-empty-tip > strong { display: block; color: var(--ink); margin-bottom: 6px; }
+.tele-empty-tip p { margin: 0; }
+
+/* Selector bar */
+.tele-selector-bar { display: grid; gap: 14px; padding: 14px 18px; }
+.tele-filters { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
+.tele-field { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; }
+.tele-field select, .tele-pick-card select { font: 500 14px var(--text); color: var(--ink); background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 8px; padding: 7px 10px; min-width: 200px; max-width: 100%; }
+.tele-pickers { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: stretch; }
+.tele-pick-card { display: grid; gap: 8px; padding: 11px 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--line-strong); }
+.tele-pick-ref { border-left-color: #1f5bd1; }
+.tele-pick-cmp { border-left-color: #e4572e; }
+.tele-pick-card select { width: 100%; background: var(--surface); }
+.tele-pick-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tele-pick-tag { display: inline-flex; align-items: center; gap: 6px; font: 600 13px var(--display); letter-spacing: .03em; text-transform: uppercase; color: var(--ink-2); }
+.tele-ref-star { font-size: 12px; font-weight: 700; color: var(--dup); }
+.tele-pin-btn { background: none; border: 0; color: var(--link); font-size: 12px; font-weight: 600; cursor: pointer; padding: 2px 6px; border-radius: 6px; }
+.tele-pin-btn:hover { background: var(--surface); }
+.tele-swap-btn { align-self: center; font-size: 18px; padding: 8px 12px; }
+
+/* Color swatches & semantic tones */
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+.sw-ref { background: #2b67e0; }
+.sw-cmp { background: #e4572e; }
+.sw-gain { background: #16a34a; }
+.sw-loss { background: #d7263d; }
+.sw-thr { background: #16a34a; }
+.sw-brk { background: #dc2626; }
+.sw-tc { background: #f59e0b; }
+.sw-abs { background: #ef4444; }
+.c-ref { color: #2b67e0; }
+.c-cmp { color: #e4572e; }
+.is-gain { color: var(--ok); }
+.is-loss { color: var(--bad); }
+:root[data-theme="dark"] .c-ref { color: #38bdf8; }
+:root[data-theme="dark"] .c-cmp { color: #fb923c; }
+:root[data-theme="dark"] .sw-ref { background: #38bdf8; }
+:root[data-theme="dark"] .sw-cmp { background: #fb923c; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .c-ref { color: #38bdf8; }
+  :root:not([data-theme="light"]) .c-cmp { color: #fb923c; }
+  :root:not([data-theme="light"]) .sw-ref { background: #38bdf8; }
+  :root:not([data-theme="light"]) .sw-cmp { background: #fb923c; }
+}
+
+/* KPI Strip */
+.tele-kpis { display: grid; grid-template-columns: 1.45fr repeat(5, 1fr); gap: 10px; }
+.tele-kpi { display: grid; gap: 3px; padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.tele-kpi-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); }
+.tele-kpi-val { font: 700 22px/1.1 var(--display); font-variant-numeric: tabular-nums; color: var(--ink); }
+.tele-kpi-val small { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.tele-kpi-sub { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tele-kpi-hero { border-top: 3px solid var(--line-strong); }
+.tele-kpi-hero.is-gain { border-top-color: var(--ok); background: linear-gradient(180deg, var(--ok-bg), var(--surface) 62%); }
+.tele-kpi-hero.is-loss { border-top-color: var(--bad); background: linear-gradient(180deg, var(--bad-bg), var(--surface) 62%); }
+.tele-kpi-hero .tele-kpi-val { font-size: 28px; }
+.tele-kpi-hero.is-gain .tele-kpi-val { color: var(--ok); }
+.tele-kpi-hero.is-loss .tele-kpi-val { color: var(--bad); }
+
+/* Coaching Highlights Strip */
+.tele-highlights { display: flex; flex-wrap: wrap; gap: 10px 22px; padding: 10px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); align-items: center; }
+.tele-hl-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tele-hl-title { font: 700 12px var(--display); text-transform: uppercase; letter-spacing: .05em; }
+.tele-hl-pill { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); font-size: 13px; cursor: pointer; transition: transform .1s, border-color .15s; }
+.tele-hl-pill strong { color: var(--ink); font-weight: 600; }
+.tele-hl-pill span { font: 700 13px var(--display); font-variant-numeric: tabular-nums; }
+.tele-hl-pill.is-loss span { color: var(--bad); }
+.tele-hl-pill.is-gain span { color: var(--ok); }
+.tele-hl-pill:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+.tele-hl-pill.active.is-loss { border-color: var(--bad); background: var(--bad-bg); }
+.tele-hl-pill.active.is-gain { border-color: var(--ok); background: var(--ok-bg); }
+
+/* Main Split Workbench */
+.tele-workbench { display: grid; grid-template-columns: minmax(340px, 430px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.tele-workbench.map-expanded { grid-template-columns: 1fr; }
+.tele-card-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 12px; margin-bottom: 10px; }
+.tele-card-head .panel-title { margin: 0; }
+.tele-card-sub { margin: 2px 0 0; font-size: 12px; color: var(--ink-2); }
+
+/* Track Map Card */
+.tele-map-card { position: sticky; top: 72px; padding: 14px 16px; }
+.tele-map-card.is-expanded { position: static; }
+.tele-map-head { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.tele-map-title-row { width: 100%; min-width: 0; }
+.tele-map-title-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tele-map-head .panel-title { margin: 0; }
+.tele-map-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 18px; line-height: 18px; }
+.tele-map-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.tele-map-toggle { flex-shrink: 0; }
+.tele-seg-toggle { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); }
+.tele-seg-toggle button { border: 0; background: none; padding: 4px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+.tele-seg-toggle button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.tele-zoom-tools { display: inline-flex; align-items: center; gap: 4px; }
+.tele-zbtn { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); color: var(--ink); font: 700 13px var(--display); cursor: pointer; }
+.tele-zbtn:hover:not(:disabled) { background: var(--surface); border-color: var(--ink-3); }
+.tele-zbtn:disabled { opacity: .4; cursor: default; }
+.tele-zbtn-txt { font-size: 11.5px; font-weight: 600; padding: 0 8px; }
+.tele-expand-btn { white-space: nowrap; }
+.tele-map-wrap { display: grid; gap: 10px; }
+.tele-map-stage { position: relative; }
+.tele-map-svg { width: 100%; height: auto; aspect-ratio: 1 / 1; display: block; border-radius: 10px; background: var(--surface-2); cursor: crosshair; user-select: none; }
+.tele-map-card.is-expanded .tele-map-svg { aspect-ratio: 1.85 / 1; max-height: 580px; }
+.tele-map-svg.panning { cursor: grabbing; }
+.tele-zoom-badge { position: absolute; right: 10px; top: 10px; padding: 2px 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); font: 700 12px var(--display); pointer-events: none; box-shadow: var(--shadow); }
+.tele-track-halo { stroke: var(--line-strong); opacity: .4; }
+.tele-sf-label { font-family: var(--display); font-weight: 700; fill: var(--ink-2); pointer-events: none; }
+.tele-sec-label { font-family: var(--display); font-weight: 600; fill: var(--ink); stroke: var(--surface-2); paint-order: stroke; stroke-linejoin: round; pointer-events: none; opacity: .88; }
+.tele-cursor-pulse { fill: var(--focus); opacity: .28; pointer-events: none; }
+.tele-cursor-core { fill: var(--surface); stroke: var(--ink); pointer-events: none; }
+.tele-map-footer { display: grid; gap: 6px; }
+.tele-map-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--ink-2); }
+.tele-leg-item { display: inline-flex; align-items: center; gap: 5px; }
+.tele-leg-item i { width: 10px; height: 4px; border-radius: 2px; display: inline-block; }
+.tele-map-pill-slot { min-height: 26px; display: flex; align-items: center; }
+.tele-map-pill { display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); font: 700 13px var(--display); font-variant-numeric: tabular-nums; }
+.tele-map-pill.is-gain { background: var(--ok-bg); color: var(--ok); }
+.tele-map-pill.is-loss { background: var(--bad-bg); color: var(--bad); }
+.tele-map-pill-spd { font-weight: 600; color: var(--ink-2); font-size: 12px; }
+.tele-map-empty { padding: 36px 16px; text-align: center; color: var(--ink-2); background: var(--surface-2); border-radius: 10px; font-size: 14px; }
+
+/* Charts Card */
+.tele-charts-card { padding: 14px 16px; display: grid; gap: 8px; }
+.tele-chart-controls { display: flex; align-items: center; gap: 10px; }
+.tele-check { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.tele-readout { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; min-height: 42px; padding: 7px 12px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.tele-ro-item { display: flex; align-items: baseline; gap: 6px; font-size: 13px; }
+.tele-ro-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); font-weight: 700; }
+.tele-ro-sec { font-size: 12px; color: var(--ink-2); max-width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tele-ro-badges { display: inline-flex; gap: 5px; }
+.tele-flag { font: 700 11px var(--display); padding: 1px 6px; border-radius: 4px; color: #fff; }
+.tele-flag-tc { background: #d97706; }
+.tele-flag-abs { background: #dc2626; }
+
+.tele-panel-block { display: grid; gap: 3px; }
+.tele-panel-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; padding: 0 4px; }
+.tele-panel-name { font: 700 12px var(--display); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-2); }
+.tele-panel-leg { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-2); }
+.tele-cv { width: 100%; display: block; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); cursor: crosshair; user-select: none; }
+
+/* Section Breakdown & Telemetry Tables */
+.tele-sections-card { padding: 16px 18px; }
+.tele-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tele-table th, .tele-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.tele-table thead th { font: 600 12.5px var(--display); text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); border-bottom: 2px solid var(--line-strong); white-space: nowrap; }
+.tele-table .tl { text-align: left; }
+.tele-table .tr { text-align: right; font-family: var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tele-table .tele-wrap { white-space: normal; overflow-wrap: anywhere; }
+.tele-sec-row { cursor: pointer; }
+.tele-sec-row:hover { background: var(--surface-2); }
+.tele-sec-row.active { background: var(--diff-bg); }
+.tele-bar-col { width: 132px; min-width: 110px; }
+.tele-divbar { display: grid; grid-template-columns: 1fr 2px 1fr; align-items: center; height: 14px; }
+.tele-divbar-half { display: flex; height: 10px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.tele-divbar-half.left { justify-content: flex-end; }
+.tele-divbar-half.right { justify-content: flex-start; }
+.tele-divbar-zero { width: 2px; height: 14px; background: var(--line-strong); }
+.tele-divbar-fill { height: 100%; border-radius: 2px; }
+.tele-divbar-fill.is-gain { background: #16a34a; }
+.tele-divbar-fill.is-loss { background: #d7263d; }
+
+/* Lap Library Table & Badges */
+.tele-lib-panel { padding: 14px 18px; }
+.tele-row-ref td:first-child { border-left: 3px solid #2b67e0; }
+.tele-row-cmp td:first-child { border-left: 3px solid #e4572e; }
+.tele-row-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.tele-rename-form { display: inline-flex; gap: 6px; align-items: center; }
+.tele-rename-input { padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); color: var(--ink); width: 210px; }
+.tele-badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font: 700 11px var(--display); letter-spacing: .04em; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.tele-src-live { background: var(--ok-bg); color: var(--ok); }
+.tele-src-motec { background: var(--cool-bg); color: var(--cool); }
+.tele-src-sample { background: var(--dup-bg); color: var(--dup); }
+.tele-badge-bad { background: var(--bad-bg); color: var(--bad); }
+
+/* MoTeC Import Dialog */
+.tele-motec-dlg { width: min(860px, 95vw); max-width: 860px; }
+.tele-motec-fname { max-width: 280px; overflow-wrap: anywhere; font-weight: 600; font-size: 13px; }
+.tele-dropzone { display: grid; gap: 4px; text-align: center; padding: 20px 16px; margin: 10px 0 16px; border: 2px dashed var(--line-strong); border-radius: 12px; background: var(--surface-2); cursor: pointer; transition: border-color .15s, background .15s; }
+.tele-dropzone:hover, .tele-dropzone.over { border-color: var(--focus); background: var(--cool-bg); }
+.tele-motec-section h3 { margin: 0 0 8px; font: 600 15px var(--display); }
+.tele-motec-list { max-height: 280px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; }
+
+@media (max-width: 1120px) {
+  .tele-kpis { grid-template-columns: repeat(3, 1fr); }
+  .tele-workbench { grid-template-columns: 1fr; }
+  .tele-map-card { position: static; }
+  .tele-map-svg { max-width: 440px; margin: 0 auto; }
+}
+@media (max-width: 740px) {
+  .tele-empty-grid { grid-template-columns: 1fr; }
+  .tele-pickers { grid-template-columns: 1fr; }
+  .tele-swap-btn { justify-self: start; }
+  .tele-kpis { grid-template-columns: repeat(2, 1fr); }
+}
