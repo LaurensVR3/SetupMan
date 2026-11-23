@@ -390,7 +390,7 @@ export const AnalysisPage = {
 
     return { req, laps, ready, badLap, sameTrack, sameCar, error, colors, view, charts, deltas, carLaps, map, atCursor, corners, PRESETS, preset, setPreset,
       picker, pickQ, groups, shownChannels, toggleChannel, removeChart, zoomTo, wholeLap, makeFirst, removeLap, finalDelta, backTo,
-      facts, extremes, total, bar, mapCorners, officialTurns, pct, kmh, lapTime, signed, clock };
+      facts, extremes, total, bar, mapCorners, officialTurns, pct, kmh, lapTime, signed, clock, kindLabel };
   },
   template: `
     <main class="page page-wide ta-page">
