@@ -261,6 +261,7 @@ a.game-tile:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px)
 .setting-stack .setting-text { flex: none; }
 .setting-text { flex: 1 1 320px; }
 .setting-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stint-setup { max-width: 260px; font: inherit; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface); color: var(--ink); }
 .setting-text h3 { font-size: 15px; margin: 0 0 2px; }
 .setting-text output { font: 700 17px var(--display); }
 .setting-text p { margin: 0; color: var(--ink-2); font-size: 14px; }

@@ -799,6 +799,23 @@ func (q Q) SetSessionSetup(sessionID, setupID, versionID int64, match string, mo
 	return nil
 }
 
+// SetLapsSetup gives some laps of a session another setup (one stint, D-177).
+func (q Q) SetLapsSetup(sessionID int64, lapIDs []int64, setupID, versionID int64) error {
+	for _, id := range lapIDs {
+		if _, err := q.ex.Exec(`UPDATE laps SET setup_id=?, version_id=? WHERE id=? AND session_id=?`, nullID(setupID), nullID(versionID), id, sessionID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SetLapsSetupSince gives the laps of a session recorded at or after a time another setup (the
+// current stint, D-177).
+func (q Q) SetLapsSetupSince(sessionID int64, since time.Time, setupID, versionID int64) error {
+	_, err := q.ex.Exec(`UPDATE laps SET setup_id=?, version_id=? WHERE session_id=? AND at >= ?`, nullID(setupID), nullID(versionID), sessionID, ms(since))
+	return err
+}
+
 // Session returns one session, or nil.
 func (q Q) Session(id int64) (*Session, error) {
 	var s Session

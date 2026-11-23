@@ -5,6 +5,8 @@ package library
 
 import (
 	"math"
+	"sort"
+	"strings"
 
 	"setupman/internal/game"
 	"setupman/internal/history"
@@ -21,6 +23,7 @@ type SessionReport struct {
 	Summary   SessionSummary `json:"summary"`
 	Stints    []StintReport  `json:"stints"`
 	Laps      []LapRow       `json:"laps"`
+	Choices   []Choice       `json:"choices"` // the setups for this car and track, to choose a stint's setup (D-177)
 }
 
 // SessionSummary sums up a whole session.
@@ -41,6 +44,8 @@ type SessionSummary struct {
 // StintReport is one stint: the laps between two pit stops.
 type StintReport struct {
 	N            int        `json:"n"`
+	SetupID      int64      `json:"setupId"`   // the setup of its laps, 0 = not known or mixed
+	SetupName    string     `json:"setupName"` // "" = not known
 	FromLap      int        `json:"fromLap"`
 	ToLap        int        `json:"toLap"`
 	DrivingMs    int        `json:"drivingMs"`
@@ -96,6 +101,38 @@ func (l *Library) SessionReport(sessionID int64) (SessionReport, error) {
 	}
 	r.Laps = lapRows(laps, seq)
 	r.Stints = stints(r.Laps)
+	names := map[int64]string{}
+	r.Choices = []Choice{}
+	if setups, err := l.db.SetupsForTrack(s.Game, s.Car, s.Track); err == nil {
+		for _, st := range setups {
+			if st.DeletedAt.IsZero() {
+				names[st.ID] = st.Name
+				r.Choices = append(r.Choices, Choice{ID: st.ID, Name: st.Name})
+			}
+		}
+	}
+	sort.Slice(r.Choices, func(a, b int) bool { return strings.ToLower(r.Choices[a].Name) < strings.ToLower(r.Choices[b].Name) })
+	for i := range r.Stints {
+		st := &r.Stints[i]
+		var id int64 = -1
+		for _, lr := range r.Laps {
+			if lr.N >= st.FromLap && lr.N <= st.ToLap {
+				if id == -1 {
+					id = lr.SetupID
+				} else if id != lr.SetupID {
+					id = 0
+				}
+			}
+		}
+		if id > 0 {
+			st.SetupID, st.SetupName = id, names[id]
+			if st.SetupName == "" {
+				if x, _ := l.db.Setup(id); x != nil {
+					st.SetupName = x.Name
+				}
+			}
+		}
+	}
 	r.Summary = summarize(laps)
 	return r, nil
 }

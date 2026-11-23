@@ -146,6 +146,7 @@ func (lay layout) parse(phys, graph, stat []byte) sample {
 	s := sample{ok: true, status: i32(graph, offStatus), inPit: u32(graph, offIsInPit) != 0, speed: float32(f32(phys, offSpeedKmh))}
 	t := game.Telemetry{
 		Live:          s.status == statusLive,
+		Off:           s.status == 0,
 		Session:       lay.sessions[i32(graph, offSession)],
 		CompletedLaps: int(i32(graph, offCompletedLaps)),
 		LastLapMs:     int(i32(graph, offLastLapMs)),

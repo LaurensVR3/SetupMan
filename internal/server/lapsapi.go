@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"setupman/internal/history"
@@ -12,6 +13,8 @@ import (
 func (s *Server) registerLaps() {
 	s.mux.HandleFunc("GET /api/setups/{id}/laps", s.handleSetupLaps)
 	s.mux.HandleFunc("PUT /api/sessions/{id}/setup", s.handleSessionSetup)
+	s.mux.HandleFunc("PUT /api/sessions/{id}/stints/{n}/setup", s.handleStintSetup)
+	s.mux.HandleFunc("PUT /api/recording/setup", s.handleRecordingSetup)
 	s.mux.HandleFunc("GET /api/laps/{game}/{car}/{track}", s.handleTrackLaps)
 	s.mux.HandleFunc("GET /api/recording", s.handleRecording)
 	s.mux.HandleFunc("GET /api/pit", s.handlePit)
@@ -72,6 +75,44 @@ func (s *Server) handleSessionSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.lib.SetSessionSetup(id, in.SetupID); err != nil {
+		historyError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleStintSetup gives one stint of a session another setup (D-177).
+func (s *Server) handleStintSetup(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(r)
+	n, err := strconv.Atoi(r.PathValue("n"))
+	if !ok || err != nil {
+		writeError(w, http.StatusBadRequest, "invalid stint")
+		return
+	}
+	var in struct {
+		SetupID int64 `json:"setupId"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+	if err := s.lib.SetStintSetup(id, n, in.SetupID); err != nil {
+		historyError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleRecordingSetup says which setup is driven now (top bar, D-177).
+func (s *Server) handleRecordingSetup(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		SetupID int64 `json:"setupId"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil || in.SetupID == 0 {
+		writeError(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+	if err := s.lib.SetRecordingSetup(in.SetupID); err != nil {
 		historyError(w, err)
 		return
 	}

@@ -5,6 +5,7 @@ package library
 // Nothing here writes to a game folder.
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -54,6 +55,15 @@ type recorder struct {
 	// started, and the values last compared there
 	startLaps int
 	pitKey    string
+	// setup per stint (D-177): when the current stint began (session start or leaving the pits),
+	// whether the setup was picked by hand, and the car's setup values then (setupKey). A setup
+	// picked by hand stays until those values change (another setup loaded in the pits).
+	stintStart time.Time
+	manual     bool
+	setKey     string // the car's setupKey when the current setup was set (by SetupMan or by hand)
+	lastKey    string
+	// leaving a server (D-177): when the game went back to its main menu
+	offSince time.Time
 }
 
 // Choice is one setup offered in manual setup select.
@@ -125,6 +135,20 @@ func pitKey(t game.Telemetry) string {
 		t.PitPressures[0], t.PitPressures[1], t.PitPressures[2], t.PitPressures[3], t.PitFuel)
 }
 
+// setupKey sums up the values that come from the loaded setup and that the driver rarely changes
+// on track: the pit menu (its tyre pressures and fuel come from the setup's pit strategy). When
+// they change, another setup was loaded (rig 2026-11-23: 2727 swapped for 3040 in the pits).
+func setupKey(t game.Telemetry) string {
+	if !t.PitMenuKnown {
+		return ""
+	}
+	return fmt.Sprintf("%.1f %.1f %.1f %.1f|%.0f", t.PitPressures[0], t.PitPressures[1], t.PitPressures[2], t.PitPressures[3], t.PitFuel)
+}
+
+// offGrace: how long the game must stay in its main menu before the session counts as ended
+// (a loading screen can report "off" for a moment).
+var offGrace = 5 * time.Second
+
 // feedTelemetry advances the recorder of one game with one snapshot.
 func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 	l.recMu.Lock()
@@ -145,8 +169,24 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 		}
 		return
 	}
+	if t.Off {
+		// Back in the game's main menu (left the server or the session): the session ended (D-177).
+		if r != nil {
+			if r.offSince.IsZero() {
+				r.offSince = time.Now()
+			} else if time.Since(r.offSince) >= offGrace {
+				log.Printf("rec %s: session ended (back in the main menu)", g.ID())
+				l.recs[id], changed = nil, true
+				l.stopExtra(id)
+			}
+		}
+		return
+	}
+	if r != nil {
+		r.offSince = time.Time{}
+	}
 	if !t.Live || t.Car == "" || t.Track == "" {
-		return // menus, pause, replay: keep the session as it is
+		return // pause, replay, setup screens: keep the session as it is
 	}
 
 	newSession := r == nil || !strings.EqualFold(r.car, t.Car) || !strings.EqualFold(r.track, t.Track) ||
@@ -161,6 +201,7 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 			lapStartFuel: t.Fuel, lapPit: true, wasInPits: inPits(t)}
 		r.matchPending = true
 		r.startLaps = t.CompletedLaps
+		r.stintStart = time.Now()
 		l.recs[id], changed = r, true
 		logSession(g, t)
 		l.startExtra(g, s.ID) // extra telemetry log for this session (D-162)
@@ -169,11 +210,17 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 	// Leaving the pits: the setup may have been changed there, so look again.
 	if r.wasInPits && !inPits(t) {
 		logPits(g, t, false)
-		r.matchPending = true
+		// Once a race is under way the setup can't be swapped (a stop changes only the pit strategy
+		// items) and the fuel added fits no setup: keep the known setup there (D-177).
+		r.matchPending = r.setupID == 0 || r.kind != "race" || t.CompletedLaps == r.startLaps
+		r.stintStart = time.Now() // a new stint: its laps may be driven with another setup (D-177)
 	} else if !r.wasInPits && inPits(t) {
 		logPits(g, t, true)
 	}
 	r.wasInPits = inPits(t)
+	if k := setupKey(t); k != "" {
+		r.lastKey = k
+	}
 	if r.matchPending && t.Fuel > 0 && !inPits(t) {
 		r.matchPending = false
 		l.matchSetup(g, r, t)
@@ -347,10 +394,27 @@ func (l *Library) matchSetup(g game.Game, r *recorder, t game.Telemetry) {
 			short = v
 		}
 	}
+	// A setup picked by hand stays while the car's setup values are the ones it had then; once
+	// they change, another setup was loaded and SetupMan follows it again (D-177).
+	now := setupKey(t)
+	changed := now != "" && r.setKey != "" && now != r.setKey
+	keepManual := r.manual && r.setupID != 0 && !changed
 	r.shortlist = r.shortlist[:0]
 	if i < 0 {
 		for _, k := range short {
 			r.shortlist = append(r.shortlist, Choice{ID: ids[k], Name: names[k]})
+		}
+		inShort := false
+		for _, c := range r.shortlist {
+			inShort = inShort || c.ID == r.setupID
+		}
+		if r.setupID != 0 && changed && !inShort && len(short) > 0 {
+			// The values no longer fit the setup laps were going to: say "unknown" rather than
+			// put the next laps under the wrong setup; manual setup select offers the likely ones.
+			logMatch(g, t, len(ids), "", "", fmt.Sprintf("%q no longer fits the car's values; %s", r.setupName, shortText(names, short)))
+			r.setupID, r.versionID, r.setupName, r.manual = 0, 0, "", false
+			_ = l.db.SetSessionSetup(r.sessionID, 0, 0, "none", false)
+			return
 		}
 		logMatch(g, t, len(ids), "", r.setupName, shortText(names, short))
 		return // unsure: laps are recorded without a setup until the user picks one
@@ -358,12 +422,16 @@ func (l *Library) matchSetup(g game.Game, r *recorder, t game.Telemetry) {
 	if v := byValues(all); how == "the file the game opened last" && len(v) == 1 && v[0] != i {
 		how += fmt.Sprintf(" (the values point to %q: changed in the game after loading?)", names[v[0]])
 	}
-	// A setup the user set by hand for this session stays.
-	if s, err := l.db.Session(r.sessionID); err == nil && s != nil && s.Match == "manual" {
+	if keepManual && ids[i] != r.setupID {
+		logMatch(g, t, len(ids), "", r.setupName, fmt.Sprintf("you chose it; the values point to %q but did not change since", names[i]))
 		return
 	}
 	logMatch(g, t, len(ids), names[i], "", how)
-	r.setupID, r.versionID, r.setupName = ids[i], versions[i], names[i]
+	if ids[i] == r.setupID {
+		r.setKey = now
+		return
+	}
+	r.setupID, r.versionID, r.setupName, r.manual, r.setKey = ids[i], versions[i], names[i], false, now
 	_ = l.db.SetSessionSetup(r.sessionID, ids[i], versions[i], "auto", false)
 }
 
@@ -404,10 +472,120 @@ func (l *Library) SetSessionSetup(sessionID, setupID int64) error {
 	for _, r := range l.recs {
 		if r != nil && r.sessionID == sessionID {
 			r.setupID, r.versionID, r.setupName = setupID, versionID, ""
+			r.manual, r.setKey = setupID != 0, r.lastKey
 			r.shortlist = nil
 			if s, _ := l.db.Setup(setupID); s != nil {
 				r.setupName = s.Name
 			}
+		}
+	}
+	l.recMu.Unlock()
+	l.publish(Event{Type: "history-changed"})
+	l.publish(Event{Type: "recording"})
+	return nil
+}
+
+// setupVersion is the version of a setup that is in the game folder (else its newest).
+func (l *Library) setupVersion(setupID int64) (int64, error) {
+	s, err := l.db.Setup(setupID)
+	if err != nil || s == nil {
+		return 0, history.ErrNotFound
+	}
+	if s.DiskVersionID != 0 {
+		return s.DiskVersionID, nil
+	}
+	if v, _ := l.db.LatestVersion(setupID); v != nil {
+		return v.ID, nil
+	}
+	return 0, nil
+}
+
+// SetRecordingSetup says which setup is driven now, from the top bar (D-177). On track it applies
+// to the current stint (since the car left the pits) and the laps after it; in the pits, to the
+// laps from now on (the laps before were driven with what was loaded then). It stays until the
+// car's setup values change. Earlier stints are changed on the session page.
+func (l *Library) SetRecordingSetup(setupID int64) error {
+	if l.db == nil {
+		return ErrNoHistory
+	}
+	versionID, err := l.setupVersion(setupID)
+	if err != nil {
+		return err
+	}
+	l.recMu.Lock()
+	var r *recorder
+	for _, x := range l.recs {
+		if x != nil && x.sessionID != 0 {
+			r = x
+		}
+	}
+	if r == nil {
+		l.recMu.Unlock()
+		return errors.New("no session is being recorded")
+	}
+	from := "now on"
+	if !r.wasInPits && !r.stintStart.IsZero() {
+		from = "the start of this stint"
+		if err := l.db.SetLapsSetupSince(r.sessionID, r.stintStart, setupID, versionID); err != nil {
+			l.recMu.Unlock()
+			return err
+		}
+	}
+	_ = l.db.SetSessionSetup(r.sessionID, setupID, versionID, "manual", false)
+	r.setupID, r.versionID, r.setupName = setupID, versionID, ""
+	if s, _ := l.db.Setup(setupID); s != nil {
+		r.setupName = s.Name
+	}
+	r.manual, r.setKey, r.shortlist = true, r.lastKey, nil
+	log.Printf("rec: setup set by hand to %q (from %s)", r.setupName, from)
+	l.recMu.Unlock()
+	l.publish(Event{Type: "history-changed"})
+	l.publish(Event{Type: "recording"})
+	return nil
+}
+
+// SetStintSetup gives the laps of one stint of a session another setup (session page, D-177).
+func (l *Library) SetStintSetup(sessionID int64, stint int, setupID int64) error {
+	if l.db == nil {
+		return ErrNoHistory
+	}
+	var versionID int64
+	if setupID != 0 {
+		v, err := l.setupVersion(setupID)
+		if err != nil {
+			return err
+		}
+		versionID = v
+	}
+	rep, err := l.SessionReport(sessionID)
+	if err != nil {
+		return err
+	}
+	if stint < 1 || stint > len(rep.Stints) {
+		return history.ErrNotFound
+	}
+	st := rep.Stints[stint-1]
+	var ids []int64
+	for _, lr := range rep.Laps {
+		if lr.N >= st.FromLap && lr.N <= st.ToLap {
+			ids = append(ids, lr.ID)
+		}
+	}
+	if err := l.db.SetLapsSetup(sessionID, ids, setupID, versionID); err != nil {
+		return err
+	}
+	last := stint == len(rep.Stints)
+	if last { // the session's own setup follows its last stint (shown in lists)
+		_ = l.db.SetSessionSetup(sessionID, setupID, versionID, "manual", false)
+	}
+	l.recMu.Lock()
+	for _, r := range l.recs {
+		if r != nil && r.sessionID == sessionID && last {
+			r.setupID, r.versionID, r.setupName = setupID, versionID, ""
+			if s, _ := l.db.Setup(setupID); s != nil {
+				r.setupName = s.Name
+			}
+			r.manual, r.setKey, r.shortlist = setupID != 0, r.lastKey, nil
 		}
 	}
 	l.recMu.Unlock()

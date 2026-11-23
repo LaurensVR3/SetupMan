@@ -36,6 +36,7 @@ type LiveReader interface {
 // Fields a game can't provide (or that look implausible) are marked unknown.
 type Telemetry struct {
 	Live          bool    // a session is running (not menu, pause or replay)
+	Off           bool    // no session at all: the game's main menu, e.g. after leaving a server (D-177)
 	Session       string  // "practice", "qualifying", "race", "hotlap", … or ""
 	Car, Track    string  // as the game names them (e.g. "ferrari_296_gt3", "spa")
 	CompletedLaps int     // laps completed in this session

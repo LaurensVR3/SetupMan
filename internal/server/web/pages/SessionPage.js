@@ -1,8 +1,9 @@
 // Session report (spec D-127): one practice, qualifying or race session on one page: summary,
 // stints between pit stops, and every lap with fuel, temperatures and hot tyre pressures.
-import { computed, watchEffect } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import { useRoute } from "vue-router";
-import { get } from "../api.js";
+import { get, put, enc } from "../api.js";
+import { showToast } from "../store.js";
 import { usePageData } from "./load.js";
 import { Loading, setCrumbs } from "../components/common.js";
 import { lapTime } from "../components/LapTimes.js";
@@ -17,7 +18,17 @@ export const SessionPage = {
   components: { Loading, TeleLinks },
   setup() {
     const route = useRoute();
-    const { data, error } = usePageData(() => get(`/api/sessions/${route.params.id}`), { laps: true });
+    const { data, error, reload } = usePageData(() => get(`/api/sessions/${route.params.id}`), { laps: true });
+    // A stint's setup (D-177): laps of two setups in one session (swapped in the pits) are split here.
+    const busy = ref(false);
+    async function setStint(n, id) {
+      if (busy.value) return;
+      busy.value = true;
+      try {
+        await put(`/api/sessions/${enc(data.value.session.id)}/stints/${n}/setup`, { setupId: Number(id) || 0 });
+        await reload?.();
+      } catch (e) { showToast(e.message, 6000); } finally { busy.value = false; }
+    }
     const kind = (k) => KINDS[k] || "Session";
     watchEffect(() => {
       const d = data.value;
@@ -40,7 +51,7 @@ export const SessionPage = {
       const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
       return h ? `${h}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}` : `${m}:${String(r).padStart(2, "0")}`;
     }
-    return { data, error, kind, lapTime, dateTime, gap, note, psi, range, temp, duration, hasPressures, hasTemps, versions, WHEELS };
+    return { data, error, busy, setStint, kind, lapTime, dateTime, gap, note, psi, range, temp, duration, hasPressures, hasTemps, versions, WHEELS };
   },
   template: `
     <main class="page page-wide">
@@ -70,15 +81,20 @@ export const SessionPage = {
           </div>
           <p v-if="data.summary.hasPressures" class="panel-hint">Average hot tyre pressures (out-laps and in-laps not counted): <template v-for="(w, i) in WHEELS" :key="w">{{ w }} {{ psi(data.summary.pressures[i]) }}<template v-if="i < 3">, </template></template> psi.</p>
 
-          <section v-if="data.stints.length > 1" class="panel session-panel" aria-labelledby="stints-h">
+          <section class="panel session-panel" aria-labelledby="stints-h">
             <h2 id="stints-h" class="panel-title">Stints</h2>
+            <p class="panel-hint">Swapped setups in the pits? Choose each stint's setup here; its laps move along.</p>
             <div class="table-scroll">
             <table class="compare-table lap-table">
-              <thead><tr><th class="ct-label">Stint</th><th class="ct-val">Laps</th><th class="ct-val">Best</th><th class="ct-val">Average</th><th class="ct-val">Fuel / lap</th><th class="ct-val">Time</th>
+              <thead><tr><th class="ct-label">Stint</th><th class="ct-label">Setup</th><th class="ct-val">Laps</th><th class="ct-val">Best</th><th class="ct-val">Average</th><th class="ct-val">Fuel / lap</th><th class="ct-val">Time</th>
                 <template v-if="hasPressures"><th v-for="w in WHEELS" :key="w" class="ct-val">{{ w }}</th></template></tr></thead>
               <tbody>
                 <tr v-for="s in data.stints" :key="s.n">
                   <td class="ct-label">Stint {{ s.n }}<span v-if="s.wet" class="muted-small"> (wet tyres)</span></td>
+                  <td class="ct-label"><select class="stint-setup" :value="s.setupId || ''" :disabled="busy" :aria-label="'Setup of stint ' + s.n" @change="setStint(s.n, $event.target.value)">
+                    <option value="">{{ s.setupId ? 'Not known' : 'Not known or mixed' }}</option>
+                    <option v-for="c in data.choices" :key="c.id" :value="c.id">{{ c.name }}</option>
+                  </select></td>
                   <td class="ct-val">{{ s.fromLap }}–{{ s.toLap }}</td>
                   <td class="ct-val">{{ s.bestMs ? lapTime(s.bestMs) : '–' }}</td>
                   <td class="ct-val">{{ s.avgMs ? lapTime(s.avgMs) : '–' }}</td>
