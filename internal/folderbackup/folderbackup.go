@@ -28,6 +28,7 @@ const (
 	ReasonBeforeManaging = "Before SetupMan started managing this folder"
 	ReasonManual         = "Created by you"
 	ReasonFullBackup     = "Part of a full SetupMan backup"
+	ReasonTelemetryLaps  = "Before setting telemetry laps to 99"
 	reasonBeforeRestore  = "Automatic, before restoring the backup of %s"
 )
 

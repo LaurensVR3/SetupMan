@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -825,5 +826,161 @@ func renameOnDisk(from, to string, caseOnly bool) error {
 		_ = os.Rename(tmp, from)
 		return err
 	}
+	return nil
+}
+
+// ---------- telemetry laps (D-176) ----------
+
+// telemetryLapsField is the setup value that sets how many laps the game keeps in its telemetry
+// files. Only ACC has one; 99 is the most the game allows.
+var telemetryLapsField = map[string]string{"acc": "basicSetup.electronics.telemetryLaps"}
+
+const maxTelemetryLaps = "99"
+
+// TeleLapsPlan is one setup in the game folder whose telemetry laps aren't 99 yet.
+type TeleLapsPlan struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	CarName   string `json:"carName"`
+	TrackName string `json:"trackName"`
+	Laps      string `json:"laps"` // the value in the file now
+}
+
+// HasTelemetryLaps says whether a game's setups have a telemetry laps value.
+func HasTelemetryLaps(gameID string) bool { return telemetryLapsField[gameID] != "" }
+
+// TelemetryLapsPreview lists the setups in a game's folder whose file has fewer than 99
+// telemetry laps, sorted by car, track and name.
+func (l *Library) TelemetryLapsPreview(gameID string) ([]TeleLapsPlan, error) {
+	out := []TeleLapsPlan{}
+	field := telemetryLapsField[gameID]
+	if field == "" || l.db == nil {
+		return out, errors.New("this game has no telemetry laps setting")
+	}
+	all, err := l.db.SetupsForGame(gameID)
+	if err != nil {
+		return out, err
+	}
+	g := l.game(gameID)
+	for _, s := range all {
+		if s.RelPath == "" || !s.DeletedAt.IsZero() {
+			continue
+		}
+		root, _, err := l.gameFolder(gameID, s.Car, s.Track)
+		if err != nil {
+			continue
+		}
+		raw, err := lastopened.ReadFile(filepath.Join(root, filepath.FromSlash(s.RelPath)))
+		if err != nil {
+			continue
+		}
+		fields, err := g.ParseSetup(raw)
+		if err != nil {
+			continue
+		}
+		for _, f := range fields {
+			if f.Path == field && f.Value != maxTelemetryLaps {
+				p := TeleLapsPlan{ID: s.ID, Name: s.Name, Laps: f.Value}
+				p.CarName, p.TrackName = l.readableNames(gameID, s.Car, s.Track)
+				out = append(out, p)
+			}
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		a, b := out[i], out[j]
+		if a.CarName != b.CarName {
+			return a.CarName < b.CarName
+		}
+		if a.TrackName != b.TrackName {
+			return a.TrackName < b.TrackName
+		}
+		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+	})
+	return out, nil
+}
+
+// SetTelemetryLaps sets telemetry laps to 99 in the files of the chosen setups in the game
+// folder (D-176). Only on request, only with folder management on, never while driving, and
+// after a backup of the folder. Nothing else in the files changes; the file date is kept, and
+// the setups get no new version (telemetry laps isn't scored, D-52).
+func (l *Library) SetTelemetryLaps(gameID string, ids []int64) ([]ManyResult, error) {
+	out := []ManyResult{}
+	field := telemetryLapsField[gameID]
+	if field == "" || l.db == nil {
+		return out, errors.New("this game has no telemetry laps setting")
+	}
+	if !l.managed(gameID) {
+		return out, ErrNotManaged
+	}
+	if l.Live() == game.LiveDriving {
+		return out, errors.New("not while driving: try again once you are back in the menus")
+	}
+	editor, ok := l.game(gameID).(game.Editor)
+	if !ok {
+		return out, errors.New("setups of this game can't be changed")
+	}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	if _, err := l.createBackup(gameID, folderbackup.ReasonTelemetryLaps); err != nil {
+		return out, fmt.Errorf("no backup could be made, so nothing was changed: %w", err)
+	}
+	defer l.Rescan(gameID)
+	l.folderMu.Lock()
+	defer l.folderMu.Unlock()
+	changed := 0
+	for _, id := range ids {
+		s, err := l.db.Setup(id)
+		if err != nil || s == nil || s.Game != gameID || s.RelPath == "" {
+			continue
+		}
+		res := ManyResult{ID: id, Name: s.Name}
+		if err := l.setTelemetryLapsLocked(gameID, s, editor, field); err != nil {
+			res.Error = err.Error()
+		} else {
+			changed++
+		}
+		out = append(out, res)
+	}
+	if changed > 0 {
+		log.Printf("telemetry laps set to %s in %d setups (%s)", maxTelemetryLaps, changed, gameID)
+	}
+	return out, nil
+}
+
+func (l *Library) setTelemetryLapsLocked(gameID string, s *store.Setup, editor game.Editor, field string) error {
+	root, _, err := l.gameFolder(gameID, s.Car, s.Track)
+	if err != nil {
+		return err
+	}
+	target := filepath.Join(root, filepath.FromSlash(s.RelPath))
+	if !isInside(root, target) {
+		return errors.New("refusing to write outside the setups folder")
+	}
+	// A save the game made seconds ago is stored first (D-138); the file itself is then edited,
+	// so whatever it holds keeps every other value.
+	if _, err := l.secureFile(gameID, s, target); err != nil {
+		return err
+	}
+	info, err := os.Stat(target)
+	if err != nil {
+		return err
+	}
+	raw, err := lastopened.ReadFile(target)
+	if err != nil {
+		return err
+	}
+	content, err := editor.EditSetup(raw, map[string]string{field: maxTelemetryLaps})
+	if err != nil {
+		return err
+	}
+	if bytes.Equal(content, raw) {
+		return nil
+	}
+	if err := writeFileAtomic(target, content); err != nil {
+		return err
+	}
+	_ = os.Chtimes(target, info.ModTime(), info.ModTime()) // lists and game-version estimates stay right (D-103)
+	l.noteOwnTouch(target)                                 // not opened by the game (D-147)
 	return nil
 }

@@ -178,6 +178,7 @@ export const ManualPage = {
             <section id="m-tele-files">
               <h2>Where it comes from</h2>
               <p>ACC writes MoTeC telemetry files (Documents\\Assetto Corsa Competizione\\MoTeC). SetupMan reads them and never changes, moves or deletes them; Settings → Games → ACC shows the folder and lets you choose another. New files are read in the background, never while you drive.</p>
+              <p>ACC keeps telemetry only for as many laps as the setup's <b>Telemetry laps</b> value (Electronics, at most 99). With folder management enabled, Settings → Games → ACC → <b>Set telemetry laps to 99…</b> lists the setups in the folder that have fewer and sets 99 in the ones you select, after a backup of the folder. Nothing else in the files changes and the setups get no new version.</p>
               <p>ACC saves a session again and again while you drive, and each save keeps the full data (speed, pedals, tyres …) of its last laps only. SetupMan puts the saves of a session together and shows every lap once, taking its data from whichever save still has it. A lap no save has data for keeps its lap time and is marked <b>No data</b>; it can't be analysed.</p>
               <p>Laps that are not full laps (out-lap, in-lap, a restart, a cut or being sent back to the pits) are greyed out and not counted. Laps through the pit lane are full laps.</p>
             </section>

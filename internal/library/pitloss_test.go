@@ -17,8 +17,8 @@ func imolaSession() []store.Lap {
 		{At: at(1110.543), LapMs: 101102, Valid: false},
 		{At: at(1212.560), LapMs: 101065, Valid: true},
 		{At: at(1312.576), LapMs: 100712, Valid: true},
-		{At: at(1762.644), LapMs: 101527, Valid: true, Pit: true}, // out of the garage
-		{At: at(1882.663), LapMs: 120170, Valid: true, Pit: true}, // in-lap
+		{At: at(1762.644), LapMs: 101527, Valid: true, Pit: true},  // out of the garage
+		{At: at(1882.663), LapMs: 120170, Valid: true, Pit: true},  // in-lap
 		{At: at(2036.692), LapMs: 153542, Valid: false, Pit: true}, // out-lap with the stop
 		{At: at(2136.709), LapMs: 101182, Valid: true},
 	}

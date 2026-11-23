@@ -31,8 +31,9 @@ type GameSummary struct {
 	Duplicates     int            `json:"duplicates"` // groups of identical / near-identical setups
 	ScannedAt      *time.Time     `json:"scannedAt,omitempty"`
 	Live           game.LiveState `json:"live"`
-	Laps           bool           `json:"laps"`   // SetupMan records laps and gives pit stop advice for this game
-	ByFile         bool           `json:"byFile"` // the setup driven is recognised from the file the game opened last (D-147, D-149)
+	Laps           bool           `json:"laps"`          // SetupMan records laps and gives pit stop advice for this game
+	TelemetryLaps  bool           `json:"telemetryLaps"` // setups have a telemetry laps value SetupMan can set to 99 (D-176)
+	ByFile         bool           `json:"byFile"`        // the setup driven is recognised from the file the game opened last (D-147, D-149)
 	// Telemetry suite (D-160, D-162): the game writes telemetry files SetupMan can read, where it
 	// found them, and whether SetupMan can add its extra log
 	Telemetry         bool   `json:"telemetry"`
@@ -254,6 +255,7 @@ func (l *Library) summary(g game.Game) GameSummary {
 		Managed: l.managedLocked(g), TidyOnGameClose: s.cfg.TidyOnGameClose, AutoRename: s.cfg.AutoRename, Queued: l.QueuedCount(),
 	}
 	_, sum.Laps = g.(game.TelemetrySource)
+	sum.TelemetryLaps = HasTelemetryLaps(g.ID())
 	if tf, ok := g.(game.TelemetryFolder); ok {
 		sum.Telemetry, sum.DetectedTelemetry = true, tf.TelemetryFolder()
 	}

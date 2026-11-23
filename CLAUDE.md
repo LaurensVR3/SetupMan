@@ -8,7 +8,7 @@ The owner is not a programmer: explain changes in plain language and keep code s
 ## Rules
 - **Never write, move or delete anything in a user's setup folder** unless a spec decision allows it and the
   user confirmed the action (D-07). The only code that writes there is `internal/library/staging.go`
-  (opt-in per game, D-73), `internal/library/rename.go` (auto-rename merge of a new save into the renamed
+  (opt-in per game, D-73; also telemetry laps 99 on the user's button press, D-176), `internal/library/rename.go` (auto-rename merge of a new save into the renamed
   setup, only with folder management and auto-rename on, D-138) and `internal/folderbackup` restore. Keep it
   that way. The game's telemetry folder (ACC MoTeC) is never written (D-160).
 - **Pure Go only** (no cgo – there is no C compiler on the dev machine). Standard library + `golang.org/x/sys`.

@@ -1,6 +1,6 @@
 // Settings: appearance, duplicate threshold, games (visibility + folder), logos (spec D-33, D-36, D-37).
 // Every change is saved straight away.
-import { ref, reactive, computed, onMounted, watch } from "vue";
+import { ref, reactive, computed, onMounted, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { get, put, post, enc } from "../api.js";
 import { store, applyTheme, showToast } from "../store.js";
@@ -9,6 +9,7 @@ import { setCrumbs } from "../components/common.js";
 import { FolderPicker } from "../components/FolderPicker.js";
 import { FamilyTree } from "../components/FamilyTree.js";
 import { LastOpenedNotice } from "../components/LastOpenedNotice.js";
+import { TeleLapsDialog } from "../components/TeleLaps.js";
 
 const TABS = [["general", "General"], ["games", "Games"], ["compare", "Comparing & history"], ["backups", "Backups & bin"], ["network", "Network"], ["about", "About"]];
 
@@ -29,7 +30,7 @@ const FEATURES = [
 ];
 
 export const SettingsPage = {
-  components: { FolderPicker, FamilyTree, LastOpenedNotice },
+  components: { FolderPicker, FamilyTree, LastOpenedNotice, TeleLapsDialog },
   setup() {
     setCrumbs([{ label: "Settings", to: "/settings" }]);
     const games = ref([]);
@@ -119,6 +120,10 @@ export const SettingsPage = {
       }
     }
     const confirmDlg = ref(null);
+    // Set telemetry laps to 99 (D-176): one dialog, for the game whose button was pressed
+    const teleLapsDlg = ref(null);
+    const teleLapsGame = reactive({ id: "", short: "" });
+    async function openTeleLaps(g) { teleLapsGame.id = g.id; teleLapsGame.short = g.short; await nextTick(); teleLapsDlg.value.open(); }
     const restore = reactive({ open: false, game: null, backup: null, plan: null, error: "", busy: false });
     async function askRestore(g, b) {
       Object.assign(restore, { open: true, game: g, backup: b, plan: null, error: "", busy: false });
@@ -406,7 +411,7 @@ export const SettingsPage = {
     const issueUrl = (form) => `https://github.com/LaurensVR3/SetupMan/issues/new?template=${form}&version=${encodeURIComponent(store.app?.number || "")}`;
     return { issueUrl, lfmId, saveLfm, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
       hist, preview, applyHistory, countNodes, setEndurance, autostart, setAutostart,
-      manage, setManaged, setTidy, setAutoRename, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
+      manage, setManaged, setTidy, setAutoRename, teleLapsDlg, teleLapsGame, openTeleLaps, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
       teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
   },
   template: `
@@ -546,6 +551,13 @@ export const SettingsPage = {
                   <p>When you save a setup in the game, SetupMan renames the file to initials, session, temperature, game version and your codes (e.g. “ABC R 2327 1.10.4 TC25”), and notes the original name. Initials are yours (Settings → General). Session and temperature come from the session you saved in; outside a session, from the setup it was made from.</p>
                 </div>
                 <label class="switch switch-lg"><input type="checkbox" :checked="g.autoRename" @change="setAutoRename(g.id, $event.target.checked)"><span></span><span class="sr">Apply the naming standard to new saves</span></label>
+              </div>
+              <div v-if="g.managed && g.telemetryLaps" class="setting manage-row">
+                <div class="setting-text">
+                  <h3>Telemetry laps</h3>
+                  <p>{{ g.short }} keeps telemetry for as many laps as each setup's Telemetry laps value (Electronics), up to 99. Sets 99 in the setups in the {{ g.short }} folder that have fewer; you see the list first, and a backup of the folder is made before anything changes. Not while driving.</p>
+                </div>
+                <button type="button" class="btn" @click="openTeleLaps(g)">Set telemetry laps to 99…</button>
               </div>
             </div>
             <div v-if="g.laps" class="setting setting-stack">
@@ -894,6 +906,7 @@ export const SettingsPage = {
           <p>Brand logos: Wikimedia Commons. Logos are trademarks of their owners and are only used to identify the cars.</p>
           <p>Real values for ACC cars: the open-source Race Element project.</p>
         </section>
+        <TeleLapsDialog ref="teleLapsDlg" :game="teleLapsGame.id" :short="teleLapsGame.short" />
       </template>
 
       <FolderPicker :open="picker.open" :start="picker.start" :title="picker.kind === 'telemetry' ? 'Choose the telemetry folder' : 'Choose the setups folder'" @pick="picked" @close="picker.open = false" />

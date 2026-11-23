@@ -26,11 +26,40 @@ func (s *Server) registerStaging() {
 	s.mux.HandleFunc("POST /api/setups/{id}/rename", s.handleRename)
 	s.mux.HandleFunc("POST /api/setups/rename-tidy", s.handleRenameTidy)
 	s.mux.HandleFunc("GET /api/games/{game}/tidy-preview", s.handleTidyPreview)
+	s.mux.HandleFunc("GET /api/games/{game}/telemetry-laps", s.handleTeleLapsPreview)
+	s.mux.HandleFunc("POST /api/games/{game}/telemetry-laps", s.handleSetTeleLaps)
 	s.mux.HandleFunc("POST /api/setups/delete", s.handleDelete)
 	s.mux.HandleFunc("POST /api/setups/{id}/undelete", s.handleUndelete)
 	s.mux.HandleFunc("GET /api/bin", s.handleBin)
 	s.mux.HandleFunc("GET /api/games/{game}/duplicates", s.handleDuplicates)
 	s.mux.HandleFunc("POST /api/setups/{id}/temperature", s.handleTemperature)
+}
+
+// handleTeleLapsPreview lists the setups in the folder whose telemetry laps aren't 99 (D-176).
+func (s *Server) handleTeleLapsPreview(w http.ResponseWriter, r *http.Request) {
+	list, err := s.lib.TelemetryLapsPreview(r.PathValue("game"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"setups": list})
+}
+
+// handleSetTeleLaps sets telemetry laps to 99 in the chosen setups' files (D-176).
+func (s *Server) handleSetTeleLaps(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		IDs []int64 `json:"ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+	res, err := s.lib.SetTelemetryLaps(r.PathValue("game"), in.IDs)
+	if err != nil {
+		stagingError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"results": res})
 }
 
 // handleTemperature proposes changes for another air and track temperature (nothing is saved).
