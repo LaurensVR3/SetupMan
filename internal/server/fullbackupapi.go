@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"setupman/internal/fullbackup"
@@ -20,6 +21,31 @@ func (s *Server) registerFullBackup() {
 	s.mux.HandleFunc("GET /api/full-backups/{id}/download", s.handleFullDownload)
 	s.mux.HandleFunc("POST /api/full-backups/{id}/restore", s.handleFullRestore)
 	s.mux.HandleFunc("POST /api/open-folder", s.handleOpenFolder)
+	s.mux.HandleFunc("GET /api/log", s.handleLogDownload)
+}
+
+// handleLogDownload sends setupman.log as a download, for a device on the network that can't
+// open the folder on the PC SetupMan runs on (D-175).
+func (s *Server) handleLogDownload(w http.ResponseWriter, r *http.Request) {
+	if s.Full == nil {
+		writeError(w, http.StatusNotFound, "The log file is not available.")
+		return
+	}
+	f, err := os.Open(filepath.Join(s.Full.DataDir, "setupman.log"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, "There is no log file yet.")
+		return
+	}
+	defer f.Close()
+	st, err := f.Stat()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="setupman.log"`)
+	w.Header().Set("Cache-Control", "no-store")
+	http.ServeContent(w, r, "", st.ModTime(), f)
 }
 
 // handleOpenFolder opens a backup folder in Windows Explorer on the PC SetupMan runs on.

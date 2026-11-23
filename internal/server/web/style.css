@@ -260,6 +260,7 @@ a.game-tile:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px)
 .setting-stack { flex-direction: column; align-items: stretch; gap: 10px; }
 .setting-stack .setting-text { flex: none; }
 .setting-text { flex: 1 1 320px; }
+.setting-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .setting-text h3 { font-size: 15px; margin: 0 0 2px; }
 .setting-text output { font: 700 17px var(--display); }
 .setting-text p { margin: 0; color: var(--ink-2); font-size: 14px; }
@@ -569,6 +570,11 @@ input[type="range"] { width: 100%; accent-color: var(--kerb); }
   background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: var(--shadow-hover); }
 .menu-list button, .menu-list a { text-align: left; border: 0; background: none; padding: 9px 12px; border-radius: 7px; cursor: pointer; color: var(--ink); text-decoration: none; font-size: 14.5px; }
 .menu-list button:hover, .menu-list a:hover { background: var(--surface-2); }
+/* Phones: the More button can sit at the left edge, so the menu opens as a sheet at the bottom of the screen */
+@media (max-width: 640px) {
+  .menu-list { position: fixed; left: 16px; right: 16px; top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); min-width: 0; z-index: 60; }
+  .menu-list button, .menu-list a { padding: 13px 14px; font-size: 16px; }
+}
 .tool-panel { margin-bottom: 16px; border-color: var(--line-strong); }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line-strong); margin: 0 0 18px; }
 .tabs button { border: 0; background: none; padding: 10px 16px; font: 600 16px var(--display); color: var(--ink-2); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 8px; align-items: center; }

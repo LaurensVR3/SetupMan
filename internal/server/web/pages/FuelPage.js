@@ -17,6 +17,13 @@ export function parseLap(text) {
   return isFinite(n) ? n : NaN;
 }
 
+// Where a measured pit stop time loss comes from (D-173), e.g. "measured from 2 stops with GT3 cars on this track".
+export function pitSource(pm) {
+  const n = pm.stops === 1 ? "1 stop" : `${pm.stops} stops`;
+  const who = pm.class ? `with ${pm.class} cars` : pm.sameCar ? "with this car" : "with any car";
+  return `measured from ${n} ${who} on this track`;
+}
+
 export const PlanView = {
   props: { plan: Object, kind: String },
   template: `
@@ -50,6 +57,7 @@ export const FuelPage = {
     const race = reactive({ plan: null, error: "" });
     const qual = reactive({ plan: null, error: "" });
     const recorded = ref(null); // lap stats recorded on this car and track (D-44)
+    const pitMeasured = ref(null); // pit stop time loss from recorded stops (D-173)
     let loadedKey = "";
     let saveTimer;
 
@@ -76,7 +84,11 @@ export const FuelPage = {
       const key = `${g.id}/${c.id}/${trackId}`;
       if (key !== loadedKey) {
         loadedKey = key;
-        get(`/api/laps/${enc(g.id)}/${enc(c.id)}/${enc(trackId)}`).then((r) => (recorded.value = r.stats.laps ? r.stats : null)).catch(() => {});
+        get(`/api/laps/${enc(g.id)}/${enc(c.id)}/${enc(trackId)}`).then((r) => {
+          recorded.value = r.stats.laps ? r.stats : null;
+          pitMeasured.value = r.pitLoss && r.pitLoss.seconds > 0 ? r.pitLoss : null;
+          if (pitMeasured.value && String(inputs.race.pitLoss).trim() === "") inputs.race.pitLoss = pitMeasured.value.seconds.toFixed(1);
+        }).catch(() => {});
         get(`/api/fuel/${enc(g.id)}/${enc(c.id)}/${enc(trackId)}`).then((saved) => {
           if (saved.race) Object.assign(inputs.race, saved.race);
           if (saved.q) Object.assign(inputs.q, saved.q);
@@ -113,8 +125,10 @@ export const FuelPage = {
       if (r.avgMs) inputs.race.avgLap = lapTime(r.avgMs);
       if (r.fuelLaps) { inputs.race.fuelPerLap = r.fuelPerLap.toFixed(2); inputs.q.fuelPerLap = ""; }
       if (r.bestMs) inputs.q.bestLap = lapTime(r.bestMs);
+      if (pitMeasured.value) inputs.race.pitLoss = pitMeasured.value.seconds.toFixed(1);
     }
-    return { data, error, trackName, inputs, race, qual, recorded, useRecorded, lapTime };
+    const useMeasuredPit = () => { inputs.race.pitLoss = pitMeasured.value.seconds.toFixed(1); };
+    return { data, error, trackName, inputs, race, qual, recorded, useRecorded, lapTime, pitMeasured, useMeasuredPit, pitSource };
   },
   template: `
     <main class="page">
@@ -141,7 +155,10 @@ export const FuelPage = {
               <label>Average lap time<span class="unit-input"><input v-model="inputs.race.avgLap" placeholder="1:45.0"></span></label>
               <label>Fuel per lap<span class="unit-input"><input v-model="inputs.race.fuelPerLap" inputmode="decimal" placeholder="3.2"> L</span></label>
               <label>Mandatory pit stops<span class="unit-input"><input v-model="inputs.race.stops" inputmode="numeric" placeholder="0"></span></label>
-              <label v-if="Number(inputs.race.stops) > 0">Time lost per pit stop<span class="unit-input"><input v-model="inputs.race.pitLoss" inputmode="decimal" placeholder="25"> s</span></label>
+              <label v-if="Number(inputs.race.stops) > 0">Time lost per pit stop<span class="unit-input"><input v-model="inputs.race.pitLoss" inputmode="decimal" placeholder="25"> s</span>
+                <small v-if="pitMeasured">{{ pitMeasured.seconds.toFixed(1) }} s, {{ pitSource(pitMeasured) }}.
+                  <button v-if="Number(String(inputs.race.pitLoss).replace(',', '.')) !== Number(pitMeasured.seconds.toFixed(1))" type="button" class="btn-link" @click.prevent="useMeasuredPit">Use this</button></small>
+                <small v-else>Measured automatically once you drive a full pit stop on this track with SetupMan running.</small></label>
               <label>Safety margin<span class="unit-input"><input v-model="inputs.race.safety" inputmode="decimal" placeholder="2"> L</span></label>
               <label>Tank size (optional)<span class="unit-input"><input v-model="inputs.race.tank" inputmode="decimal" placeholder="e.g. 120"> L</span></label>
               <label v-if="Number(inputs.race.stops) > 0" class="fuel-window">Pit window (optional)

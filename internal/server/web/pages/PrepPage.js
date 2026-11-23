@@ -7,7 +7,7 @@ import { store, stagingDone, showToast } from "../store.js";
 import { setCrumbs, EmptyState } from "../components/common.js";
 import { SessionBadge } from "../components/FamilyTree.js";
 import { lapTime } from "../components/LapTimes.js";
-import { PlanView } from "./FuelPage.js";
+import { PlanView, pitSource } from "./FuelPage.js";
 
 const SESSIONS = [["Q", "Qualifying"], ["R", "Race"], ["Endurance", "Endurance"]];
 
@@ -89,6 +89,7 @@ export const PrepPage = {
     // Saved fuel inputs of this car and track (pit loss, safety margin, tank) and the track's lap stats.
     const fuelSaved = ref({});
     const trackStats = ref(null);
+    const pitMeasured = ref(null); // pit stop time loss from recorded stops on this track (D-173)
     let req = 0; // only the answer to the latest inputs is shown
     // keepChoice: a refresh (a setup shown or hidden, a new lap) keeps the setup you picked; new inputs pick the best match.
     async function rank(keepChoice = false) {
@@ -106,6 +107,7 @@ export const PrepPage = {
         list.value = r.setups;
         fuelSaved.value = f.race || {};
         trackStats.value = l.stats && l.stats.laps ? l.stats : null;
+        pitMeasured.value = l.pitLoss && l.pitLoss.seconds > 0 ? l.pitLoss : null;
         if (!keep) chosenId.value = r.setups[0]?.id || 0;
         error.value = "";
       } catch (e) { error.value = e.message; }
@@ -126,7 +128,7 @@ export const PrepPage = {
     const plan = reactive({ result: null, error: "", basis: [], missing: "" });
     const num = (v) => { const n = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(n) ? n : 0; };
     const defaultMinutes = () => (inp.session === "Q" ? 15 : 60);
-    watch([chosen, () => inp.minutes, () => inp.session, fuelSaved, trackStats], async () => {
+    watch([chosen, () => inp.minutes, () => inp.session, () => inp.stops, fuelSaved, trackStats, pitMeasured], async () => {
       Object.assign(plan, { result: null, error: "", basis: [], missing: "" });
       const s = chosen.value, minutes = num(inp.minutes) || defaultMinutes(); // empty: the length shown in the box (rig 2026-11-21)
       if (!s) return;
@@ -144,10 +146,16 @@ export const PrepPage = {
           const avg = pick([s.near.avgMs / 1000, "your average at this temperature"], [s.all.avgMs / 1000, "your average with this setup"], [(ts?.avgMs || 0) / 1000, "your average on this track"]);
           if (!avg[0] || !fuelPerLap[0]) { plan.missing = "SetupMan needs a recorded lap time and fuel use for this car and track first. Enter them in the fuel calculator."; return; }
           const stops = String(inp.stops).trim() !== "" ? num(inp.stops) : s.stops || num(fs.stops);
-          plan.result = { kind: "r", plan: await post("/api/fuel/race", { minutes, avgLap: avg[0], fuelPerLap: fuelPerLap[0], stops, pitLoss: num(fs.pitLoss),
+          // pit stop time loss: measured from recorded stops first, else the fuel calculator's (D-173)
+          const pm = pitMeasured.value;
+          const pitLoss = pm ? pm.seconds : num(fs.pitLoss);
+          plan.result = { kind: "r", plan: await post("/api/fuel/race", { minutes, avgLap: avg[0], fuelPerLap: fuelPerLap[0], stops, pitLoss,
             safety: fs.safety !== undefined && fs.safety !== "" ? num(fs.safety) : 2, tank: num(fs.tank), windowOpen: num(fs.windowOpen), windowClose: num(fs.windowClose) }) };
           plan.basis = [`Average lap ${lapTime(avg[0] * 1000)} (${avg[1]})`, `${fuelPerLap[0].toFixed(2)} L per lap (${fuelPerLap[1]})`,
             stops ? `${stops} mandatory ${stops === 1 ? "stop" : "stops"}` : "no mandatory stop"];
+          if (stops) plan.basis.push(pm ? `${pm.seconds.toFixed(1)} s lost per pit stop (${pitSource(pm)})`
+            : pitLoss ? `${pitLoss} s lost per pit stop (the fuel calculator)`
+            : "Time lost per pit stop not known yet: counted as 0 s. Drive a full pit stop on this track, or enter it in the fuel calculator.");
         }
       } catch (e) { plan.error = e.message; }
     }, { immediate: true });

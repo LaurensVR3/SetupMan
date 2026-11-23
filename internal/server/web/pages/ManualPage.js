@@ -139,7 +139,7 @@ export const ManualPage = {
             <section id="m-prep">
               <h2>Race prep</h2>
               <p><b>Race prep</b> (top bar, or the button on a track page) answers “which setup tonight?”. Choose car, track, session, its length and the expected temperature, and whether that is the air or the track temperature. SetupMan ranks your setups: first the ones made for that session, then the ones whose name has that temperature (e.g. 3040 = air 30 °C, track 40 °C) or comes closest, then the ones with your fastest recorded laps at a similar temperature (within 3 °C). Each setup says why it is ranked there.</p>
-              <p>For the chosen setup it shows the fuel plan, from its own recorded laps where possible, with pit loss, safety margin and tank size from the fuel calculator. With folder management enabled, <b>Show in the game</b> or <b>Show only this one</b> puts it in the game's setup list in one click. Your choices are remembered, also for other devices.</p>
+              <p>For the chosen setup it shows the fuel plan, from its own recorded laps where possible, with safety margin and tank size from the fuel calculator. The time lost per pit stop is measured from your own recorded stops on that track (cars of the same class first, else any car): drive one full stop with SetupMan running and it is known. Until then the fuel calculator's value is used. With folder management enabled, <b>Show in the game</b> or <b>Show only this one</b> puts it in the game's setup list in one click. Your choices are remembered, also for other devices.</p>
             </section>
             <section id="m-lfm">
               <h2>Low Fuel Motorsport</h2>
@@ -166,7 +166,7 @@ export const ManualPage = {
                 <li><b>Before practice:</b> check that the extra telemetry log is enabled (Settings → Games → ACC); for an LFM race, have your LFM ID in Settings → General.</li>
                 <li><b>Practice</b> in the setup you plan to race. If <b>Manual setup select</b> appears, click the right setup once. Drive at least 5 clean laps on race fuel.</li>
                 <li><b>Race prep:</b> choose the race and its temperature; it ranks your setups and shows the fuel plan from your practice laps. For another temperature, use <b>More → Adjust for another temperature</b> on the setup.</li>
-                <li><b>Fuel calculator</b> (from the track page): race length, mandatory stops, pit loss and safety margin; the fuel to start with and to add per stop.</li>
+                <li><b>Fuel calculator</b> (from the track page): race length, mandatory stops, pit loss (filled in from your recorded stops when the box is empty) and safety margin; the fuel to start with and to add per stop.</li>
                 <li><b>During the race:</b> keep <b>Pit stop</b> open on a phone or tablet; it shows the fuel to add and the pressures to set before each stop.</li>
                 <li><b>Afterwards:</b> under Telemetry, open the race session for its laps and <b>Show brake wear and temperatures</b>, and compare laps in the lap analysis.</li>
               </ol>

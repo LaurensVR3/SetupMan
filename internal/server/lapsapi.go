@@ -96,7 +96,12 @@ func (s *Server) handleTrackLaps(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"stats": st, "unassigned": un, "perSetup": per})
+	pl, err := s.lib.TrackPitLoss(game, car, track)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"stats": st, "unassigned": un, "perSetup": per, "pitLoss": pl})
 }
 
 func (s *Server) handleRecording(w http.ResponseWriter, r *http.Request) {

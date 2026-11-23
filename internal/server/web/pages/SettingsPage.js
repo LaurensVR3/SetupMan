@@ -862,7 +862,10 @@ export const SettingsPage = {
               <h3>Log file</h3>
               <p><code>setupman.log</code> lists what SetupMan saw of your games: sessions, laps, which setup it recognised and changes in the setups folders. Drag it into your report; it helps most. It contains your setup names and nothing else personal.</p>
             </div>
-            <button type="button" class="btn" @click="openFolder('log')">Open log folder</button>
+            <div class="setting-actions">
+              <button v-if="network.local" type="button" class="btn" @click="openFolder('log')">Open log folder</button>
+              <a class="btn" :class="{ 'btn-quiet': network.local }" href="/api/log" download="setupman.log">Download log</a>
+            </div>
           </div>
         </section>
 

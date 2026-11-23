@@ -883,6 +883,30 @@ func (q Q) LapsForTrack(game, car, track string) ([]Lap, error) {
 	return q.laps(`WHERE s.game = ? AND s.car = ? AND s.track = ?`, game, car, track)
 }
 
+// LapsOnTrack returns every lap on a track with any car, oldest first, and the car of each
+// session (pit stop time loss, D-173).
+func (q Q) LapsOnTrack(game, track string) ([]Lap, map[int64]string, error) {
+	laps, err := q.laps(`WHERE s.game = ? AND LOWER(s.track) = LOWER(?)`, game, track)
+	if err != nil {
+		return nil, nil, err
+	}
+	rows, err := q.ex.Query(`SELECT id, car FROM sessions WHERE game = ? AND LOWER(track) = LOWER(?)`, game, track)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+	cars := map[int64]string{}
+	for rows.Next() {
+		var id int64
+		var car string
+		if err := rows.Scan(&id, &car); err != nil {
+			return nil, nil, err
+		}
+		cars[id] = car
+	}
+	return laps, cars, rows.Err()
+}
+
 // SessionsForSetup returns the sessions in which a setup was driven, newest first.
 func (q Q) SessionsForSetup(setupID int64) ([]Session, error) {
 	rows, err := q.ex.Query(`SELECT s.id, s.game, s.car, s.track, s.kind, s.started_at, COALESCE(s.setup_id,0), COALESCE(s.version_id,0), s.match,
