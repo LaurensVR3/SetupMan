@@ -337,6 +337,14 @@ func (l *Library) linkTelemetry(id string) int {
 	if err != nil {
 		return 0
 	}
+	// Once: files linked before D-179 had only one session's laps linked; link the others too.
+	relinkKey := "telemetry/" + id + "/laps-of-every-session"
+	if v, _ := l.GetSaved(relinkKey); v == "" {
+		if linked, err := l.db.TelemetryLinked(id); err == nil {
+			files = append(files, linked...)
+		}
+		defer l.SetSaved(relinkKey, "done")
+	}
 	n := 0
 	for _, f := range files {
 		end := f.StartedAt.Add(time.Duration(f.DurationMs)*time.Millisecond + 2*time.Minute)

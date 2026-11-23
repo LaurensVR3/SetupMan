@@ -56,6 +56,28 @@ func TestMatch(t *testing.T) {
 	}
 }
 
+// One ACC file for a server weekend (D-179): practice and race laps each link to their own
+// recorded lap; the file goes to the session with the most laps.
+func TestMatchWeekendFile(t *testing.T) {
+	start := time.Date(2026, 11, 23, 20, 15, 0, 0, time.Local)
+	f := store.TeleFile{StartedAt: start}
+	laps := []store.TeleLap{
+		{N: 1, StartMs: 0, LapMs: 101000, Timed: true},       // practice
+		{N: 2, StartMs: 1800000, LapMs: 102000, Timed: true}, // race
+		{N: 3, StartMs: 1902000, LapMs: 102500, Timed: true}, // race
+	}
+	at := func(ms int64) time.Time { return start.Add(time.Duration(ms) * time.Millisecond) }
+	sessions := []store.Session{{ID: 1, StartedAt: start}, {ID: 2, StartedAt: start.Add(29 * time.Minute)}}
+	recorded := map[int64][]store.Lap{
+		1: {{ID: 10, LapMs: 101000, At: at(101000)}},
+		2: {{ID: 20, LapMs: 102000, At: at(1902000)}, {ID: 21, LapMs: 102500, At: at(2004500)}},
+	}
+	sid, links := Match(f, laps, sessions, recorded)
+	if sid != 2 || links[1] != 10 || links[2] != 20 || links[3] != 21 {
+		t.Fatalf("got session %d links %v", sid, links)
+	}
+}
+
 func TestExtraLogRoundTrip(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "acc-7.smx.gz")
 	h := ExtraHeader{Game: "acc", Session: 7, Start: time.Now(), Hz: 10, Channels: []ExtraChannel{

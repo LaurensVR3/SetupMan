@@ -429,6 +429,17 @@ func (q Q) TelemetryUnlinked(game string) ([]TeleFile, error) {
 	return scanTele(rows)
 }
 
+// TelemetryLinked returns the files linked to a recorded session (to link the laps of other
+// sessions in the same file once, D-179).
+func (q Q) TelemetryLinked(game string) ([]TeleFile, error) {
+	own := strings.Replace(teleSelect, "f.track, k.started_at,", "f.track, f.started_at,", 1)
+	rows, err := q.ex.Query(own+`WHERE f.game = ? AND f.match = 'session' AND f.missing = 0`, game)
+	if err != nil {
+		return nil, err
+	}
+	return scanTele(rows)
+}
+
 // SessionsBetween returns the recorded sessions on a car and track that started between from and to.
 func (q Q) SessionsBetween(game, car, track string, from, to time.Time) ([]Session, error) {
 	rows, err := q.ex.Query(`SELECT id, game, car, track, kind, started_at, COALESCE(setup_id,0), COALESCE(version_id,0), match
@@ -935,8 +946,11 @@ func (q Q) TelemetryTrackLaps(game, car, track string) ([]TeleLapRow, error) {
 		where += ` AND f.car = ?`
 		args = append(args, car)
 	}
-	rows, err := q.ex.Query(lapSelect+`, f.car, k.id, k.started_at, COALESCE(s.kind, ''), COALESCE(k.session_id, 0),
-		CASE WHEN k.match = 'manual' THEN COALESCE(k.setup_id, 0) ELSE COALESCE(s.setup_id, 0) END`+lapFrom+`
+	// A lap linked to a recorded lap takes that lap's session and setup: one ACC file can hold a
+	// whole server weekend, and setups can change between stints (D-177, D-179).
+	rows, err := q.ex.Query(lapSelect+`, f.car, k.id, COALESCE(ls.started_at, k.started_at), COALESCE(ls.kind, s.kind, ''), COALESCE(l.session_id, k.session_id, 0),
+		CASE WHEN l.id IS NOT NULL THEN COALESCE(l.setup_id, 0) WHEN k.match = 'manual' THEN COALESCE(k.setup_id, 0) ELSE COALESCE(s.setup_id, 0) END`+lapFrom+`
+		LEFT JOIN sessions ls ON ls.id = l.session_id
 		JOIN telemetry_files f ON f.id = t.file_id JOIN telemetry_files k ON k.id = t.sess_file LEFT JOIN sessions s ON s.id = k.session_id
 		`+where+` ORDER BY t.lap_ms, t.file_id`, args...)
 	if err != nil {

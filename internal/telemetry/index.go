@@ -109,6 +109,31 @@ func Match(f store.TeleFile, laps []store.TeleLap, sessions []store.Session, rec
 		}
 	}
 	if best > 0 {
+		// ACC keeps one file for a whole server weekend (practice, qualifying and race; rig
+		// 2026-11-23): the file goes to the session with the most laps, but every lap is linked to
+		// its own recorded lap, whichever session that is in (D-179).
+		used := map[int64]bool{}
+		for _, id := range bestLinks {
+			used[id] = true
+		}
+		for _, s := range sessions {
+			if s.ID == bestID {
+				continue
+			}
+			for _, tl := range laps {
+				if !tl.Timed || bestLinks[tl.N] != 0 {
+					continue
+				}
+				end := f.StartedAt.Add(time.Duration(tl.StartMs+int64(tl.LapMs)) * time.Millisecond)
+				for _, rl := range recorded[s.ID] {
+					if used[rl.ID] || abs(rl.LapMs-tl.LapMs) > 3 || math.Abs(rl.At.Sub(end).Seconds()) > 90 {
+						continue
+					}
+					bestLinks[tl.N], used[rl.ID] = rl.ID, true
+					break
+				}
+			}
+		}
 		return bestID, bestLinks
 	}
 	complete := 0
