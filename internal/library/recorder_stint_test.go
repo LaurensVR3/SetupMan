@@ -120,3 +120,34 @@ func TestRecorderRaceKeepsSetup(t *testing.T) {
 		t.Errorf("after a race stop: %+v, want the same setup", rec)
 	}
 }
+
+// Equally likely setups: the setup of the previous session on this car and track wins (D-180).
+func TestRecorderPreviousSessionBreaksTie(t *testing.T) {
+	folder := setupFolder(t)
+	g := &fakeGame{installed: true, folder: folder}
+	l, _ := newLib(t, g)
+	l.Apply()
+	td, _ := l.Track("acc", "ferrari_296_gt3", "spa")
+	idB := td.SetupIDs[1]
+	// a and b have the same values: a tie
+	tie := game.Telemetry{Live: true, Session: "practice", Car: "ferrari_296_gt3", Track: "spa", TC: 4, ABS: 3, Map: 1, Fuel: 32}
+	tie.InPit = true
+	l.feedTelemetry(g, tie, true)
+	tie.InPit = false
+	l.feedTelemetry(g, tie, true)
+	if rec := l.Recording(); rec.SetupID != 0 || len(rec.Likely) != 2 {
+		t.Fatalf("first session: %+v, want a tie", rec)
+	}
+	if err := l.SetRecordingSetup(idB); err != nil {
+		t.Fatal(err)
+	}
+	// next session (qualifying): the same tie, b was driven before
+	q := tie
+	q.Session, q.InPit = "qualifying", true
+	l.feedTelemetry(g, q, true)
+	q.InPit = false
+	l.feedTelemetry(g, q, true)
+	if rec := l.Recording(); rec.SetupID != idB {
+		t.Errorf("qualifying: %+v, want b from the previous session", rec)
+	}
+}

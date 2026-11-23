@@ -149,6 +149,9 @@ func setupKey(t game.Telemetry) string {
 // (a loading screen can report "off" for a moment).
 var offGrace = 5 * time.Second
 
+// prevSessionWindow: how recent the previous session must be for its setup to break a tie (D-180).
+const prevSessionWindow = 4 * time.Hour
+
 // feedTelemetry advances the recorder of one game with one snapshot.
 func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 	l.recMu.Lock()
@@ -392,6 +395,24 @@ func (l *Library) matchSetup(g game.Game, r *recorder, t game.Telemetry) {
 			i, how = v[0], "the values"
 		case len(v) > 1:
 			short = v
+		}
+	}
+	// Several fit equally well: the setup of the previous session on this car and track (in the last
+	// few hours) wins when it is one of them (rig 2026-11-23: practice recognised 3040, qualifying
+	// ten minutes later found 2635 and 3040 equally likely), D-180.
+	curInShort := false
+	for _, k := range short {
+		curInShort = curInShort || ids[k] == r.setupID
+	}
+	if i < 0 && len(short) > 1 && !curInShort { // the setup being driven, when among them, stays
+		if prev, err := l.db.PreviousSessionSetup(g.ID(), r.car, r.track, r.sessionID, time.Now().Add(-prevSessionWindow)); err == nil && prev != 0 {
+			for _, k := range short {
+				if ids[k] == prev {
+					i, how = k, fmt.Sprintf("the setup of your previous session, among %s", shortText(names, short))
+					short = nil
+					break
+				}
+			}
 		}
 	}
 	// A setup picked by hand stays while the car's setup values are the ones it had then; once

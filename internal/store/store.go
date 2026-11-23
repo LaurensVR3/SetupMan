@@ -799,6 +799,18 @@ func (q Q) SetSessionSetup(sessionID, setupID, versionID int64, match string, mo
 	return nil
 }
 
+// PreviousSessionSetup returns the setup of the latest session on a car and track before a session
+// that started after since (0 = none): a tie-break for setup recognition (D-180).
+func (q Q) PreviousSessionSetup(game, car, track string, beforeID int64, since time.Time) (int64, error) {
+	var id int64
+	err := q.ex.QueryRow(`SELECT COALESCE(setup_id, 0) FROM sessions WHERE game = ? AND car = ? AND LOWER(track) = LOWER(?) AND id < ?
+		AND setup_id IS NOT NULL AND started_at >= ? ORDER BY started_at DESC LIMIT 1`, game, car, track, beforeID, ms(since)).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	return id, err
+}
+
 // SetLapsSetup gives some laps of a session another setup (one stint, D-177).
 func (q Q) SetLapsSetup(sessionID int64, lapIDs []int64, setupID, versionID int64) error {
 	for _, id := range lapIDs {
