@@ -71,7 +71,7 @@ export const FuelPage = {
       const t = data.value.tracks.find((x) => x.id === trackId);
       trackName.value = t ? t.name : trackId;
       const g = data.value.game, c = data.value.car;
-      setCrumbs([{ label: g.name, to: "/" + g.id }, { label: c.name, to: `/${g.id}/${c.id}` },
+      setCrumbs([{ label: g.short || g.name, to: "/" + g.id }, { label: c.name, to: `/${g.id}/${c.id}` },
         { label: trackName.value, to: `/${g.id}/${c.id}/${trackId}` }, { label: "Fuel" }]);
       const key = `${g.id}/${c.id}/${trackId}`;
       if (key !== loadedKey) {

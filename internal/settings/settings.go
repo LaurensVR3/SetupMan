@@ -40,6 +40,11 @@ type Game struct {
 	TidyOnGameClose bool `json:"tidyOnGameClose"`
 	// AutoRename: give new in-game saves a tidy name (opt-in, original feature list; managed only).
 	AutoRename bool `json:"autoRename"`
+	// TelemetryFolder: where the game writes its own telemetry files (ACC: MoTeC, D-160); "" = the
+	// folder SetupMan finds. SetupMan only reads it.
+	TelemetryFolder string `json:"telemetryFolder,omitempty"`
+	// ExtraLogOff: don't write SetupMan's extra telemetry log for this game (D-162; on by default).
+	ExtraLogOff bool `json:"extraLogOff,omitempty"`
 }
 
 // ManagedFor tells whether SetupMan may write to folder: management is on, and was switched

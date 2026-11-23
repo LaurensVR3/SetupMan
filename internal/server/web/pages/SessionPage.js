@@ -6,6 +6,7 @@ import { get } from "../api.js";
 import { usePageData } from "./load.js";
 import { Loading, setCrumbs } from "../components/common.js";
 import { lapTime } from "../components/LapTimes.js";
+import { TeleLinks } from "../components/TeleLinks.js";
 import { dateTime } from "../format.js";
 
 const KINDS = { race: "Race", qualifying: "Qualifying", practice: "Practice", hotlap: "Hotlap", hotstint: "Hotstint", superpole: "Superpole", "time attack": "Time attack" };
@@ -13,7 +14,7 @@ const NOTES = { out: "Out-lap", in: "In-lap", stop: "Pit stop" };
 const WHEELS = ["FL", "FR", "RL", "RR"];
 
 export const SessionPage = {
-  components: { Loading },
+  components: { Loading, TeleLinks },
   setup() {
     const route = useRoute();
     const { data, error } = usePageData(() => get(`/api/sessions/${route.params.id}`), { laps: true });
@@ -55,6 +56,7 @@ export const SessionPage = {
           </div>
         </div>
 
+        <TeleLinks :url="'/api/sessions/' + data.session.id + '/telemetry'" title="Telemetry of this session" />
         <p v-if="!data.laps.length" class="panel-hint">No laps were completed in this session.</p>
         <template v-else>
           <div class="stats session-stats">

@@ -118,16 +118,36 @@ func (s *Store) Tx(fn func(q Q) error) error {
 	return tx.Commit()
 }
 
-const schemaVersion = 7
+const schemaVersion = 12
 
 func migrate(db *sql.DB) error {
 	var v int
 	if err := db.QueryRow(`PRAGMA user_version`).Scan(&v); err != nil {
 		return err
 	}
-	if v >= schemaVersion {
-		return nil
+	if v < 7 {
+		if err := migrateTo7(db, v); err != nil {
+			return err
+		}
 	}
+	added, err := ensureTelemetry(db) // at every start (see there)
+	if err != nil {
+		return err
+	}
+	if v < 12 || added { // a table or column was missing: what was indexed without it is incomplete
+		if err := telemetryReindex(db); err != nil {
+			return err
+		}
+	}
+	if v < schemaVersion {
+		_, err := db.Exec(fmt.Sprintf(`PRAGMA user_version = %d`, schemaVersion))
+		return err
+	}
+	return nil
+}
+
+// migrateTo7 brings a library of version v (below 7) to version 7.
+func migrateTo7(db *sql.DB, v int) error {
 	if v == 6 {
 		return migrateV7(db)
 	}

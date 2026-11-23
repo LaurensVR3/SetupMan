@@ -66,6 +66,7 @@ func TestDeleteMany(t *testing.T) {
 	folder := setupFolder(t)
 	g := &fakeGame{installed: true, folder: folder, live: game.LiveUnknown}
 	l, _ := newLib(t, g)
+	l.Debounce = time.Hour // only the rescans SetupMan makes itself count; the watcher's would race with them
 	l.Backups = &folderbackup.Store{Dir: filepath.Join(t.TempDir(), "backups")}
 	l.Start()
 	waitFor(t, "first scan", func() bool { return l.Games()[0].Status == "ok" })

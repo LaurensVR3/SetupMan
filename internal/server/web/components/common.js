@@ -47,6 +47,10 @@ export const TopBar = {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.5a9.5 9.5 0 1 1 0 19 9.5 9.5 0 0 1 0-19Zm0 4.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg>
             Pit stop
           </router-link>
+          <router-link to="/telemetry" class="nav-link" :class="{ active: $route.path.startsWith('/telemetry') }">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V4h2v14h16v2H3Zm4-4.6 3.6-5.8 3.3 3.1L18.3 6l1.7 1-5.7 9.1-3.3-3.1-3.3 5.4L7 15.4Z"/></svg>
+            Telemetry
+          </router-link>
           <router-link to="/manual" class="nav-link" :class="{ active: $route.path === '/manual' }">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5a.5.5 0 0 0 0 1H20v2H6.5A2.5 2.5 0 0 1 4 19.5v-15ZM8 6v2h8V6H8Zm0 4v2h6v-2H8Z"/></svg>
             Manual
@@ -97,9 +101,9 @@ export const EmptyState = {
 };
 
 export const Loading = {
-  props: { error: String },
+  props: { error: String, back: { type: String, default: "/" }, backLabel: { type: String, default: "Go to the start page" } },
   template: `
-    <div v-if="error" class="notice notice-error" role="alert">{{ error }} <router-link to="/">Go to the start page</router-link></div>
+    <div v-if="error" class="notice notice-error" role="alert">{{ error }} <router-link :to="back">{{ backLabel }}</router-link></div>
     <div v-else class="loading" aria-live="polite">Loading…</div>`,
 };
 

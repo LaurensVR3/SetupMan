@@ -63,6 +63,12 @@ type Library struct {
 	// that time changes, the game has not opened the file
 	touchMu  sync.Mutex
 	ownTouch map[string]time.Time
+
+	// TelemetryDir is where SetupMan keeps its extra telemetry logs (%APPDATA%\SetupMan\telemetry,
+	// D-162); set by main. "" = no extra log.
+	TelemetryDir string
+	teleOnce     sync.Once
+	teleD        *teleData
 }
 
 type state struct {
@@ -121,6 +127,7 @@ func (l *Library) Settings() settings.Settings {
 func (l *Library) Apply() {
 	st := l.store.Load()
 	var rescan []string
+	var stops []func() // called after unlocking: a watcher's callback takes l.mu, and stopping waits for it
 
 	l.mu.Lock()
 	l.settings = st
@@ -140,7 +147,7 @@ func (l *Library) Apply() {
 			continue
 		}
 		if s.stopWatch != nil {
-			s.stopWatch()
+			stops = append(stops, s.stopWatch)
 			s.stopWatch = nil
 		}
 		s.folder, s.visible, s.scan, s.err = folder, visible, nil, ""
@@ -153,6 +160,9 @@ func (l *Library) Apply() {
 		}
 	}
 	l.mu.Unlock()
+	for _, stop := range stops {
+		stop()
+	}
 
 	for _, id := range rescan {
 		l.Rescan(id)
@@ -167,6 +177,7 @@ func (l *Library) Apply() {
 			}
 		}
 	}
+	l.applyTelemetry() // telemetry folder watchers (D-160)
 	l.publish(Event{Type: "games-changed"})
 }
 
@@ -174,10 +185,11 @@ func (l *Library) Apply() {
 // so SetupMan never quits halfway through changing a game folder (D-72, D-138). Nothing touches a
 // game folder after Stop: call it only when SetupMan quits.
 func (l *Library) Stop() {
+	var stops []func()
 	l.mu.Lock()
 	for _, s := range l.states {
 		if s.stopWatch != nil {
-			s.stopWatch()
+			stops = append(stops, s.stopWatch)
 			s.stopWatch = nil
 		}
 		if s.timer != nil {
@@ -185,6 +197,10 @@ func (l *Library) Stop() {
 		}
 	}
 	l.mu.Unlock()
+	for _, stop := range stops { // outside the lock: a watcher's callback takes l.mu (see Apply)
+		stop()
+	}
+	l.stopTelemetry() // closes the extra telemetry log properly
 	l.folderMu.Lock() // held on purpose: no new folder change starts while SetupMan quits
 }
 
@@ -308,6 +324,7 @@ func (l *Library) liveStep(prev game.LiveState) (now game.LiveState) {
 		}
 		l.runPendingOps() // staging changes queued while driving (D-79)
 	}
+	l.telemetryTick(now) // telemetry files that arrived while driving (D-160)
 	if prev != game.LiveUnknown && now == game.LiveUnknown {
 		l.tidyOnGameClose() // the game was closed (D-80, optional)
 	}

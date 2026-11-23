@@ -8,6 +8,7 @@ import (
 	"setupman/internal/compare"
 	"setupman/internal/game"
 	"setupman/internal/setup"
+	"setupman/internal/telemetry"
 )
 
 // GameSummary is what a game tile and the settings page show (spec D-28, D-33).
@@ -32,6 +33,11 @@ type GameSummary struct {
 	Live           game.LiveState `json:"live"`
 	Laps           bool           `json:"laps"`   // SetupMan records laps and gives pit stop advice for this game
 	ByFile         bool           `json:"byFile"` // the setup driven is recognised from the file the game opened last (D-147, D-149)
+	// Telemetry suite (D-160, D-162): the game writes telemetry files SetupMan can read, where it
+	// found them, and whether SetupMan can add its extra log
+	Telemetry         bool   `json:"telemetry"`
+	DetectedTelemetry string `json:"detectedTelemetry,omitempty"`
+	ExtraLog          bool   `json:"extraLog"`
 	// Staging (Phase 3)
 	Managed         bool `json:"managed"`
 	TidyOnGameClose bool `json:"tidyOnGameClose"`
@@ -72,6 +78,10 @@ type TrackSummary struct {
 	Name       string `json:"name"`
 	Setups     int    `json:"setups"`
 	Duplicates int    `json:"duplicates"`
+	// Filled on the car page (D-165): the circuit outline from telemetry and the fastest valid lap
+	// recorded or in the telemetry, 0 = none
+	Outline *telemetry.Outline `json:"outline,omitempty"`
+	BestMs  int                `json:"bestMs,omitempty"`
 }
 
 // CarDetail is the car page.
@@ -163,6 +173,14 @@ func (l *Library) Game(id string) (GameDetail, bool) {
 
 // Car returns the car page.
 func (l *Library) Car(id, carID string) (CarDetail, bool) {
+	d, ok := l.car(id, carID)
+	if ok {
+		l.addTrackRecords(id, d.Car.ID, d.Tracks)
+	}
+	return d, ok
+}
+
+func (l *Library) car(id, carID string) (CarDetail, bool) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 	g, c := l.findCar(id, carID)
@@ -236,6 +254,10 @@ func (l *Library) summary(g game.Game) GameSummary {
 		Managed: l.managedLocked(g), TidyOnGameClose: s.cfg.TidyOnGameClose, AutoRename: s.cfg.AutoRename, Queued: l.QueuedCount(),
 	}
 	_, sum.Laps = g.(game.TelemetrySource)
+	if tf, ok := g.(game.TelemetryFolder); ok {
+		sum.Telemetry, sum.DetectedTelemetry = true, tf.TelemetryFolder()
+	}
+	_, sum.ExtraLog = g.(game.ExtraLogger)
 	if c, ok := g.(game.SetupCacher); sum.Laps && (!ok || !c.CachesSetups()) {
 		sum.ByFile = true
 	}
@@ -259,14 +281,16 @@ func (l *Library) summary(g game.Game) GameSummary {
 		t := s.scan.ScannedAt
 		sum.ScannedAt = &t
 		sum.Cars = len(s.scan.Cars)
+		tracks := map[string]bool{} // each track once, however many cars have setups for it
 		for i := range s.scan.Cars {
 			c := &s.scan.Cars[i]
-			sum.Tracks += len(c.Tracks)
 			for j := range c.Tracks {
+				tracks[strings.ToLower(c.Tracks[j].ID)] = true
 				sum.Setups += len(c.Tracks[j].Setups)
 				sum.Duplicates += dupCount(l.cluster(&c.Tracks[j]))
 			}
 		}
+		sum.Tracks = len(tracks)
 		if sum.Setups == 0 {
 			sum.Status, sum.Message = "empty", s.scan.Hint
 		}
@@ -360,4 +384,21 @@ func summarizePairs(pairs []compare.Pair) []PairSummary {
 		out[i] = PairSummary{A: p.A, B: p.B, Score: p.Score, Identical: p.Identical, Clicks: p.Clicks, Differ: p.Differ, Summary: p.Summary}
 	}
 	return out
+}
+
+// addTrackRecords adds each track's outline and fastest lap to the car page (outside the state
+// lock: it reads the library database).
+func (l *Library) addTrackRecords(gameID, car string, tracks []TrackSummary) {
+	if l.db == nil {
+		return
+	}
+	tele, _ := l.db.TelemetryBestPerCar(gameID, car)
+	for i := range tracks {
+		t := &tracks[i]
+		t.Outline = l.outline(gameID, t.ID)
+		t.BestMs = tele[strings.ToLower(t.ID)]
+		if st, err := l.TrackLapTimes(gameID, car, t.ID); err == nil && st.BestMs > 0 && (t.BestMs == 0 || st.BestMs < t.BestMs) {
+			t.BestMs = st.BestMs
+		}
+	}
 }

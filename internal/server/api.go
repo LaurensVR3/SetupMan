@@ -132,15 +132,17 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for id, g := range st.Games {
-		if g.Folder != "" {
-			abs, err := filepath.Abs(strings.TrimSpace(g.Folder))
-			if err != nil {
-				writeError(w, http.StatusBadRequest, err.Error())
-				return
+		for _, f := range []*string{&g.Folder, &g.TelemetryFolder} { // a pasted path: no stray spaces, always absolute
+			if *f = strings.TrimSpace(*f); *f != "" {
+				abs, err := filepath.Abs(*f)
+				if err != nil {
+					writeError(w, http.StatusBadRequest, err.Error())
+					return
+				}
+				*f = abs
 			}
-			g.Folder = abs
-			st.Games[id] = g
 		}
+		st.Games[id] = g
 	}
 	if err := s.store.Save(st); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())

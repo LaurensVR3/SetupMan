@@ -15,12 +15,17 @@ import (
 	"setupman/internal/store"
 )
 
-// managedLib returns a library with folder management on, and the ids of Spa a and b.
-func managedLib(t *testing.T) (*Library, string, int64, int64) {
+// managedLib returns a library with folder management on, and the ids of Spa a and b. debounce
+// (optional) is the watcher's quiet period, set before the library starts so no rescan armed
+// with the default one can fire later.
+func managedLib(t *testing.T, debounce ...time.Duration) (*Library, string, int64, int64) {
 	t.Helper()
 	folder := setupFolder(t)
 	g := &fakeGame{installed: true, folder: folder, live: game.LiveUnknown}
 	l, _ := newLib(t, g)
+	if len(debounce) > 0 {
+		l.Debounce = debounce[0]
+	}
 	l.Backups = &folderbackup.Store{Dir: filepath.Join(t.TempDir(), "backups")}
 	l.Start()
 	waitFor(t, "first scan", func() bool { return l.Games()[0].Status == "ok" })
@@ -37,8 +42,7 @@ func managedLib(t *testing.T) (*Library, string, int64, int64) {
 
 // A save from the game that SetupMan hasn't read yet is stored, never overwritten unasked.
 func TestStageKeepsUnreadGameSave(t *testing.T) {
-	l, folder, idA, _ := managedLib(t)
-	l.Debounce = time.Hour // the watcher must not read the save before we stage
+	l, folder, idA, _ := managedLib(t, time.Hour) // the watcher must not read the save before we stage
 	file := filepath.Join(folder, "ferrari_296_gt3", "Spa", "a.json")
 	raw, _ := os.ReadFile(file)
 	saved := []byte(strings.Replace(string(raw), `"tC1": 4`, `"tC1": 7`, 1))

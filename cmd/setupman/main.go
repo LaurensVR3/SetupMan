@@ -116,6 +116,7 @@ func main() {
 	games := []game.Game{acc.New(), ac.New(), ace.New(), acr.New()}
 	lib := library.New(games, store, db)
 	lib.Backups = &folderbackup.Store{Dir: filepath.Join(dataDir, "backups")} // ACC setups folder backups (D-82)
+	lib.TelemetryDir = filepath.Join(dataDir, fullbackup.TelemetryDir)        // extra telemetry logs (D-162)
 	lib.Start()
 	if err := autostart.Refresh(); err != nil { // SetupMan.exe may have been moved
 		log.Printf("start with Windows: %v", err)

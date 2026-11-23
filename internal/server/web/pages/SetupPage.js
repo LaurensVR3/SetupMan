@@ -14,11 +14,12 @@ import { FamilyTree, SessionBadge } from "../components/FamilyTree.js";
 import { CompareTable } from "../components/CompareTable.js";
 import { SetupSheet } from "../components/SetupSheet.js";
 import { LapTimes } from "../components/LapTimes.js";
+import { TeleLinks } from "../components/TeleLinks.js";
 
 const TABS = [["setup", "Setup"], ["history", "History"], ["laps", "Lap times"], ["notes", "Notes & details"]];
 
 export const SetupPage = {
-  components: { Loading, FamilyTree, SessionBadge, CompareTable, SetupSheet, LapTimes },
+  components: { Loading, FamilyTree, SessionBadge, CompareTable, SetupSheet, LapTimes, TeleLinks },
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -41,7 +42,7 @@ export const SetupPage = {
       const d = data.value;
       const g = d.setup.game;
       setCrumbs([
-        { label: d.gameName || g, to: "/" + g },
+        { label: d.gameShort || d.gameName || g, to: "/" + g },
         { label: d.carName, to: `/${g}/${d.setup.car}` },
         { label: d.trackName, to: `/${g}/${d.setup.car}/${d.trackId}` },
         { label: d.setup.name },
@@ -477,6 +478,7 @@ export const SetupPage = {
         <!-- Lap times -->
         <section v-else-if="tab === 'laps'" class="panel">
           <LapTimes :laps="laps" :meta="data.setup.meta" :setup-id="data.setup.id" :options="data.relinkOptions" @assign="assignSession" />
+          <TeleLinks :url="'/api/setups/' + data.setup.id + '/telemetry'" title="Telemetry with this setup" />
         </section>
 
         <!-- Notes & details -->

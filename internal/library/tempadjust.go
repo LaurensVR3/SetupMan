@@ -134,13 +134,13 @@ func (l *Library) learnTempRules(gameID, car string) ([]TempRule, int, error) {
 func labelOf(path string) string {
 	switch path {
 	case "basicSetup.tyres.tyrePressure[0]":
-		return "psi FL"
+		return "Tyre pressure FL"
 	case "basicSetup.tyres.tyrePressure[1]":
-		return "psi FR"
+		return "Tyre pressure FR"
 	case "basicSetup.tyres.tyrePressure[2]":
-		return "psi RL"
+		return "Tyre pressure RL"
 	case "basicSetup.tyres.tyrePressure[3]":
-		return "psi RR"
+		return "Tyre pressure RR"
 	case "advancedSetup.aeroBalance.brakeDuct[0]":
 		return "Brake ducts front"
 	case "advancedSetup.aeroBalance.brakeDuct[1]":

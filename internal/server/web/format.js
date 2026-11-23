@@ -1,7 +1,7 @@
 // Formatting helpers shared by pages.
 
 export function plural(n, one, many = one + "s") {
-  return `${n} ${n === 1 ? one : many}`;
+  return `${typeof n === "number" ? n.toLocaleString() : n} ${n === 1 ? one : many}`;
 }
 
 // Round down so 99.99% never shows as 100%.

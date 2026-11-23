@@ -35,6 +35,8 @@ const (
 	settingsFile = "settings.json"
 	pendingFile  = "restore-pending.zip"
 	manifestName = "manifest.json"
+	// TelemetryDir is the folder (in the data folder) with SetupMan's extra telemetry logs (D-162).
+	TelemetryDir = "telemetry"
 )
 
 // ErrNotFound is returned for an unknown backup.
@@ -111,6 +113,12 @@ func (s *Store) Create(reason string, db Snapshotter, folderZips map[FolderRef]s
 	files := map[string]string{libraryFile: tmpDB}
 	if _, err := os.Stat(filepath.Join(s.DataDir, settingsFile)); err == nil {
 		files[settingsFile] = filepath.Join(s.DataDir, settingsFile)
+	}
+	// SetupMan's own extra telemetry logs (D-162). The game's telemetry files are never included (D-160).
+	if logs, _ := filepath.Glob(filepath.Join(s.DataDir, TelemetryDir, "*.smx.gz")); len(logs) > 0 {
+		for _, p := range logs {
+			files[TelemetryDir+"/"+filepath.Base(p)] = p
+		}
 	}
 	m := Manifest{Kind: "setupman-full-backup", Version: 1, CreatedAt: time.Now(), Reason: reason, Files: map[string]string{}}
 	for ref, p := range folderZips {
@@ -380,6 +388,15 @@ func (s *Store) extractAll(pending, folderDir string) error {
 			dst = filepath.Join(folderDir, parts[1], path.Base(f.Name))
 			if fileExists(dst) {
 				continue // already there
+			}
+		case strings.HasPrefix(f.Name, TelemetryDir+"/") && strings.HasSuffix(f.Name, ".smx.gz"):
+			base := strings.TrimSuffix(path.Base(f.Name), ".smx.gz")
+			if path.Dir(f.Name) != TelemetryDir || !validID(base) {
+				continue
+			}
+			dst = filepath.Join(s.DataDir, TelemetryDir, base+".smx.gz")
+			if fileExists(dst) {
+				continue // already there (logs never change once a session is over)
 			}
 		default:
 			continue

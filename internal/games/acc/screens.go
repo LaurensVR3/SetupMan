@@ -54,8 +54,8 @@ var screens = []struct {
 	key string
 	s   screen
 }{
-	// Tyres: per wheel psi, toe, camber, caster.
-	{"basicSetup.tyres.tyrePressure", wheels(tabTyres, "psi")},
+	// Tyres: per wheel pressure, toe, camber, caster.
+	{"basicSetup.tyres.tyrePressure", wheels(tabTyres, "Tyre pressure")},
 	{"basicSetup.alignment.toe", wheels(tabTyres, "Toe")},
 	{"basicSetup.alignment.camber", wheels(tabTyres, "Camber")},
 	{"basicSetup.alignment.casterLF", screen{section: tabTyres, row: "Caster", cols: []string{"Left front"}, short: []string{"FL"}}},

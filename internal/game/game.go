@@ -186,3 +186,37 @@ func VersionAt(list []Patch, t time.Time) string {
 	}
 	return v
 }
+
+// TelemetryFolder is implemented by games that write their own telemetry files (ACC: MoTeC logs in
+// Documents\Assetto Corsa Competizione\MoTeC, D-160). SetupMan only ever reads that folder.
+type TelemetryFolder interface {
+	TelemetryFolder() string // "" when not found
+}
+
+// ExtraChannel is one value an ExtraLogger reads.
+type ExtraChannel struct {
+	Name string // e.g. "FUEL", "SLIP_ANGLE_FL"; LAP, LAP_TIME and LAST_LAP are required to line laps up
+	Unit string
+}
+
+// ExtraLogger is implemented by games whose live data has values their own telemetry files lack.
+// SetupMan logs them about 10 times per second while a session is live (D-162).
+type ExtraLogger interface {
+	ExtraChannels() []ExtraChannel
+	OpenExtra() (ExtraReader, error)
+}
+
+// ExtraReader reads the extra channels; keep it open while logging (opening is the costly part).
+type ExtraReader interface {
+	// Read fills dst (one value per ExtraChannels entry) and says whether a session is live
+	// (not menus, pause or replay). ok = false: the game's live data can't be read any more.
+	Read(dst []float32) (live, ok bool)
+	Close()
+}
+
+// Namer is implemented by games that know readable car and track names without a setup folder
+// (telemetry may exist for cars and tracks that have no setups).
+type Namer interface {
+	CarInfo(id string) (name, brand, class string)
+	TrackName(id string) string
+}

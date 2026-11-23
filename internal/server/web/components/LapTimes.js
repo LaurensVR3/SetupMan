@@ -5,9 +5,11 @@ import { dateTime } from "../format.js";
 
 export function lapTime(ms) {
   if (!ms) return "–";
-  const m = Math.floor(ms / 60000);
-  const s = (ms - m * 60000) / 1000;
-  return `${m}:${s.toFixed(3).padStart(6, "0")}`;
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms - h * 3600000) / 60000);
+  const s = (ms - h * 3600000 - m * 60000) / 1000;
+  const sec = s.toFixed(3).padStart(6, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`; // a part over an hour: h:mm:ss.000
 }
 
 const TempGraph = {

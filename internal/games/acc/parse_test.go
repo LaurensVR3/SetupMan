@@ -43,7 +43,7 @@ func TestParseInGameOrder(t *testing.T) {
 	}
 
 	f := field(t, s, "basicSetup.tyres.tyrePressure[0]")
-	if f.Label != "psi FL" || f.Row != "psi" || f.Col != "Left front" || f.Section != "Tyres" || f.Kind != "int" || f.Num != 50 {
+	if f.Label != "Tyre pressure FL" || f.Row != "Tyre pressure" || f.Col != "Left front" || f.Section != "Tyres" || f.Kind != "int" || f.Num != 50 {
 		t.Errorf("tyre pressure field wrong: %+v", f)
 	}
 	if f := field(t, s, "advancedSetup.aeroBalance.brakeDuct[1]"); f.Label != "Brake ducts rear" || f.Section != "Aero" || f.Col != "Rear" {

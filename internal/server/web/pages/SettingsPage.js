@@ -49,7 +49,7 @@ export const SettingsPage = {
     const setGameTab = (id) => router.replace({ query: { ...route.query, game: id } });
     const saved = ref("");
     const error = ref("");
-    const picker = reactive({ open: false, game: null, start: "" });
+    const picker = reactive({ open: false, game: null, kind: "setups", start: "" });
     let savedTimer;
 
     const s = computed(() => store.settings);
@@ -350,13 +350,26 @@ export const SettingsPage = {
     }
     function browse(g) {
       picker.game = g.id;
+      picker.kind = "setups";
       picker.start = draft.folders[g.id] || g.folder || g.detectedFolder;
       picker.open = true;
     }
     function picked(path) {
       picker.open = false;
-      useFolder(picker.game, path);
+      if (picker.kind === "telemetry") useTeleFolder(picker.game, path);
+      else useFolder(picker.game, path);
     }
+    // Telemetry (D-160, D-162): the folder the game writes its telemetry to (only read), and the extra log.
+    const teleDraft = reactive({});
+    const teleValue = (g) => (g.id in teleDraft ? teleDraft[g.id] : store.settings.games[g.id]?.telemetryFolder || "");
+    const useTeleFolder = (id, folder) => { teleDraft[id] = folder; return save((n) => { gameCfg(n, id).telemetryFolder = folder; }); };
+    function browseTele(g) {
+      picker.game = g.id;
+      picker.kind = "telemetry";
+      picker.start = teleValue(g) || g.detectedTelemetry || "";
+      picker.open = true;
+    }
+    const setExtraLog = (id, on) => save((n) => { gameCfg(n, id).extraLogOff = !on; });
 
     // History rebuild preview (spec D-62).
     const hist = reactive({
@@ -394,7 +407,7 @@ export const SettingsPage = {
     return { issueUrl, lfmId, saveLfm, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
       hist, preview, applyHistory, countNodes, setEndurance, autostart, setAutostart,
       manage, setManaged, setTidy, setAutoRename, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
-      full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
+      teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
   },
   template: `
     <main class="page page-narrow">
@@ -544,6 +557,28 @@ export const SettingsPage = {
               </div>
               <LastOpenedNotice v-if="g.byFile" :games="g.short" />
             </div>
+            <div v-if="g.telemetry" class="setting setting-stack">
+              <div class="setting-text">
+                <h3>Telemetry</h3>
+                <p>SetupMan reads the MoTeC telemetry {{ g.short }} writes. Sessions SetupMan recorded get their setup automatically; for older sessions, choose the setup on the track's Sessions tab. SetupMan only reads these files and never changes, moves or deletes them.</p>
+                <p v-if="g.detectedTelemetry">Found automatically: <code>{{ g.detectedTelemetry }}</code>. Leave empty to use it.</p>
+                <p v-else-if="teleValue(g)">{{ g.short }}'s own MoTeC folder was not found on this PC; SetupMan uses the folder below.</p>
+                <p v-else>Not found automatically. {{ g.short }} creates the folder once it has written telemetry; or choose a folder below.</p>
+              </div>
+              <div class="folder-row">
+                <input type="text" :value="teleValue(g)" :placeholder="g.detectedTelemetry || 'Choose a folder'" spellcheck="false"
+                  @change="useTeleFolder(g.id, $event.target.value.trim())" :aria-label="g.name + ' telemetry folder'">
+                <button type="button" class="btn" @click="browseTele(g)">Browse…</button>
+                <button v-if="teleValue(g) && g.detectedTelemetry" type="button" class="btn btn-quiet" @click="useTeleFolder(g.id, '')">Use the found folder</button>
+              </div>
+            </div>
+            <div v-if="g.extraLog" class="setting manage-row">
+              <div class="setting-text">
+                <h3>Extra telemetry log</h3>
+                <p>While you drive, SetupMan records what the MoTeC files lack: car position (for an exact track map), fuel, lap validity, slip angle and slip ratio, brake pressure, brake pad and disc wear, ride height, pitch and roll. About 10 readings per second, a few MB per hour, stored in SetupMan's own folder and included in full backups.</p>
+              </div>
+              <label class="switch switch-lg"><input type="checkbox" :checked="!s.games[g.id]?.extraLogOff" @change="setExtraLog(g.id, $event.target.checked)"><span></span><span class="sr">Extra telemetry log for {{ g.short }}</span></label>
+            </div>
             <div v-if="g.laps" class="setting">
               <div class="setting-text">
                 <h3>Pit stop advice: target tyre pressures</h3>
@@ -591,7 +626,7 @@ export const SettingsPage = {
           <div class="setting setting-stack">
             <div class="setting-text">
               <h3>Full SetupMan backups</h3>
-              <p>Everything SetupMan knows: all setup versions, history, notes, lap times and settings, plus a backup of each setups folder. Download one to keep a copy on another drive or PC.</p>
+              <p>Everything SetupMan knows: all setup versions, history, notes, lap times, settings, telemetry notes and reference laps, and SetupMan's extra telemetry logs, plus a backup of each setups folder. The game's own telemetry files (MoTeC) are not included: SetupMan never changes them. Download a backup to keep a copy on another drive or PC.</p>
             </div>
             <ul v-if="full.list.length" class="backup-list">
               <li v-for="b in full.list" :key="b.id">
@@ -659,7 +694,7 @@ export const SettingsPage = {
           <div class="setting setting-stack">
             <div class="setting-text">
               <h3>Network name</h3>
-              <p>A name such as <b>setupman.lan</b> that a reverse proxy, for example Nginx Proxy Manager, forwards to SetupMan, so devices can open it without an IP address or port number. Requires network access; devices opening SetupMan through this name need the PIN (unless it is disabled above), including this PC. Leave empty to accept IP addresses only. Setup steps: <router-link to="/manual">Manual</router-link> → Other devices and setupman.lan.</p>
+              <p>A name such as <b>setupman.lan</b> that a reverse proxy, for example Nginx Proxy Manager, forwards to SetupMan, so devices can open it without an IP address or port number. Requires network access; devices opening SetupMan through this name need the PIN (unless it is disabled above), including this PC. Leave empty to accept IP addresses only. Setup steps: <router-link to="/manual?tab=devices&s=lan">Manual → Other devices</router-link>.</p>
             </div>
             <div class="folder-row">
               <input type="text" v-model="network.newHostName" placeholder="setupman.lan" spellcheck="false" autocapitalize="off" aria-label="Network name" @keyup.enter="setHostName">
@@ -848,7 +883,7 @@ export const SettingsPage = {
               </tbody>
             </table>
           </div>
-          <p class="panel-hint">AC Rally keeps all setups in one save file, so SetupMan only reads them. Details per game are in the <router-link to="/manual">Manual</router-link> (Supported games).</p>
+          <p class="panel-hint">AC Rally keeps all setups in one save file, so SetupMan only reads them. Details per game are in the <router-link to="/manual?s=games">Manual</router-link> (Supported games).</p>
         </section>
 
         <section v-if="tab === 'about'" class="settings-section about">
@@ -858,6 +893,6 @@ export const SettingsPage = {
         </section>
       </template>
 
-      <FolderPicker :open="picker.open" :start="picker.start" title="Choose the setups folder" @pick="picked" @close="picker.open = false" />
+      <FolderPicker :open="picker.open" :start="picker.start" :title="picker.kind === 'telemetry' ? 'Choose the telemetry folder' : 'Choose the setups folder'" @pick="picked" @close="picker.open = false" />
     </main>`,
 };

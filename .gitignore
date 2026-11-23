@@ -22,3 +22,6 @@ desktop.ini
 # Rig test material (logs and game screenshots contain personal setup names) - do not publish
 /Logs/
 /Game Screenshots/
+
+# ACC MoTeC telemetry from the rig for local testing (large, personal) - do not publish
+/Telemetry/

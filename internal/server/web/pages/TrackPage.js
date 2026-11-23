@@ -31,7 +31,7 @@ export const TrackPage = {
     watchEffect(() => {
       if (!data.value) return;
       const { game: g, car: c, track: t } = data.value;
-      setCrumbs([{ label: g.name, to: "/" + g.id }, { label: c.name, to: `/${g.id}/${c.id}` }, { label: t.name }]);
+      setCrumbs([{ label: g.short || g.name, to: "/" + g.id }, { label: c.name, to: `/${g.id}/${c.id}` }, { label: t.name }]);
     });
 
     // One list of all setups: those in ACC's folder (with an index into data.setups) and hidden ones.
@@ -332,7 +332,7 @@ export const TrackPage = {
           <label v-if="!data.game.readOnly" class="dropzone" :class="{ busy }">
             <input type="file" :accept="data.game.ext + ',.zip,.setupman'" multiple :disabled="busy" @change="importFiles">
             <b>{{ busy ? 'Adding…' : 'Add setups' }}</b>
-            <span>Drop setup files anywhere on this page, or click here to choose them. {{ G }} files ({{ data.game.ext }}), ZIP files and shared setups (.setupman) all work.</span>
+            <span>Drop setup files anywhere on this page, or click to choose them. {{ G }} files ({{ data.game.ext }}), ZIP files and shared setups (.setupman) all work.</span>
           </label>
           <div v-if="imported" class="import-result" role="status">
             <p><b>{{ imported.imported === 1 ? '1 setup' : imported.imported + ' setups' }} added</b><template v-if="imported.skipped">, {{ imported.skipped }} skipped</template>.

@@ -16,6 +16,9 @@ import { ManualPage } from "./pages/ManualPage.js";
 import { PitPage } from "./pages/PitPage.js";
 import { SessionPage } from "./pages/SessionPage.js";
 import { PrepPage } from "./pages/PrepPage.js";
+import { TelemetryPage } from "./pages/TelemetryPage.js";
+import { TelemetryTrackPage } from "./pages/TelemetryTrackPage.js";
+import { AnalysisPage } from "./pages/AnalysisPage.js";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -32,6 +35,11 @@ const router = createRouter({
     { path: "/prep", component: PrepPage },
     { path: "/session/:id", component: SessionPage },
     { path: "/manual", component: ManualPage },
+    { path: "/telemetry", component: TelemetryPage },
+    { path: "/telemetry/analyse", component: AnalysisPage },
+    { path: "/telemetry/:game/:track", component: TelemetryTrackPage },
+    // the earlier car-and-track address: the track page with that car chosen
+    { path: "/telemetry/:game/:car/:track", redirect: (to) => ({ path: `/telemetry/${to.params.game}/${encodeURIComponent(to.params.track)}`, query: { car: to.params.car, ...to.query } }) },
   ],
   scrollBehavior: () => ({ top: 0 }),
 });
@@ -79,4 +87,6 @@ try {
   // Opened from another computer without the PIN yet: the PIN screen shows (D-100).
 }
 if (!needPin.value) listen();
-createApp(App).use(router).mount("#app");
+// v-focus: an input that appears (e.g. a note being edited) gets the keyboard focus
+// ("autofocus" only works when the page loads)
+createApp(App).use(router).directive("focus", { mounted: (el) => el.focus() }).mount("#app");

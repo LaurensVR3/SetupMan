@@ -141,6 +141,7 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 	if !running {
 		if r != nil {
 			l.recs[id], changed = nil, true // game closed: the session ended
+			l.stopExtra(id)
 		}
 		return
 	}
@@ -162,6 +163,7 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 		r.startLaps = t.CompletedLaps
 		l.recs[id], changed = r, true
 		logSession(g, t)
+		l.startExtra(g, s.ID) // extra telemetry log for this session (D-162)
 	}
 
 	// Leaving the pits: the setup may have been changed there, so look again.

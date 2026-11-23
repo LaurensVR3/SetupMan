@@ -60,3 +60,20 @@ func TestProposeKeep(t *testing.T) {
 		}
 	}
 }
+
+// The overview counts each track once, however many cars have setups for it (owner report
+// 2026-11-23: ACC showed 70 tracks, the number of car-and-track pairs).
+func TestGameSummaryTracks(t *testing.T) {
+	folder := setupFolder(t) // ferrari_296_gt3/Spa, bmw_m4_gt4/monza
+	base, _ := os.ReadFile("../games/acc/testdata/base.json")
+	bmwSpa := filepath.Join(folder, "bmw_m4_gt4", "Spa")
+	os.MkdirAll(bmwSpa, 0o755)
+	os.WriteFile(filepath.Join(bmwSpa, "x.json"), base, 0o644)
+	g := &fakeGame{installed: true, folder: folder, live: game.LiveUnknown}
+	l, _ := newLib(t, g)
+	l.Start()
+	waitFor(t, "first scan", func() bool { return l.Games()[0].Status == "ok" })
+	if s := l.Games()[0]; s.Cars != 2 || s.Tracks != 2 {
+		t.Fatalf("cars %d, tracks %d; want 2 and 2", s.Cars, s.Tracks)
+	}
+}
