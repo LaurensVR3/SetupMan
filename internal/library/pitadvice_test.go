@@ -93,9 +93,13 @@ func TestPitAdvice(t *testing.T) {
 	if f.LapsToGo != 29 || !f.Timed {
 		t.Errorf("laps to go = %v, want 29", f.LapsToGo)
 	}
-	// 29 × 3.0 + 2 (margin) = 89 L needed, 42 L in the tank → 47 L to add.
-	if f.FuelNeeded < 88.99 || f.FuelNeeded > 89.01 || f.FuelToAdd != 47 {
-		t.Errorf("fuel needed %.2f, add %d; want 89, 47", f.FuelNeeded, f.FuelToAdd)
+	// 29 × 3.0 = 87 L to the flag, 42 L in the tank: the last stop adds the minimum, 45 L, without
+	// the 2 L margin (D-178).
+	if f.FuelNeeded < 88.99 || f.FuelNeeded > 89.01 || f.FuelToAdd != 45 || !f.LastStop || f.MinToAdd < 44.99 || f.MinToAdd > 45.01 {
+		t.Errorf("fuel needed %.2f, add %d (min %.2f, last %v); want 89, 45", f.FuelNeeded, f.FuelToAdd, f.MinToAdd, f.LastStop)
+	}
+	if f.Spare > -44.99 || f.Spare < -45.01 {
+		t.Errorf("spare %.2f, want −45", f.Spare)
 	}
 	ty := a.Tyres
 	// Last 3 laps: 6 (rear), 5 (front), 4 (rear) → FL (26.6+26.4+26.6)/3 = 26.5 → +0.5; RL 27.4 → −0.4.
@@ -112,6 +116,15 @@ func TestPitAdvice(t *testing.T) {
 	if f := l.PitAdvice().Fuel; f.FuelToAdd != 24 { // (89 − 42) / 2 = 23.5 → 24
 		t.Errorf("with 2 stops: add %d, want 24", f.FuelToAdd)
 	}
+
+	// After the last stop, with more fuel than needed: no stop, 2.6 L to spare (D-178).
+	base.StopsLeft = 0
+	fuel = 89.6
+	feed(6, 105000, false, rear, 0.0)
+	if f := l.PitAdvice().Fuel; f.StopsPlanned != 0 || f.FuelToAdd != 0 || f.Spare < 2.59 || f.Spare > 2.61 {
+		t.Errorf("after the last stop: %+v, want 0 stops and 2.6 L spare", f)
+	}
+	fuel = 42
 
 	// On wet tyres the target is 30 psi, and dry laps are not used.
 	base.WetTyres, base.StopsLeft = true, 1

@@ -690,6 +690,9 @@ a.sr-name:hover { color: var(--link); text-decoration: underline; }
 .pit-menu { text-align: right; color: var(--ink-3); font-size: 13px; line-height: 1.2; }
 .pit-menu b { font: 600 22px var(--display); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .pit-ok, .pit-menu.pit-ok b { color: var(--ok); }
+.pit-spare { color: var(--ok); }
+.pit-short { color: var(--bad); }
+.pit-min { margin: 4px 0 0; color: var(--ink-2); font-size: 13px; }
 .pit-tyres { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
 .pit-tyre { display: flex; flex-direction: column; min-width: 0; }
 .pit-tyre-name { font-size: 13px; color: var(--ink-3); font-weight: 600; }

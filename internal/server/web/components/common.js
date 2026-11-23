@@ -61,8 +61,9 @@ export const TopBar = {
           </router-link>
         </nav>
       </div>
-      <!-- manual setup select (D-149) on every page while a session is recorded; a known setup can be changed (D-177) -->
-      <div v-if="rec.active && (rec.choices || []).length" class="ss-strip">
+      <!-- manual setup select (D-149) on every page while a session is recorded; a known setup can be changed (D-177).
+           Not in a race once the first lap is done: the setup can't be swapped there (D-178) -->
+      <div v-if="rec.active && (rec.choices || []).length && !(rec.kind === 'race' && rec.laps > 0)" class="ss-strip">
         <div class="topbar-inner"><SetupSelect :rec="rec" compact /></div>
       </div>
       <div v-if="store.offline" class="offline" role="alert">SetupMan isn't running. Start SetupMan.exe again; this page reloads by itself.</div>

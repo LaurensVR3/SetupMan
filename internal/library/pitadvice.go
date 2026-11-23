@@ -50,6 +50,10 @@ type FuelAdvice struct {
 	FuelNow    float64 `json:"fuelNow"`
 	Margin     float64 `json:"margin"`
 	FuelNeeded float64 `json:"fuelNeeded"` // to the finish, including the margin
+	MinNeeded  float64 `json:"minNeeded"`  // to the finish, without a margin (D-178)
+	Spare      float64 `json:"spare"`      // fuel now minus MinNeeded: left over at the finish (negative = short), D-178
+	LastStop   bool    `json:"lastStop"`   // the next stop is the last: FuelToAdd is the minimum, no margin (D-178)
+	MinToAdd   float64 `json:"minToAdd"`   // the exact minimum the last stop must add (FuelToAdd rounds it up), D-178
 	StopsLeft  int     `json:"stopsLeft"`
 	StopsKnown bool    `json:"stopsKnown"`
 	FuelToAdd  int     `json:"fuelToAdd"` // advice for the next stop, whole litres
@@ -203,8 +207,11 @@ func fuelAdvice(laps []store.Lap, t game.Telemetry, margin float64, plan stintPl
 		f.Reason = "The session length is not known yet."
 		return f
 	}
-	f.FuelNeeded = f.LapsToGo*f.FuelPerLap + margin
-	extra := math.Max(0, f.FuelNeeded-t.Fuel) // still to be added at the stops
+	f.MinNeeded = f.LapsToGo * f.FuelPerLap
+	f.FuelNeeded = f.MinNeeded + margin
+	f.Spare = t.Fuel - f.MinNeeded
+	extra := math.Max(0, f.FuelNeeded-t.Fuel)   // still to be added at the stops, with the margin
+	minExtra := math.Max(0, f.MinNeeded-t.Fuel) // the same without it: the last stint needs no margin (D-178)
 
 	// The most one stop can add: the tank (arriving with the margin left) and the stint limit
 	// (whole laps that fit in one stint).
@@ -224,13 +231,18 @@ func fuelAdvice(laps []store.Lap, t game.Telemetry, margin float64, plan stintPl
 	if t.StopsKnown {
 		stops = t.StopsLeft
 	}
-	if extra > 0 {
-		stops = max(stops, 1, int(math.Ceil(extra/limit-1e-9)))
+	if minExtra > 0 {
+		stops = max(stops, 1, int(math.Ceil(minExtra/limit-1e-9)))
 	}
 	f.StopsPlanned = stops
 	switch {
 	case stops == 0:
 		f.FuelToAdd = 0
+	case stops == 1:
+		// The last stop: just enough to reach the flag (owner, race 2026-11-23: "I really don't
+		// need 2l of safety in the last stint"). The pit menu takes whole litres: rounded up.
+		f.LastStop, f.MinToAdd = true, minExtra
+		f.FuelToAdd = int(math.Ceil(minExtra - 1e-9))
 	case plan.endurance && stops > 2:
 		// Endurance: a full stint now; the last two stints share what is left equally.
 		f.FuelToAdd = int(math.Floor(math.Min(limit, extra) + 1e-9))
