@@ -439,6 +439,20 @@ telemetry metrics stay in Phase 4.
 - Q-TL7. AC writes no telemetry files: should SetupMan log AC telemetry itself? (Raise when T5 comes.)
 
 
+### Audit 2026-11-23 (first race; rig data: log, full backup with library and extra logs)
+Data: 21 recorded sessions (6 setups recognised, 7 picked by hand, 8 unknown), 99 laps (20 without a setup), 9 sessions without a lap, 910 telemetry files (24 linked). Fixed the same night: D-178 (setup bar in races, last-stop fuel), D-179 (weekend MoTeC files), D-180 (previous session breaks a tie). Confirmed on the rig: the session ends in the main menu (D-177, log 22:07:24), a pick by hand covers the current stint, log download, the pit loss measured (now 2 stops at Imola: 71.6 s practice, 76.8 s race; median 74.2 s).
+Open, proposed (need the owner's OK):
+- A-1. **Telemetry Sessions tab**: a weekend file (practice + qualifying + race) still shows as one session; split it by recorded session, each with its own setup and kind (the Best laps list is already right, D-179).
+- A-2. **Pit loss mixes driving and service**: the race stop (58 L) cost 76.8 s, the practice stop (25 s fuel, 5 s tyres) 71.6 s. Split it into the pit-lane loss and the time standing still (from the extra log's speed), and let Race prep add the service time of the stop you will make (fuel to add, tyres).
+- A-3. **Recognition of near-identical setups**: BGK R 2635 and 3040 (Imola) are equal in everything the car reports (fuel, TC, ABS, map, brake bias, pit strategy); only the cold tyre pressures differ, and the pressure tie-break didn't decide in qualifying. D-180 covers the common case (same setup as the previous session). Brake bias was checked as an extra clue and would not have helped here (not added: ACC reports it with a per-car offset).
+- A-4. **Empty sessions**: 9 of 21 sessions have no lap (loading screens, garage visits): leave them out of lists and reports.
+- A-5. **SetupMan restart during a session** starts a new session (17 → 18 at 19:29): continue the session when car, track and kind are the same and ACC's laps carry on.
+- A-6. **Log**: "entered the pits … fuel 0.0 L" when going back to the garage is ACC's reset, not a reading: say "back to the garage".
+- A-7. **No automatic check of page templates**: the blank Lap analysis page (D-174) came from a name the template used but the page didn't provide. A test that checks every page for this (the check done by hand on 2026-11-23) would catch it before a release.
+- A-8. **Flaky test**: TestTidyWholeGame sometimes counts 2 rescans (folder-watch timing).
+- A-9. **Dev PC safety**: ACC's folder in Settings is `SampleSetups` with folder management on, so a button that writes would change the sample setups (CLAUDE.md forbids it): point it at a copy.
+- A-10. **Phone layout** (More menu, setup bar, Pit stop page) is checked by code only; Chrome on the dev PC can't be narrowed. Check on the phone (R-31, R-32).
+
 ### Rig test round 4: what is still open (version 0.23.0)
 The checklist page (claude.ai artifact "SetupMan Rig Test") shows the same list; results are saved there.
 
