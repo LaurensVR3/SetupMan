@@ -928,6 +928,20 @@ func (l *Library) TelemetryFile(id, session int64) (*TeleFileDetail, error) {
 		d.Reference = &TeleRef{FileID: fid, N: n}
 	}
 	d.Turns, d.Official = l.turnsOf(f.Game, f.Track)
+	// the setup of every recorded lap: a session can have stints with different setups (D-177)
+	names := map[int64]string{}
+	for i := range d.Laps {
+		id := d.Laps[i].LapSetupID
+		if id == 0 {
+			continue
+		}
+		if _, ok := names[id]; !ok {
+			if s, _ := l.db.Setup(id); s != nil {
+				names[id] = s.Name
+			}
+		}
+		d.Laps[i].LapSetupName = names[id]
+	}
 	return d, nil
 }
 

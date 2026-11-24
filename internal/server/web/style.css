@@ -1297,3 +1297,4 @@ th.tt-num { text-align: right; }
 .ta-ref.on { color: var(--lap-0); font-weight: 600; }
 .fuel-basis { margin: 6px 0 8px; padding-left: 18px; color: var(--ink-2); font-size: 14px; }
 .fuel-basis-note { margin: 0 0 8px; font-size: 13px; color: var(--ink-2); }
+.ts-stints { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }

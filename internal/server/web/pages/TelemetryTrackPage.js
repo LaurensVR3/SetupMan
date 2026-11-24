@@ -112,6 +112,18 @@ export const TelemetryTrackPage = {
       const l = (data.value?.laps || []).find((x) => x.fileId === s.fileId && x.n === s.n);
       return { time: lapTime(s.lapMs || l?.lapMs), label: s.label || (l ? lapLabel(l) : "Lap") };
     };
+    // setups of an opened session in the order they were driven (a stint per setup, D-177)
+    function stints(f) {
+      const d = details[fk(f)];
+      if (!d) return [];
+      const out = [];
+      for (const l of d.laps) {
+        if (!l.lapSetupId) continue;
+        if (!out.length || out[out.length - 1].id !== l.lapSetupId) out.push({ id: l.lapSetupId, name: l.lapSetupName || "Setup " + l.lapSetupId });
+      }
+      return out;
+    }
+    const stintSession = (f) => details[fk(f)]?.laps.find((l) => l.sessionId)?.sessionId || f.sessionId || 0;
     // purple in an opened session: its fastest full lap that was not invalid (as on a timing screen)
     const sessionBest = (l, f) => !!(l.complete && l.valid !== false && f.bestMs && l.lapMs === f.bestMs);
     const analyse = (list) => router.push({ path: "/telemetry/analyse", query: { laps: list.map(lapKey).join(",") } });
@@ -245,7 +257,7 @@ export const TelemetryTrackPage = {
     const isBest = (l) => shownBest.value && l.lapMs === shownBest.value;
     const carBest = (l) => carOf(l.car)?.bestMs === l.lapMs;
 
-    return { sessionBest, data, error, tab, setTab, TABS, PERIODS, colors, allCars, carsWithLaps, chosen, carOn, toggleCar, allCarsOn, shownCars, many, carOf,
+    return { stints, stintSession, sessionBest, data, error, tab, setTab, TABS, PERIODS, colors, allCars, carsWithLaps, chosen, carOn, toggleCar, allCarsOn, shownCars, many, carOf,
       laps, files, best, overallBest, shownBest, refLapNo, recentLaps, fSetup, fKind, fPeriod, fValid, fPit, shown, kinds, anyInvalid, anyPit, anyTemps, setupsWithLaps, knownSetups,
       filtered, filtersOn, resetFilters, sel, selIndex, pick, clearSel, selInfo, lapLabel, analyse, ref0, bestVsRef, compareCars, setupSel, toggleSetup,
       setupBy, compareSetups, setupGroups, showEmpty, days, months, jumpTo, firstOfMonth, emptyCount, sessionsWithLaps, open, details, toggle, fk, flags,
@@ -408,7 +420,11 @@ export const TelemetryTrackPage = {
                   <span class="ts-fact"><b>{{ f.laps }}</b> {{ f.laps === 1 ? 'full lap' : 'full laps' }}</span>
                   <span class="ts-fact"><b class="tl-time" :class="{ 'is-best': f.bestMs && f.bestMs === shownBest }">{{ lapTime(f.bestMs) }}</b></span>
                   <span class="ts-fact ts-dur" title="Session length">{{ duration(f.durationMs) }}</span>
-                  <span class="ts-setup">
+                  <span v-if="stints(f).length > 1" class="ts-setup ts-stints" :title="'This session had ' + stints(f).length + ' stints with different setups'">
+                    <span>{{ stints(f).map(x => x.name).join(' → ') }}</span>
+                    <router-link v-if="stintSession(f)" :to="'/session/' + stintSession(f)" class="ts-setup-open">Change per stint</router-link>
+                  </span>
+                  <span v-else class="ts-setup">
                     <select class="ts-select" :class="{ unknown: !f.setupId }" :value="f.setupId || 0" @change="setSetup(f, $event.target.value)" :aria-label="'Setup driven in the session at ' + when(f.startedAt)">
                       <option :value="0">Setup not known</option>
                       <option v-for="s in (carOf(f.car) || {}).setups || []" :key="s.id" :value="s.id">{{ s.name }}</option>
@@ -429,7 +445,7 @@ export const TelemetryTrackPage = {
                   <p v-if="!details[fk(f)]" class="loading">Loading laps…</p>
                   <div v-else class="table-scroll">
                     <table class="tt-table">
-                      <thead><tr><th class="tt-pick"><span class="sr">Compare</span></th><th class="tt-num">Lap</th><th>Time</th><th class="tt-num">Gap</th><th></th><th v-if="anySessionFuel(details[fk(f)])" class="tt-num">Fuel</th><th v-if="anySessionTemps(details[fk(f)])" class="tt-num">Track °C</th><th><span class="sr">Reference</span></th></tr></thead>
+                      <thead><tr><th class="tt-pick"><span class="sr">Compare</span></th><th class="tt-num">Lap</th><th>Time</th><th class="tt-num">Gap</th><th></th><th v-if="anySessionFuel(details[fk(f)])" class="tt-num">Fuel</th><th v-if="anySessionTemps(details[fk(f)])" class="tt-num">Track °C</th><th v-if="stints(f).length > 1">Setup</th><th><span class="sr">Reference</span></th></tr></thead>
                       <tbody>
                         <tr v-for="l in details[fk(f)].laps" :key="l.fileId + ':' + l.n" :class="{ dim: !l.complete || l.valid === false, picked: selIndex(l.fileId, l.n) >= 0 }">
                           <td class="tt-pick">
@@ -445,6 +461,7 @@ export const TelemetryTrackPage = {
                             :title="t === 'No data' ? 'ACC kept only the lap time of this lap: it keeps the full data of the last laps of a session only.' : null">{{ t }}</span></td>
                           <td v-if="anySessionFuel(details[fk(f)])" class="tt-num">{{ l.fuelUsed ? l.fuelUsed.toFixed(2) + ' L' : '' }}</td>
                           <td v-if="anySessionTemps(details[fk(f)])" class="tt-num">{{ l.hasTemps ? l.road.toFixed(0) + ' °C' : '' }}</td>
+                          <td v-if="stints(f).length > 1" class="tt-setup">{{ l.lapSetupName || '' }}</td>
                           <td><button v-if="l.complete" type="button" class="ref-star" :class="{ on: l.reference }" @click="setRef(l)" :aria-pressed="l.reference"
                             :title="l.reference ? 'Reference lap for this car on this track. Click to clear.' : 'Make this the reference lap for this car on this track'">★</button></td>
                         </tr>

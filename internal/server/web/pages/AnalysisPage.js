@@ -143,8 +143,8 @@ export const AnalysisPage = {
       let name;
       if (new Set(sameCar.map(sessionOf)).size === 1) name = `Lap ${l.meta.lap}`;
       else {
-        const setups = sameCar.map((x) => x.file.setupName || "");
-        if (setups.every((s) => s) && new Set(setups).size === sameCar.length) name = l.file.setupName;
+        const setups = sameCar.map((x) => x.setupName || "");
+        if (setups.every((s) => s) && new Set(setups).size === sameCar.length) name = l.setupName;
         else {
           const day = (x) => new Date(x.file.startedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" });
           const time = (x) => new Date(x.file.startedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
@@ -159,8 +159,9 @@ export const AnalysisPage = {
     const laps = computed(() => req.value.map((l, i) => {
       const f = files[l.fileId];
       const meta = f?.laps.find((x) => x.fileId === l.fileId && x.n === l.n);
-      return f && meta ? { ...l, key: lapKey(l), file: f.file, meta, color: colors.value[i], label: `Lap ${meta.lap}`,
-        setup: f.file.setupName || "Setup not known", when: when(f.file.startedAt), kind: f.file.kind } : null;
+      const setupName = meta?.lapSetupName || f?.file.setupName || ""; // the lap's own stint setup (D-177)
+      return f && meta ? { ...l, key: lapKey(l), file: f.file, meta, color: colors.value[i], label: `Lap ${meta.lap}`, setupName,
+        setup: setupName || "Setup not known", when: when(f.file.startedAt), kind: f.file.kind } : null;
     }).filter(Boolean).map((l, i, all) => ({ ...l, label: lapName(l, all) })));
     const ready = computed(() => laps.value.length === req.value.length && laps.value.length > 0 && !badLap.value);
     // a lap the page can't show: not in its session, or without data (ACC keeps the data of its last
