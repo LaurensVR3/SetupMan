@@ -1151,22 +1151,25 @@ th.tt-num { text-align: right; }
 /* 3D track view (D-190) */
 .seg-sm button { padding: 3px 10px; font-size: 13px; }
 /* 3D: full width above the graphs, kept in view while they scroll (wide and tall enough screens) */
-.ta-3d-card { margin-bottom: 14px; }
+.ta-3d-card { margin-bottom: 14px; padding: 10px 14px 12px; }
 .ta-bench.is-3d { grid-template-columns: minmax(0, 1fr); } /* 3D: graphs full width under the view */
 .ta-bench.is-3d .ta-side { position: static; order: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
 @media (min-width: 1181px) and (min-height: 600px) {
   .ta-3d-card { position: sticky; top: 64px; z-index: 6; box-shadow: 0 8px 18px -12px rgba(0,0,0,.35); }
-  .ta-3d-card .t3d-stage { height: 55vh; min-height: 300px; } /* 16:9 screens: a tall view, graphs still in view below */
-  .ta-3d-card .t3d-foot { margin-top: 4px; }
+  .ta-3d-card .t3d-stage { height: 48vh; min-height: 280px; } /* 16:9 screens: a tall view, a full graph still in view below */
 }
 .ta-3d-card .ta-card-head { justify-content: flex-start; }
-.t3d-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 10px; }
+.t3d-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 8px; }
+.t3d-bar .ta-card-title { margin: 0; }
+.t3d-notes { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.t3d-info { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); font: italic 600 12px Georgia, serif; cursor: help; padding: 0; }
+.t3d-info:hover, .t3d-info:focus-visible { color: var(--ink); border-color: var(--ink-2); }
 .t3d-field { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); font-weight: 500; }
 .t3d-field select { max-width: 220px; padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
 .t3d-size input { width: 120px; accent-color: var(--focus); }
 .t3d-size span { min-width: 44px; font-variant-numeric: tabular-nums; color: var(--ink); }
-.t3d-photo { margin-left: auto; }
-.t3d-bar .t3d-field select { max-width: 170px; }
+.t3d-photo { flex: none; }
+.t3d-bar .t3d-field select { max-width: 170px; padding: 3px 8px; }
 .t3d-photo button:disabled { opacity: .45; cursor: not-allowed; }
 .t3d-stage { position: relative; height: calc(100vh - 300px); min-height: 320px; max-height: 760px; border-radius: 10px; overflow: hidden; background: var(--plot); border: 1px solid var(--line); }
 .t3d-canvas { position: absolute; inset: 0; touch-action: none; }

@@ -498,14 +498,15 @@ export const AnalysisPage = {
         </section>
 
         <section v-if="map3d.mode === '3d'" class="ta-card ta-3d-card">
-          <div class="ta-card-head">
-            <h2 class="ta-card-title">Track</h2>
-            <div class="segmented seg-sm" role="radiogroup" aria-label="Track view">
-              <button type="button" role="radio" aria-checked="false" @click="map3d.mode = '2d'">2D</button>
-              <button type="button" role="radio" aria-checked="true" class="on">3D</button>
-            </div>
-          </div>
-          <Tele3D :game="laps[0].file.game" :track="laps[0].file.track" :view="view" :laps="laps3d" :channels="channels3d" :wall="map3d" :corners="mapCorners" />
+          <Tele3D :game="laps[0].file.game" :track="laps[0].file.track" :view="view" :laps="laps3d" :channels="channels3d" :wall="map3d" :corners="mapCorners">
+            <template #lead>
+              <h2 class="ta-card-title">Track</h2>
+              <div class="segmented seg-sm" role="radiogroup" aria-label="Track view">
+                <button type="button" role="radio" aria-checked="false" @click="map3d.mode = '2d'">2D</button>
+                <button type="button" role="radio" aria-checked="true" class="on">3D</button>
+              </div>
+            </template>
+          </Tele3D>
         </section>
 
         <div class="ta-bench" :class="{ 'is-3d': map3d.mode === '3d' }">

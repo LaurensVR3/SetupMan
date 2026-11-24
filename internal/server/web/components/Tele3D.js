@@ -555,24 +555,35 @@ export const Tele3D = {
   template: `
     <div class="t3d" ref="box">
       <div class="t3d-bar">
-        <label class="t3d-field">Wall height
+        <slot name="lead"></slot>
+        <label class="t3d-field">Height
           <select v-model="wall.h" aria-label="Wall height channel">
             <option v-for="c in channels" :key="c.name" :value="c.name">{{ c.label }}</option>
           </select>
         </label>
-        <label class="t3d-field">Wall colour
+        <label class="t3d-field">Colour
           <select v-model="wall.c" aria-label="Wall colour channel">
             <option :value="LAPCOL">Lap colour</option>
             <option :value="PEDALS">Throttle / brake</option>
             <option v-for="c in channels" :key="c.name" :value="c.name">{{ c.label }}</option>
           </select>
         </label>
-        <div v-if="scene" class="segmented t3d-photo" role="radiogroup" aria-label="Photo">
+        <span class="t3d-notes">
+          <span v-if="scene && scene.source === 'calculated'" class="tag tag-warn" title="No lap at this track has SetupMan's extra log yet, so the track was placed from a line calculated from speed and yaw rate (± a few metres). Drive a session with SetupMan running for exact positions.">placed ± a few m</span>
+          <span v-if="scene && scene.noTerrain" class="tag tag-warn" :title="scene.noTerrain">no terrain</span>
+          <template v-if="offline.source">
+            <span v-if="offline.busy" class="tag">Aerial photo {{ offline.have }}/{{ offline.tiles }}</span>
+            <button v-else-if="offline.error" type="button" class="btn btn-sm" :title="offline.error" @click="downloadPhotos">Retry aerial photo</button>
+            <button v-else-if="!offlineReady" type="button" class="btn btn-sm" @click="downloadPhotos" :title="'Keep the aerial photo for offline use (about ' + bytes(offline.estimate) + '). ' + offline.source.credit + ' (' + offline.source.licence + '). Delete it in Settings → Telemetry.'">Download aerial photo</button>
+          </template>
+          <button type="button" class="t3d-info" aria-label="How to use the 3D view" title="Drag to rotate, right-drag to move, wheel to zoom. Point at the graphs to move the markers; click a line to move the cursor. The wall height follows the zoom.">i</button>
+        </span>
+        <div v-if="scene" class="segmented seg-sm t3d-photo" role="radiogroup" aria-label="Photo">
           <button type="button" role="radio" :aria-checked="photo === 'maptiler'" :class="{ on: photo === 'maptiler' }" :disabled="!scene.mapTilerKey || !online"
             :title="!scene.mapTilerKey ? 'Add your free MapTiler key in Settings → Telemetry' : !online ? 'Needs an internet connection' : 'Sharp satellite photos from MapTiler (online)'" @click="photo = 'maptiler'">Satellite</button>
           <button v-if="offline.source" type="button" role="radio" :aria-checked="photo === 'offline'" :class="{ on: photo === 'offline' }" :disabled="!offlineReady"
-            :title="offlineReady ? offline.source.credit : 'Download the offline aerial photo first'" @click="photo = 'offline'">Aerial photo</button>
-          <button type="button" role="radio" :aria-checked="photo === 'none'" :class="{ on: photo === 'none' }" @click="photo = 'none'">No photo</button>
+            :title="offlineReady ? offline.source.credit : 'Download the aerial photo first'" @click="photo = 'offline'">Aerial</button>
+          <button type="button" role="radio" :aria-checked="photo === 'none'" :class="{ on: photo === 'none' }" @click="photo = 'none'">None</button>
         </div>
       </div>
       <div class="t3d-stage">
@@ -588,17 +599,6 @@ export const Tele3D = {
           <a v-if="photo === 'maptiler'" href="https://www.maptiler.com/" target="_blank" rel="noopener" class="t3d-maptiler"><img src="https://api.maptiler.com/resources/logo.svg" alt="MapTiler" height="18"></a>
           <span>{{ credits.join(' · ') }}</span>
         </div>
-      </div>
-      <div class="t3d-foot">
-        <span class="t3d-help">Drag to rotate, right-drag to move, wheel to zoom. Point at the graphs to move the markers; click a line or wall to move the cursor.</span>
-        <span v-if="scene && scene.noTerrain" class="t3d-note">{{ scene.noTerrain }}</span>
-        <template v-if="offline.source">
-          <span v-if="offline.busy" class="t3d-note">Downloading the aerial photo… {{ offline.have }} of {{ offline.tiles }} tiles</span>
-          <span v-else-if="offline.error" class="t3d-note is-error">{{ offline.error }} <button type="button" class="btn-link" @click="downloadPhotos">Try again</button></span>
-          <button v-else-if="!offlineReady" type="button" class="btn btn-sm" @click="downloadPhotos" :title="offline.source.credit + ' (' + offline.source.licence + ')'">Download aerial photo for offline use (about {{ bytes(offline.estimate) }})</button>
-          <span v-else class="t3d-note">Offline aerial photo kept ({{ bytes(offline.bytes) }}) <button type="button" class="btn-link" @click="deletePhotos">Delete</button></span>
-        </template>
-        <span v-if="scene && scene.source === 'calculated'" class="t3d-note" title="No lap at this track has SetupMan's extra log yet, so the track was placed from a line calculated from speed and yaw rate. Drive a session with SetupMan running for exact positions.">Track placed from a calculated line (± a few metres)</span>
       </div>
     </div>`,
 };
