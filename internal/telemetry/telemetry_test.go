@@ -260,3 +260,45 @@ func TestFindTurns(t *testing.T) {
 		t.Error("two laps are too few")
 	}
 }
+
+// A session that continues after SetupMan restarted adds to its extra log (A-5): read back as one
+// log, the new rows' times relative to the original start; a cut-off log is not continued.
+func TestExtraLogAppend(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "acc-9.smx.gz")
+	chans := []ExtraChannel{{Name: ExtraLapCount}, {Name: "FUEL", Unit: "l"}}
+	start := time.Now().Add(-time.Hour).Truncate(time.Second)
+	w, err := CreateExtra(p, ExtraHeader{Game: "acc", Session: 9, Start: start, Hz: 10, Channels: chans})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.Write(1, []float32{0, 50})
+	w.Write(2, []float32{0, 49})
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	w2, began, err := AppendExtra(p, chans)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !began.Equal(start) {
+		t.Errorf("start %v, want %v", began, start)
+	}
+	w2.Write(3600, []float32{3, 20})
+	w2.Close()
+	x, err := ReadExtra(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(x.T) != 3 || x.T[2] != 3600 || x.Data[1][2] != 20 || !x.Complete {
+		t.Fatalf("read back: T %v fuel %v complete %v", x.T, x.Data[1], x.Complete)
+	}
+	if _, _, err := AppendExtra(p, []ExtraChannel{{Name: "OTHER"}}); err == nil {
+		t.Error("appended with other channels")
+	}
+	// a log cut off in the middle (SetupMan killed): not continued
+	b, _ := os.ReadFile(p)
+	os.WriteFile(p, b[:len(b)-12], 0o644)
+	if _, _, err := AppendExtra(p, chans); err == nil {
+		t.Error("appended to a cut-off log")
+	}
+}

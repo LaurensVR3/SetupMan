@@ -58,6 +58,9 @@ type Library struct {
 	// recording laps (Phase 4): one recorder per game
 	recMu sync.Mutex
 	recs  map[string]*recorder
+	// resumeTried: per game, whether the first session after SetupMan started was checked for a
+	// session to continue (A-5)
+	resumeTried map[string]bool
 
 	// files SetupMan put in a game folder, with the last-opened time it left on them (D-147): until
 	// that time changes, the game has not opened the file

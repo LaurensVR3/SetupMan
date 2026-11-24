@@ -374,7 +374,14 @@ func (l *Library) linkTelemetry(id string) int {
 // ---------- extra log (D-162) ----------
 
 // startExtra starts the extra log for a newly recorded session.
-func (l *Library) startExtra(g game.Game, sessionID int64) {
+func (l *Library) startExtra(g game.Game, sessionID int64) { l.startExtraMode(g, sessionID, false) }
+
+// startExtraResume carries on the extra log of a session that continues after a restart (A-5).
+func (l *Library) startExtraResume(g game.Game, sessionID int64) {
+	l.startExtraMode(g, sessionID, true)
+}
+
+func (l *Library) startExtraMode(g game.Game, sessionID int64, resume bool) {
 	xl, ok := g.(game.ExtraLogger)
 	if !ok || l.TelemetryDir == "" || l.Settings().GameOrDefault(g.ID()).ExtraLogOff {
 		return
@@ -386,7 +393,7 @@ func (l *Library) startExtra(g game.Game, sessionID int64) {
 	t.extras[g.ID()] = stop
 	t.extraMu.Unlock()
 	t.extraWG.Add(1)
-	go l.runExtra(xl, g.ID(), sessionID, stop)
+	go l.runExtra(xl, g.ID(), sessionID, stop, resume)
 }
 
 // stopExtra ends the extra log of a game (the session ended or the game closed).
@@ -402,7 +409,7 @@ func (l *Library) stopExtra(id string) {
 
 // runExtra reads the extra channels about 10 times per second while the session is live and
 // writes them to the session's extra log. The file is only created once there is something to write.
-func (l *Library) runExtra(xl game.ExtraLogger, id string, sessionID int64, stop chan struct{}) {
+func (l *Library) runExtra(xl game.ExtraLogger, id string, sessionID int64, stop chan struct{}, resume bool) {
 	defer l.tele().extraWG.Done()
 	defer guard("extra telemetry log")
 	chans := xl.ExtraChannels()
@@ -429,7 +436,7 @@ func (l *Library) runExtra(xl game.ExtraLogger, id string, sessionID int64, stop
 			return
 		case <-timer.C:
 		}
-		wait = l.extraStep(xl, id, sessionID, chans, vals, start, &r, &w)
+		wait = l.extraStep(xl, id, sessionID, chans, vals, &start, resume, &r, &w)
 		if wait == 0 {
 			return
 		}
@@ -439,7 +446,7 @@ func (l *Library) runExtra(xl game.ExtraLogger, id string, sessionID int64, stop
 
 // extraStep takes one reading; it returns how long to wait for the next (0 = stop logging).
 func (l *Library) extraStep(xl game.ExtraLogger, id string, sessionID int64, chans []game.ExtraChannel, vals []float32,
-	start time.Time, r *game.ExtraReader, w **telemetry.ExtraWriter) time.Duration {
+	start *time.Time, resume bool, r *game.ExtraReader, w **telemetry.ExtraWriter) time.Duration {
 	if l.Settings().GameOrDefault(id).ExtraLogOff {
 		return 0 // switched off in Settings during the session
 	}
@@ -460,11 +467,22 @@ func (l *Library) extraStep(xl game.ExtraLogger, id string, sessionID int64, cha
 		return extraIdle
 	}
 	if *w == nil {
-		h := telemetry.ExtraHeader{Game: id, Session: sessionID, Start: start, Hz: int(time.Second / extraEvery)}
+		h := telemetry.ExtraHeader{Game: id, Session: sessionID, Start: *start, Hz: int(time.Second / extraEvery)}
 		for _, c := range chans {
 			h.Channels = append(h.Channels, telemetry.ExtraChannel{Name: c.Name, Unit: c.Unit})
 		}
-		ew, err := telemetry.CreateExtra(telemetry.ExtraPath(l.TelemetryDir, id, sessionID), h)
+		path := telemetry.ExtraPath(l.TelemetryDir, id, sessionID)
+		if resume { // a session that continues after a restart: add to its log (A-5)
+			ew, began, err := telemetry.AppendExtra(path, h.Channels)
+			if err != nil {
+				log.Printf("extra telemetry log of session %d not continued: %v", sessionID, err)
+				return 0 // the log so far stays as it is
+			}
+			*w, *start = ew, began
+			log.Printf("extra telemetry log continued for session %d", sessionID)
+			return extraEvery
+		}
+		ew, err := telemetry.CreateExtra(path, h)
 		if err != nil {
 			log.Printf("extra telemetry log: %v", err)
 			return 0
@@ -472,7 +490,7 @@ func (l *Library) extraStep(xl game.ExtraLogger, id string, sessionID int64, cha
 		*w = ew
 		log.Printf("extra telemetry log started for session %d (%d channels)", sessionID, len(chans))
 	}
-	if err := (*w).Write(time.Since(start).Seconds(), vals); err != nil {
+	if err := (*w).Write(time.Since(*start).Seconds(), vals); err != nil {
 		log.Printf("extra telemetry log: %v", err)
 		return 0
 	}

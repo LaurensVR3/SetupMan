@@ -799,6 +799,19 @@ func (q Q) SetSessionSetup(sessionID, setupID, versionID int64, match string, mo
 	return nil
 }
 
+// LatestSession returns the newest recorded session of a game, or nil.
+func (q Q) LatestSession(game string) (*Session, error) {
+	var id int64
+	err := q.ex.QueryRow(`SELECT id FROM sessions WHERE game = ? ORDER BY started_at DESC LIMIT 1`, game).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return q.Session(id)
+}
+
 // PreviousSessionSetup returns the setup of the latest session on a car and track before a session
 // that started after since (0 = none): a tie-break for setup recognition (D-180).
 func (q Q) PreviousSessionSetup(game, car, track string, beforeID int64, since time.Time) (int64, error) {

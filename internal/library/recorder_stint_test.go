@@ -151,3 +151,46 @@ func TestRecorderPreviousSessionBreaksTie(t *testing.T) {
 		t.Errorf("qualifying: %+v, want b from the previous session", rec)
 	}
 }
+
+// SetupMan restarted during a session: the first session it sees continues the recorded one (same
+// car, track and kind, begun after the game started); a session from an earlier run of the game
+// does not (A-5).
+func TestRecorderResumesAfterRestart(t *testing.T) {
+	folder := setupFolder(t)
+	fg := &fakeGame{installed: true, folder: folder}
+	g := startedGame{fakeGame: fg, at: time.Now().Add(-time.Hour)}
+	l, _ := newLib(t, fg)
+	l.Apply()
+	base := game.Telemetry{Live: true, Session: "practice", Car: "ferrari_296_gt3", Track: "spa", TC: 4, ABS: 3, Map: 1, Fuel: 32}
+	l.feedTelemetry(g, base, true)
+	first := l.Recording().SessionID
+	lap := base
+	lap.CompletedLaps, lap.LastLapMs = 1, 100000
+	l.feedTelemetry(g, lap, true)
+
+	// "restart": the recorder is gone, the session is in the library
+	l.recMu.Lock()
+	l.recs, l.resumeTried = map[string]*recorder{}, nil
+	l.recMu.Unlock()
+	again := base // ACC reported 0 laps again after the restart (rig log 2026-11-23 19:29)
+	l.feedTelemetry(g, again, true)
+	if rec := l.Recording(); rec.SessionID != first || rec.Laps != 1 {
+		t.Fatalf("after a restart: %+v, want session %d with 1 lap", rec, first)
+	}
+	lap2 := base
+	lap2.CompletedLaps, lap2.LastLapMs = 1, 101000
+	l.feedTelemetry(g, lap2, true)
+	if laps, _ := l.db.LapsForSession(first); len(laps) != 2 {
+		t.Errorf("laps in the continued session: %d, want 2", len(laps))
+	}
+
+	// a game started after the session: a new session
+	l.recMu.Lock()
+	l.recs, l.resumeTried = map[string]*recorder{}, nil
+	l.recMu.Unlock()
+	g.at = time.Now().Add(time.Minute)
+	l.feedTelemetry(g, base, true)
+	if rec := l.Recording(); rec.SessionID == first {
+		t.Errorf("continued a session from an earlier run of the game: %+v", rec)
+	}
+}

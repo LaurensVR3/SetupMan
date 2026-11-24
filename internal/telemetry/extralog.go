@@ -122,6 +122,36 @@ func CreateExtra(path string, h ExtraHeader) (*ExtraWriter, error) {
 	return w, w.flush()
 }
 
+// AppendExtra continues an extra log (a session that goes on after SetupMan restarted, A-5): the
+// rows are added as a new gzip part after the old one, which the reader reads as one stream. Only
+// when the log has the same channels and its end is complete (SetupMan closed it); returns the log's
+// start, to which new rows' times are relative.
+func AppendExtra(path string, chans []ExtraChannel) (*ExtraWriter, time.Time, error) {
+	x, err := ReadExtra(path)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+	if len(x.Header.Channels) != len(chans) {
+		return nil, time.Time{}, errors.New("its channels differ")
+	}
+	for i, c := range chans {
+		if x.Header.Channels[i].Name != c.Name {
+			return nil, time.Time{}, errors.New("its channels differ")
+		}
+	}
+	if !x.Complete {
+		return nil, time.Time{}, errors.New("its end is incomplete")
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+	gz, _ := gzip.NewWriterLevel(f, gzip.BestSpeed)
+	w := &ExtraWriter{f: f, gz: gz, bw: bufio.NewWriterSize(gz, 64<<10), width: len(chans), lastFlush: time.Now()}
+	w.row = make([]byte, 4*(1+w.width))
+	return w, x.Header.Start, nil
+}
+
 // Write adds one reading: t = seconds since the start, vals = one value per channel.
 func (w *ExtraWriter) Write(t float64, vals []float32) error {
 	if len(vals) != w.width {
@@ -166,6 +196,8 @@ type ExtraLog struct {
 	Header ExtraHeader
 	T      []float32   // seconds since the start
 	Data   [][]float32 // Data[channel][row]
+	// Complete: the file ended cleanly (no cut-off tail), so rows can be appended (A-5)
+	Complete bool
 }
 
 // Index returns the position of a channel (-1 when absent).
@@ -212,7 +244,8 @@ func ReadExtra(path string) (*ExtraLog, error) {
 	le := binary.LittleEndian
 	for {
 		if _, err := io.ReadFull(br, row); err != nil {
-			break // end of file, or the cut-off tail of a file that was not closed
+			x.Complete = err == io.EOF // a clean end; ErrUnexpectedEOF = a cut-off tail
+			break                      // end of file, or the cut-off tail of a file that was not closed
 		}
 		x.T = append(x.T, math.Float32frombits(le.Uint32(row)))
 		for i := 0; i < n; i++ {

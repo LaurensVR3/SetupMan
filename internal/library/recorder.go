@@ -183,6 +183,43 @@ func round4(p [4]float64) [4]float64 {
 	return p
 }
 
+// resumeMaxAge: how old a session may be to continue it after SetupMan restarted (A-5).
+const resumeMaxAge = 6 * time.Hour
+
+// resumeSession continues the newest recorded session when SetupMan was restarted during it (A-5;
+// rig 2026-11-23: a restart at 19:29 split one practice in two). Only for the first session SetupMan
+// sees after it started, and only when that session has the same car, track and kind, began after
+// the game started (the same run of the game) and is at most a few hours old. Its laps, setup and
+// extra log carry on.
+func (l *Library) resumeSession(g game.Game, t game.Telemetry) *recorder {
+	id := g.ID()
+	if l.resumeTried == nil {
+		l.resumeTried = map[string]bool{}
+	}
+	if l.resumeTried[id] {
+		return nil
+	}
+	l.resumeTried[id] = true
+	start := gameStart(g)
+	s, err := l.db.LatestSession(id)
+	if err != nil || s == nil || start.IsZero() || !s.StartedAt.After(start) || time.Since(s.StartedAt) > resumeMaxAge ||
+		!strings.EqualFold(s.Car, t.Car) || !strings.EqualFold(s.Track, t.Track) || s.Kind != t.Session {
+		return nil
+	}
+	laps, _ := l.db.LapsForSession(s.ID)
+	r := &recorder{sessionID: s.ID, car: s.Car, track: strings.ToLower(s.Track), kind: s.Kind, lastLaps: t.CompletedLaps,
+		lapStartFuel: t.Fuel, lapPit: true, wasInPits: inPits(t), matchPending: true, startLaps: t.CompletedLaps,
+		stintStart: time.Now(), laps: len(laps), setupID: s.SetupID, versionID: s.VersionID, manual: s.Match == "manual"}
+	if s.SetupID != 0 {
+		if st, _ := l.db.Setup(s.SetupID); st != nil {
+			r.setupName = st.Name
+		}
+	}
+	log.Printf("rec %s: session %d continues (SetupMan was restarted during it), %d laps so far", id, s.ID, len(laps))
+	l.startExtraResume(g, s.ID)
+	return r
+}
+
 // setupKey sums up the values that come from the loaded setup and that the driver rarely changes
 // on track: the pit menu (its tyre pressures and fuel come from the setup's pit strategy). When
 // they change, another setup was loaded (rig 2026-11-23: 2727 swapped for 3040 in the pits).
@@ -242,6 +279,12 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 
 	newSession := r == nil || !strings.EqualFold(r.car, t.Car) || !strings.EqualFold(r.track, t.Track) ||
 		r.kind != t.Session || t.CompletedLaps < r.lastLaps
+	if newSession && r == nil {
+		if rr := l.resumeSession(g, t); rr != nil {
+			r, newSession = rr, false
+			l.recs[id], changed = r, true
+		}
+	}
 	if newSession {
 		s := &store.Session{Game: id, Car: t.Car, Track: strings.ToLower(t.Track), Kind: t.Session}
 		if err := l.db.InsertSession(s); err != nil {
