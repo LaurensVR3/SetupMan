@@ -940,7 +940,8 @@ func (q Q) LapsOnTrack(game, track string) ([]Lap, map[int64]string, error) {
 func (q Q) SessionsForSetup(setupID int64) ([]Session, error) {
 	rows, err := q.ex.Query(`SELECT s.id, s.game, s.car, s.track, s.kind, s.started_at, COALESCE(s.setup_id,0), COALESCE(s.version_id,0), s.match,
 		(SELECT COUNT(*) FROM laps l WHERE l.session_id = s.id)
-		FROM sessions s WHERE s.id IN (SELECT session_id FROM laps WHERE setup_id = ?) OR s.setup_id = ? ORDER BY s.started_at DESC`, setupID, setupID)
+		FROM sessions s WHERE (s.id IN (SELECT session_id FROM laps WHERE setup_id = ?) OR s.setup_id = ?)
+		AND EXISTS (SELECT 1 FROM laps l WHERE l.session_id = s.id) ORDER BY s.started_at DESC`, setupID, setupID) // sessions without a lap are left out (A-4)
 	if err != nil {
 		return nil, err
 	}

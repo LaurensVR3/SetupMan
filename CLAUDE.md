@@ -16,6 +16,7 @@ The owner is not a programmer: explain changes in plain language and keep code s
   embedded with `go:embed`. No CDN links (app must work offline).
 - **Performance (D-13)**: nothing may poll heavily. Idle CPU target < 0.5% of one core (measured ~0.05%).
 - `SampleSetups/` (AC, ACC, AC EVO, AC Rally setups from the rig) is local and git-ignored. Never commit it.
+  The dev PC's SetupMan points at `TestSetups/` (a git-ignored copy) so `SampleSetups/` is never written (D-184).
   Unit tests use the fixtures in `internal/games/acc/testdata/`; a few extra tests read `SampleSetups/` when present.
 - **Don't edit files with PowerShell `Get-Content`/`WriteAllText`**: it corrupts non-ASCII characters.
   Use the Edit/Write tools.

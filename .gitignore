@@ -17,6 +17,8 @@ desktop.ini
 
 # Sample setups from the rig (AC, ACC, AC EVO, AC Rally) for local testing - do not publish
 /SampleSetups/
+# Working copy of SampleSetups the dev PC's SetupMan points at (D-184), so SampleSetups is never written
+/TestSetups/
 /SetupMan
 
 # Rig test material (logs and game screenshots contain personal setup names) - do not publish

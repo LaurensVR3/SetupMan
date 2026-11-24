@@ -103,6 +103,9 @@ func TestTidyWholeGame(t *testing.T) {
 	g := &fakeGame{installed: true, folder: folder, live: game.LiveUnknown}
 	l, _ := newLib(t, g)
 	l.Backups = &folderbackup.Store{Dir: filepath.Join(t.TempDir(), "backups")}
+	// The folder watcher must not rescan on its own during the test: only the bulk rename's own
+	// rescan is counted (the test failed now and then when the watcher fired in between, A-8).
+	l.Debounce = time.Hour
 	l.Start()
 	waitFor(t, "first scan", func() bool { return l.Games()[0].Status == "ok" })
 	if _, err := l.SetManaged("acc", true); err != nil {
