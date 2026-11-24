@@ -58,7 +58,12 @@ func Suggest(m Meta, session string, wet bool, original string) string {
 		parts = append(parts, strings.ReplaceAll(m.LapTime, ":", "."))
 	}
 	parts = append(parts, m.Codes...)
-	parts = append(parts, Rest(original, m)...)
+	for _, w := range Rest(original, m) {
+		if wet && (strings.EqualFold(w, "wet") || strings.EqualFold(w, "w")) {
+			continue // already written as WET above (rig 2026-11-24: "WET … MED WET")
+		}
+		parts = append(parts, w)
+	}
 	return strings.Join(parts, " ")
 }
 

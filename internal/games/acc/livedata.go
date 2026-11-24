@@ -47,6 +47,7 @@ const (
 	offStatus        = 4
 	offSession       = 8
 	offCompletedLaps = 132
+	offCurrentLapMs  = 140
 	offLastLapMs     = 144
 	offTimeLeft      = 152
 	offSessionLaps   = 172
@@ -187,6 +188,9 @@ func (lay layout) parse(phys, graph, stat []byte) sample {
 	}
 	if t.LastLapMs < 0 || t.LastLapMs > 3_600_000 {
 		t.LastLapMs = 0
+	}
+	if v := i32(graph, offCurrentLapMs); v >= 0 && v <= 3_600_000 {
+		t.CurrentLapMs, t.CurrentKnown = int(v), true
 	}
 	lay.pitAdvice(&t, phys, graph)
 	if len(stat) >= staticReadSize {

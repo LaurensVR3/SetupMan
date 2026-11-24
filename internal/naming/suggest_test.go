@@ -23,6 +23,10 @@ func TestSuggest(t *testing.T) {
 		{"GO2 296 GT3 SIL E R01 23C", SessionR, false, "R 23C GO2 GT3 296 SIL E"},
 		{"ABC 1313 R 1.10.4 tc36", SessionR, false, "ABC R 1313 1.10.4 tc36"}, // air 13, track 13
 		{"19c 21c CDA4 QF DRY 02", SessionQ, false, "Q 1921 CDA4 QF DRY 02"},
+		{"BGK R WET 1.10.2 RW", SessionR, true, "BGK R WET 1.10.2 RW"}, // WET once (rig 2026-11-24)
+		{"GO2 MUSTANG SPA MED wet", "", true, "WET GO2 MUSTANG SPA MED"},
+		{"HUN W2429", "", true, "HUN WET 2429"},
+		{"SPA WET", "", false, "SPA WET"}, // dry tyres: the word is the driver's, kept
 	}
 	for _, c := range cases {
 		if got := Suggest(Parse(c.name), c.session, c.wet, c.name); got != c.want {

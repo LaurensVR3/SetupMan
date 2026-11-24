@@ -277,6 +277,16 @@ func (x *ExtraLog) Laps() []ExtraLap {
 			for end-1 > from && x.Data[ti][end-1] < x.Data[ti][end-2] {
 				end--
 			}
+			// The lap starts at the last restart of the lap clock before its end. The game restarts
+			// the clock without counting a lap when the car crosses the line on its way out of
+			// the pit box (out-lap) or after a return to the garage: those readings belong to no
+			// counted lap (rig 2026-11-24, Imola: lap 1 held the out-lap, lap 3 held lap 2).
+			for k := end - 1; k > from; k-- {
+				if clockRestart(x.Data[ti][k-1], x.Data[ti][k]) {
+					from = k
+					break
+				}
+			}
 			out = append(out, ExtraLap{From: from, To: end, LapMs: int(x.Data[lt][i])})
 			from = end
 		} else if x.Data[li][i] < x.Data[li][i-1] {
@@ -284,6 +294,12 @@ func (x *ExtraLog) Laps() []ExtraLap {
 		}
 	}
 	return out
+}
+
+// clockRestart reports whether the game's lap clock (ms) went back to the start of a lap between
+// two readings.
+func clockRestart(prev, cur float32) bool {
+	return cur < 3000 && prev > cur+1000
 }
 
 // FindLap returns the first extra-log lap with this lap time (within 3 ms). Two laps of one session

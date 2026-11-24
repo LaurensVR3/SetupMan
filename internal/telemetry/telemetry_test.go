@@ -302,3 +302,28 @@ func TestExtraLogAppend(t *testing.T) {
 		t.Error("appended to a cut-off log")
 	}
 }
+
+// The game restarts its lap clock without counting a lap on the way out of the pit box: the
+// counted lap starts at that restart, not with the out-lap (rig 2026-11-24, Imola).
+func TestExtraLapsUncountedOutLap(t *testing.T) {
+	x := &ExtraLog{Header: ExtraHeader{Channels: []ExtraChannel{{Name: ExtraLapCount}, {Name: ExtraLapTime}, {Name: ExtraLastLap}}}}
+	add := func(lap, ms, last float32) {
+		x.T = append(x.T, float32(len(x.T))/10)
+		x.Data[0], x.Data[1], x.Data[2] = append(x.Data[0], lap), append(x.Data[1], ms), append(x.Data[2], last)
+	}
+	x.Data = make([][]float32, 3)
+	for ms := 0; ms <= 130000; ms += 100 { // out-lap: the counter stays at 0
+		add(0, float32(ms), 0)
+	}
+	start := len(x.T)
+	for ms := 0; ms <= 101200; ms += 100 { // lap 1
+		add(0, float32(ms), 0)
+	}
+	end := len(x.T)
+	add(0, 20, 0)
+	add(1, 120, 101268)
+	l, ok := x.FindLap(101268)
+	if !ok || l.From != start || l.To != end {
+		t.Fatalf("lap: %+v %v, want rows %d-%d", l, ok, start, end)
+	}
+}

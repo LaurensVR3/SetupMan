@@ -37,7 +37,7 @@ var extraWheels = [4]string{"FL", "FR", "RL", "RR"}
 func extraFields() []extraField {
 	f := []extraField{
 		{game.ExtraChannel{Name: "LAP"}, 'g', offCompletedLaps, true},
-		{game.ExtraChannel{Name: "LAP_TIME", Unit: "ms"}, 'g', 140, true},
+		{game.ExtraChannel{Name: "LAP_TIME", Unit: "ms"}, 'g', offCurrentLapMs, true},
 		{game.ExtraChannel{Name: "LAST_LAP", Unit: "ms"}, 'g', offLastLapMs, true},
 		{game.ExtraChannel{Name: "LAP_POS"}, 'g', offLapProgress, false},
 		{game.ExtraChannel{Name: "LAP_VALID"}, 'g', offIsValidLap, true},

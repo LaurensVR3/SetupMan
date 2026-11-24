@@ -43,6 +43,16 @@ type recorder struct {
 	maxStintMs      int  // the server's stint limit: the highest "stint time left" seen (D-125)
 	wasInPits       bool
 	laps            int
+	// The game restarts its lap clock without counting a lap when the car crosses the line on its
+	// way out of the pit box, or after a return to the garage (rig 2026-11-24, Imola). The lap
+	// then starts there: lapClock is the clock last read, restartAt when it went back (zero = not)
+	// with the fuel and pit state then, lastLapAt when the game last counted a lap.
+	lapClock    int
+	clockKnown  bool
+	restartAt   time.Time
+	restartFuel float64
+	restartPit  bool
+	lastLapAt   time.Time
 	// matchPending: look for the driven setup as soon as the car is out of the pits with real
 	// values. When a session loads, ACC first reports placeholders (0 L fuel, ABS 5, map 2;
 	// rig test 2026-11-20), and the setup can still be changed in the pit box.
@@ -373,6 +383,13 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 		r.maxStintMs = t.StintLeftMs
 	}
 
+	if t.CurrentKnown {
+		if r.clockKnown && r.lapClock > t.CurrentLapMs+1000 && t.CompletedLaps == r.lastLaps && time.Since(r.lastLapAt) > lapRestartWait {
+			r.restartAt, r.restartFuel, r.restartPit = time.Now(), t.Fuel, inPits(t)
+		}
+		r.lapClock, r.clockKnown = t.CurrentLapMs, true
+	}
+
 	if t.CompletedLaps > r.lastLaps && t.LastLapMs > 0 {
 		lap := &store.Lap{SessionID: r.sessionID, SetupID: r.setupID, VersionID: r.versionID, LapMs: t.LastLapMs,
 			Valid: !r.lapInvalid, Pit: r.lapPit || t.CompletedLaps-r.lastLaps > 1}
@@ -403,14 +420,32 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 		r.laps++
 		changed = true
 		// Start the next lap. Crossing the line in the pit lane makes the next lap an out-lap.
-		r.lastLaps, r.lapStartFuel, r.lapInvalid = t.CompletedLaps, t.Fuel, false
-		r.lapPit = inPits(t)
-		r.airSum, r.roadSum, r.tempN = 0, 0, 0
-		r.pSum, r.pN = [4]float64{}, 0
-		r.ttSum, r.ttN = [4]float64{}, 0
+		r.lastLaps, r.lapStartFuel = t.CompletedLaps, t.Fuel
+		r.startLap(inPits(t))
+		r.restartAt, r.lastLapAt = time.Time{}, time.Now()
 	} else if t.CompletedLaps > r.lastLaps {
 		r.lastLaps = t.CompletedLaps
+		r.restartAt, r.lastLapAt = time.Time{}, time.Now()
+	} else if !r.restartAt.IsZero() && time.Since(r.restartAt) >= lapRestartWait {
+		// the lap clock went back and the game counted no lap: what came before belongs to no
+		// lap (out-lap from the pit box, return to the garage), the lap starts at the restart
+		log.Printf("rec %s: lap clock restarted without a counted lap (fuel %.1f L, pits %v): the lap starts there", g.ID(), r.restartFuel, r.restartPit)
+		r.lapStartFuel = r.restartFuel
+		r.startLap(r.restartPit || inPits(t))
+		r.restartAt = time.Time{}
 	}
+}
+
+// lapRestartWait: how long after the lap clock went back the game may still count the lap (it
+// restarts the clock a reading or two before it counts; SetupMan reads every 2 seconds).
+var lapRestartWait = 5 * time.Second
+
+// startLap clears what is gathered per lap; pit: the lap starts in the pit lane or box.
+func (r *recorder) startLap(pit bool) {
+	r.lapInvalid, r.lapPit = false, pit
+	r.airSum, r.roadSum, r.tempN = 0, 0, 0
+	r.pSum, r.pN = [4]float64{}, 0
+	r.ttSum, r.ttN = [4]float64{}, 0
 }
 
 // matchSetup works out the setup being driven among the setups in the game folder for this car

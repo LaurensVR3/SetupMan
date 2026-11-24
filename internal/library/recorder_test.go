@@ -319,3 +319,40 @@ func TestLiveSessionInMenus(t *testing.T) {
 		t.Fatalf("liveSession in the menus = %+v, %v", got, ok)
 	}
 }
+
+// The game restarts its lap clock without counting a lap when the car crosses the line on its way
+// out of the pit box: the first counted lap starts there, so it is a flying lap with its own fuel
+// (rig 2026-11-24, Imola: lap 1 had 5.3 L and a pit mark because it held the out-lap).
+func TestRecorderUncountedOutLap(t *testing.T) {
+	old := lapRestartWait
+	lapRestartWait = 0
+	defer func() { lapRestartWait = old }()
+	folder := setupFolder(t)
+	g := &fakeGame{installed: true, folder: folder, live: game.LiveUnknown}
+	l, _ := newLib(t, g)
+	l.Apply()
+	snap := func(laps, lastMs, clock int, fuel float64, inPit bool) game.Telemetry {
+		return game.Telemetry{Live: true, Session: "practice", Car: "ferrari_296_gt3", Track: "Spa", CompletedLaps: laps,
+			LastLapMs: lastMs, CurrentLapMs: clock, CurrentKnown: true, InPit: inPit, PitLaneKnown: true, InPitLane: inPit,
+			Fuel: fuel, TC: 4, ABS: 3, Map: 1}
+	}
+	feed := func(tl game.Telemetry) { l.feedTelemetry(g, tl, true) }
+	feed(snap(0, 0, 0, 30, true))           // pit box
+	feed(snap(0, 0, 60000, 29.5, false))    // out-lap
+	feed(snap(0, 0, 128000, 27.5, false))   // just before the line
+	feed(snap(0, 0, 500, 27.4, false))      // line crossed: clock restarts, no lap counted
+	feed(snap(0, 0, 60000, 26, false))      // flying lap
+	feed(snap(1, 101000, 400, 24.7, false)) // counted together with the clock restart
+	feed(snap(1, 101000, 50000, 23.4, false))
+	feed(snap(2, 102000, 1500, 22, false)) // the next lap
+	laps, err := l.db.LapsForSession(1)
+	if err != nil || len(laps) != 2 {
+		t.Fatalf("laps: %+v %v", laps, err)
+	}
+	if laps[0].Pit || laps[0].FuelUsed < 2.69 || laps[0].FuelUsed > 2.71 {
+		t.Errorf("first lap: pit %v fuel %.2f, want a flying lap with 2.7 L", laps[0].Pit, laps[0].FuelUsed)
+	}
+	if laps[1].Pit || laps[1].FuelUsed < 2.69 || laps[1].FuelUsed > 2.71 {
+		t.Errorf("second lap: pit %v fuel %.2f, want 2.7 L", laps[1].Pit, laps[1].FuelUsed)
+	}
+}

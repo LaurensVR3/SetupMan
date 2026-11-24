@@ -41,6 +41,8 @@ type Telemetry struct {
 	Car, Track    string  // as the game names them (e.g. "ferrari_296_gt3", "spa")
 	CompletedLaps int     // laps completed in this session
 	LastLapMs     int     // last completed lap time
+	CurrentLapMs  int     // the lap clock: time in the current lap (only meaningful when CurrentKnown)
+	CurrentKnown  bool    //
 	InPit         bool    // in the pit box
 	InPitLane     bool    // in the pit lane (only meaningful when PitLaneKnown)
 	PitLaneKnown  bool    //
