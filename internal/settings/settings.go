@@ -74,6 +74,9 @@ type Settings struct {
 	// TempRules: how each author writes temperatures in setup names (D-146), by initials in upper
 	// case; "*" = everyone else. Empty = the defaults (two numbers air then track, one number air).
 	TempRules naming.TempRules `json:"tempRules,omitempty"`
+	// MapTilerKey is the user's own free MapTiler key for sharp satellite photos in the 3D telemetry
+	// view (D-190). The browser loads the photos from MapTiler directly; they are never stored.
+	MapTilerKey string `json:"mapTilerKey,omitempty"`
 }
 
 // Network is access from other computers on the local network (spec D-100).

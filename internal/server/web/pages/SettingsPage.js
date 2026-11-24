@@ -2,7 +2,7 @@
 // Every change is saved straight away.
 import { ref, reactive, computed, onMounted, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { get, put, post, enc } from "../api.js";
+import { get, put, post, enc, api } from "../api.js";
 import { store, applyTheme, showToast } from "../store.js";
 import { dateTime } from "../format.js";
 import { setCrumbs } from "../components/common.js";
@@ -278,6 +278,18 @@ export const SettingsPage = {
     // LFM ID for the next race in Race prep (D-142).
     const lfmId = ref(store.settings?.lfmId || "");
     const saveLfm = () => save((n) => { n.lfmId = String(lfmId.value || "").trim(); });
+    // 3D telemetry (D-190): the user's own MapTiler key, and the offline aerial photos kept per track
+    const mapTilerKey = ref(store.settings?.mapTilerKey || "");
+    const saveMapTiler = () => save((n) => { n.mapTilerKey = String(mapTilerKey.value || "").trim(); });
+    const keptPhotos = ref({});
+    const loadKeptPhotos = () => get("/api/maps3d").then((v) => (keptPhotos.value = v || {})).catch(() => {});
+    loadKeptPhotos();
+    const trackLabel = (id) => id.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    const kb = (n) => (n >= 1 << 20 ? (n / (1 << 20)).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
+    async function deleteKept(gameId, track) {
+      try { await api("DELETE", `/api/telemetry/3d/${enc(gameId)}/${enc(track)}/photos`); await loadKeptPhotos(); }
+      catch (e) { showToast(e.message); }
+    }
     const initials = ref(store.settings?.initials || "");
     const saveInitials = () => save((n) => { n.initials = String(initials.value || "").trim().toUpperCase(); }).then(loadTempAuthors);
     // Temperatures in setup names, per author (D-146): there is no standard, so each author's way
@@ -409,7 +421,7 @@ export const SettingsPage = {
     const visLabel = { auto: "When installed", show: "Always", hide: "Never" };
     // GitHub issue forms (D-156); the forms read ?version= into their version field.
     const issueUrl = (form) => `https://github.com/LaurensVR3/SetupMan/issues/new?template=${form}&version=${encodeURIComponent(store.app?.number || "")}`;
-    return { issueUrl, lfmId, saveLfm, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
+    return { issueUrl, lfmId, saveLfm, mapTilerKey, saveMapTiler, keptPhotos, trackLabel, kb, deleteKept, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
       hist, preview, applyHistory, countNodes, setEndurance, autostart, setAutostart,
       manage, setManaged, setTidy, setAutoRename, teleLapsDlg, teleLapsGame, openTeleLaps, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
       teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
@@ -590,6 +602,22 @@ export const SettingsPage = {
                 <p>While you drive, SetupMan records what the MoTeC files lack: car position (for an exact track map), fuel, lap validity, slip angle and slip ratio, brake pressure, brake pad and disc wear, ride height, pitch and roll. About 10 readings per second, a few MB per hour, stored in SetupMan's own folder and included in full backups.</p>
               </div>
               <label class="switch switch-lg"><input type="checkbox" :checked="!s.games[g.id]?.extraLogOff" @change="setExtraLog(g.id, $event.target.checked)"><span></span><span class="sr">Extra telemetry log for {{ g.short }}</span></label>
+            </div>
+            <div v-if="g.extraLog" class="setting setting-stack">
+              <div class="setting-text">
+                <h3>3D track view: satellite photos</h3>
+                <p>Lap analysis can show your laps in 3D on the real track. For sharp satellite photos at every track, create a free account at <a href="https://www.maptiler.com/cloud/" target="_blank" rel="noopener">MapTiler</a> and paste your API key here. The free plan is for personal, non-commercial use and has a monthly limit (about 100,000 tile requests; one 3D view of a track uses a few hundred). The photos load straight from MapTiler while you are online and are not stored. Without a key the view uses the government aerial photos SetupMan can download for offline use (Zandvoort, Zolder, Spa, Nürburgring, Red Bull Ring, Paul Ricard, Barcelona, Valencia, Suzuka and the US tracks), or no photo.</p>
+              </div>
+              <div class="folder-row">
+                <input type="text" v-model="mapTilerKey" placeholder="MapTiler API key" spellcheck="false" autocomplete="off" aria-label="MapTiler API key" @keyup.enter="saveMapTiler">
+                <button type="button" class="btn btn-sm" :disabled="String(mapTilerKey || '').trim() === (s.mapTilerKey || '')" @click="saveMapTiler">Save</button>
+              </div>
+              <div v-if="Object.keys(keptPhotos).length" class="kept-photos">
+                <h4>Offline aerial photos kept</h4>
+                <ul>
+                  <li v-for="(size, t) in keptPhotos" :key="t"><span>{{ trackLabel(t) }}</span><span class="kept-size">{{ kb(size) }}</span><button type="button" class="btn-link" @click="deleteKept(g.id, t)">Delete</button></li>
+                </ul>
+              </div>
             </div>
             <div v-if="g.laps" class="setting">
               <div class="setting-text">

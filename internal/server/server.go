@@ -73,6 +73,7 @@ func New(lib *library.Library, store *settings.Store, logoStore *logos.Store) *S
 	s.registerPrep()
 	s.registerNaming()
 	s.registerTelemetry()
+	s.registerMaps3D()
 	return s
 }
 

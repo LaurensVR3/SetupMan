@@ -13,6 +13,7 @@ import (
 	"setupman/internal/folderbackup"
 	"setupman/internal/game"
 	"setupman/internal/history"
+	"setupman/internal/maps3d"
 	"setupman/internal/settings"
 	"setupman/internal/store"
 	"setupman/internal/watch"
@@ -70,8 +71,11 @@ type Library struct {
 	// TelemetryDir is where SetupMan keeps its extra telemetry logs (%APPDATA%\SetupMan\telemetry,
 	// D-162); set by main. "" = no extra log.
 	TelemetryDir string
-	teleOnce     sync.Once
-	teleD        *teleData
+	// Maps keeps the 3D telemetry view's terrain and offline photos (D-190); set by main.
+	Maps     *maps3d.Maps
+	scene3D  scene3DCache
+	teleOnce sync.Once
+	teleD    *teleData
 }
 
 type state struct {

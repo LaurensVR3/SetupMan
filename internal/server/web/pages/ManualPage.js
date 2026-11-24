@@ -208,6 +208,16 @@ export const ManualPage = {
                 <li><b>Turns</b>: the time gained or lost in every turn with a bar, and why, e.g. “Braking 12 m later · Minimum speed +4 km/h · Exit speed +3 km/h” (only reasons that explain the gain or loss). Click a turn to zoom in.</li>
               </ul>
             </section>
+            <section id="m-tele-3d">
+              <h2>3D track view</h2>
+              <p>Select <b>3D</b> on the Track card of the lap analysis. Every lap is drawn on its own driving line on the real, hilly track, with a wall standing on it: choose the channel for the wall's <b>height</b> (e.g. speed) and for its <b>colour</b> (e.g. Throttle / brake: green on the throttle, red on the brakes, grey while coasting). Point at the graphs and a marker per lap shows exactly where the car was; click a line to move the cursor there. Drag to rotate, right-drag to move, wheel to zoom; the camera stays where you put it.</p>
+              <ul>
+                <li><b>Exact position</b>: laps driven with SetupMan's extra telemetry log use the car position the game reported. Older laps are drawn on the track's typical line and marked “approximate position”; their channel values are still their own.</li>
+                <li><b>Satellite</b>: sharp photos at every track with your own free MapTiler key (Settings → Games → ACC). They load from MapTiler while you are online and are not stored.</li>
+                <li><b>Aerial photo</b>: for tracks where a government offers aerial photos under an open licence (Zandvoort, Zolder, Spa, Nürburgring, Red Bull Ring, Paul Ricard, Barcelona, Valencia, Suzuka, the US tracks), <b>Download aerial photo for offline use</b> keeps them on this PC (a few MB to about 25 MB per track). Delete them on the view or in Settings.</li>
+                <li>The terrain is downloaded the first time you open a track in 3D and kept. The first time also places the game's track on the real map, which takes a few seconds.</li>
+              </ul>
+            </section>
             <section id="m-tele-turns">
               <h2>Turn numbers</h2>
               <p>Turns use the circuit's official numbers, taken from Wikimedia Commons track maps, so T5 is the T5 you know. Point at a turn number in the turns table or on the track map for its name, where known. For a track without official numbers yet, SetupMan counts the track's slow points itself, and the Turns card says so.</p>

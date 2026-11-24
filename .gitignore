@@ -27,3 +27,6 @@ desktop.ini
 
 # ACC MoTeC telemetry from the rig for local testing (large, personal) - do not publish
 /Telemetry/
+
+# Rig full backups (personal data, never commit)
+Full Backups/

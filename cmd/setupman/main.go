@@ -33,6 +33,7 @@ import (
 	"setupman/internal/games/acr"
 	"setupman/internal/library"
 	"setupman/internal/logos"
+	"setupman/internal/maps3d"
 	"setupman/internal/server"
 	"setupman/internal/settings"
 	histstore "setupman/internal/store"
@@ -117,6 +118,7 @@ func main() {
 	lib := library.New(games, store, db)
 	lib.Backups = &folderbackup.Store{Dir: filepath.Join(dataDir, "backups")} // ACC setups folder backups (D-82)
 	lib.TelemetryDir = filepath.Join(dataDir, fullbackup.TelemetryDir)        // extra telemetry logs (D-162)
+	lib.Maps = maps3d.New(filepath.Join(dataDir, "maps"))                     // 3D telemetry terrain and offline photos (D-190)
 	lib.Start()
 	if err := autostart.Refresh(); err != nil { // SetupMan.exe may have been moved
 		log.Printf("start with Windows: %v", err)
