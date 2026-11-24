@@ -11,7 +11,7 @@ import { FamilyTree } from "../components/FamilyTree.js";
 import { LastOpenedNotice } from "../components/LastOpenedNotice.js";
 import { TeleLapsDialog } from "../components/TeleLaps.js";
 
-const TABS = [["general", "General"], ["games", "Games"], ["compare", "Comparing & history"], ["backups", "Backups & bin"], ["network", "Network"], ["about", "About"]];
+const TABS = [["general", "General"], ["games", "Games"], ["telemetry", "Telemetry"], ["compare", "Comparing & history"], ["backups", "Backups & bin"], ["network", "Network"], ["about", "About"]];
 
 // About → Features per game: true = yes, false = no, text = yes with a remark.
 const FEATURE_GAMES = ["ACC", "AC", "AC EVO", "AC Rally"];
@@ -34,6 +34,7 @@ export const SettingsPage = {
   setup() {
     setCrumbs([{ label: "Settings", to: "/settings" }]);
     const games = ref([]);
+    const teleGames = computed(() => games.value.filter((g) => g.telemetry || g.extraLog)); // games whose telemetry SetupMan reads (D-190)
     const draft = reactive({ folders: {} }); // folder text fields, per game
     const checks = reactive({});            // folder check results, per game
     const route = useRoute();
@@ -280,14 +281,15 @@ export const SettingsPage = {
     const saveLfm = () => save((n) => { n.lfmId = String(lfmId.value || "").trim(); });
     // 3D telemetry (D-190): the user's own MapTiler key, and the offline aerial photos kept per track
     const mapTilerKey = ref(store.settings?.mapTilerKey || "");
+    const showKey = ref(false);
     const saveMapTiler = () => save((n) => { n.mapTilerKey = String(mapTilerKey.value || "").trim(); });
     const keptPhotos = ref({});
     const loadKeptPhotos = () => get("/api/maps3d").then((v) => (keptPhotos.value = v || {})).catch(() => {});
     loadKeptPhotos();
     const trackLabel = (id) => id.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
     const kb = (n) => (n >= 1 << 20 ? (n / (1 << 20)).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
-    async function deleteKept(gameId, track) {
-      try { await api("DELETE", `/api/telemetry/3d/${enc(gameId)}/${enc(track)}/photos`); await loadKeptPhotos(); }
+    async function deleteKept(track) { // photos belong to the track, whichever game drove it
+      try { await api("DELETE", `/api/telemetry/3d/acc/${enc(track)}/photos`); await loadKeptPhotos(); }
       catch (e) { showToast(e.message); }
     }
     const initials = ref(store.settings?.initials || "");
@@ -421,7 +423,7 @@ export const SettingsPage = {
     const visLabel = { auto: "When installed", show: "Always", hide: "Never" };
     // GitHub issue forms (D-156); the forms read ?version= into their version field.
     const issueUrl = (form) => `https://github.com/LaurensVR3/SetupMan/issues/new?template=${form}&version=${encodeURIComponent(store.app?.number || "")}`;
-    return { issueUrl, lfmId, saveLfm, mapTilerKey, saveMapTiler, keptPhotos, trackLabel, kb, deleteKept, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
+    return { issueUrl, lfmId, saveLfm, mapTilerKey, showKey, saveMapTiler, keptPhotos, trackLabel, kb, deleteKept, teleGames, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
       hist, preview, applyHistory, countNodes, setEndurance, autostart, setAutostart,
       manage, setManaged, setTidy, setAutoRename, teleLapsDlg, teleLapsGame, openTeleLaps, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
       teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
@@ -564,13 +566,6 @@ export const SettingsPage = {
                 </div>
                 <label class="switch switch-lg"><input type="checkbox" :checked="g.autoRename" @change="setAutoRename(g.id, $event.target.checked)"><span></span><span class="sr">Apply the naming standard to new saves</span></label>
               </div>
-              <div v-if="g.managed && g.telemetryLaps" class="setting manage-row">
-                <div class="setting-text">
-                  <h3>Telemetry laps</h3>
-                  <p>{{ g.short }} keeps telemetry for as many laps as each setup's Telemetry laps value (Electronics), up to 99. Sets 99 in the setups in the {{ g.short }} folder that have fewer; you see the list first, and a backup of the folder is made before anything changes. Not while driving.</p>
-                </div>
-                <button type="button" class="btn" @click="openTeleLaps(g)">Set telemetry laps to 99…</button>
-              </div>
             </div>
             <div v-if="g.laps" class="setting setting-stack">
               <div class="setting-text">
@@ -580,44 +575,6 @@ export const SettingsPage = {
                 <p v-if="g.byFile && app.lastOpened && app.lastOpened.enabled" class="check check-ok">Windows records when files are opened on this PC.</p>
               </div>
               <LastOpenedNotice v-if="g.byFile" :games="g.short" />
-            </div>
-            <div v-if="g.telemetry" class="setting setting-stack">
-              <div class="setting-text">
-                <h3>Telemetry</h3>
-                <p>SetupMan reads the MoTeC telemetry {{ g.short }} writes. Sessions SetupMan recorded get their setup automatically; for older sessions, choose the setup on the track's Sessions tab. SetupMan only reads these files and never changes, moves or deletes them.</p>
-                <p v-if="g.detectedTelemetry">Found automatically: <code>{{ g.detectedTelemetry }}</code>. Leave empty to use it.</p>
-                <p v-else-if="teleValue(g)">{{ g.short }}'s own MoTeC folder was not found on this PC; SetupMan uses the folder below.</p>
-                <p v-else>Not found automatically. {{ g.short }} creates the folder once it has written telemetry; or choose a folder below.</p>
-              </div>
-              <div class="folder-row">
-                <input type="text" :value="teleValue(g)" :placeholder="g.detectedTelemetry || 'Choose a folder'" spellcheck="false"
-                  @change="useTeleFolder(g.id, $event.target.value.trim())" :aria-label="g.name + ' telemetry folder'">
-                <button type="button" class="btn" @click="browseTele(g)">Browse…</button>
-                <button v-if="teleValue(g) && g.detectedTelemetry" type="button" class="btn btn-quiet" @click="useTeleFolder(g.id, '')">Use the found folder</button>
-              </div>
-            </div>
-            <div v-if="g.extraLog" class="setting manage-row">
-              <div class="setting-text">
-                <h3>Extra telemetry log</h3>
-                <p>While you drive, SetupMan records what the MoTeC files lack: car position (for an exact track map), fuel, lap validity, slip angle and slip ratio, brake pressure, brake pad and disc wear, ride height, pitch and roll. About 10 readings per second, a few MB per hour, stored in SetupMan's own folder and included in full backups.</p>
-              </div>
-              <label class="switch switch-lg"><input type="checkbox" :checked="!s.games[g.id]?.extraLogOff" @change="setExtraLog(g.id, $event.target.checked)"><span></span><span class="sr">Extra telemetry log for {{ g.short }}</span></label>
-            </div>
-            <div v-if="g.extraLog" class="setting setting-stack">
-              <div class="setting-text">
-                <h3>3D track view: satellite photos</h3>
-                <p>Lap analysis can show your laps in 3D on the real track. For sharp satellite photos at every track, create a free account at <a href="https://www.maptiler.com/cloud/" target="_blank" rel="noopener">MapTiler</a> and paste your API key here. The free plan is for personal, non-commercial use and has a monthly limit (about 100,000 tile requests; one 3D view of a track uses a few hundred). The photos load straight from MapTiler while you are online and are not stored. Without a key the view uses the government aerial photos SetupMan can download for offline use (Zandvoort, Zolder, Spa, Nürburgring, Red Bull Ring, Paul Ricard, Barcelona, Valencia, Suzuka and the US tracks), or no photo.</p>
-              </div>
-              <div class="folder-row">
-                <input type="text" v-model="mapTilerKey" placeholder="MapTiler API key" spellcheck="false" autocomplete="off" aria-label="MapTiler API key" @keyup.enter="saveMapTiler">
-                <button type="button" class="btn btn-sm" :disabled="String(mapTilerKey || '').trim() === (s.mapTilerKey || '')" @click="saveMapTiler">Save</button>
-              </div>
-              <div v-if="Object.keys(keptPhotos).length" class="kept-photos">
-                <h4>Offline aerial photos kept</h4>
-                <ul>
-                  <li v-for="(size, t) in keptPhotos" :key="t"><span>{{ trackLabel(t) }}</span><span class="kept-size">{{ kb(size) }}</span><button type="button" class="btn-link" @click="deleteKept(g.id, t)">Delete</button></li>
-                </ul>
-              </div>
             </div>
             <div v-if="g.laps" class="setting">
               <div class="setting-text">
@@ -639,6 +596,65 @@ export const SettingsPage = {
                 <input type="number" min="5" max="1440" step="5" :value="s.games[g.id]?.enduranceMinutes || 45" @change="setEndurance(g.id, $event.target.value)" :aria-label="g.name + ' endurance stint length'"> minutes
               </label>
             </div>
+          </article>
+        </section>
+
+        <section v-if="tab === 'telemetry'" class="settings-section">
+          <h2>3D track view</h2>
+            <div class="setting setting-stack">
+              <div class="setting-text">
+                <h3>Satellite photos</h3>
+                <p>Lap analysis can show your laps in 3D on the real track (Track → 3D). For sharp satellite photos at every track, create a free account at <a href="https://www.maptiler.com/cloud/" target="_blank" rel="noopener">MapTiler</a> and paste your API key here. The free plan is for personal, non-commercial use and has a monthly limit (about 100,000 tile requests; one 3D view of a track uses a few hundred). The photos load straight from MapTiler while you are online and are not stored. Without a key the view uses the government aerial photos SetupMan can download for offline use (Zandvoort, Zolder, Spa, Nürburgring, Red Bull Ring, Paul Ricard, Barcelona, Valencia, Suzuka and the US tracks), or no photo.</p>
+              </div>
+              <div class="folder-row">
+                <input :type="showKey ? 'text' : 'password'" v-model="mapTilerKey" placeholder="MapTiler API key" spellcheck="false" autocomplete="off" aria-label="MapTiler API key" @keyup.enter="saveMapTiler">
+                <button type="button" class="btn btn-sm btn-quiet" @click="showKey = !showKey">{{ showKey ? 'Hide' : 'Show' }}</button>
+                <button type="button" class="btn btn-sm" :disabled="String(mapTilerKey || '').trim() === (s.mapTilerKey || '')" @click="saveMapTiler">Save</button>
+              </div>
+              <div v-if="Object.keys(keptPhotos).length" class="kept-photos">
+                <h4>Offline aerial photos kept</h4>
+                <ul>
+                  <li v-for="(size, t) in keptPhotos" :key="t"><span>{{ trackLabel(t) }}</span><span class="kept-size">{{ kb(size) }}</span><button type="button" class="btn-link" @click="deleteKept(t)">Delete</button></li>
+                </ul>
+              </div>
+            </div>
+        </section>
+
+        <section v-if="tab === 'telemetry'" class="settings-section">
+          <h2>Telemetry per game</h2>
+          <p v-if="!teleGames.length" class="setting-hint">None of your games has telemetry SetupMan can read yet.</p>
+          <article v-for="g in teleGames" :key="g.id" class="game-setting">
+            <header><h3>{{ g.name }}</h3></header>
+            <div v-if="g.telemetry" class="setting setting-stack">
+              <div class="setting-text">
+                <h3>MoTeC folder</h3>
+                <p>SetupMan reads the MoTeC telemetry {{ g.short }} writes. Sessions SetupMan recorded get their setup automatically; for older sessions, choose the setup on the track's Sessions tab. SetupMan only reads these files and never changes, moves or deletes them.</p>
+                <p v-if="g.detectedTelemetry">Found automatically: <code>{{ g.detectedTelemetry }}</code>. Leave empty to use it.</p>
+                <p v-else-if="teleValue(g)">{{ g.short }}'s own MoTeC folder was not found on this PC; SetupMan uses the folder below.</p>
+                <p v-else>Not found automatically. {{ g.short }} creates the folder once it has written telemetry; or choose a folder below.</p>
+              </div>
+              <div class="folder-row">
+                <input type="text" :value="teleValue(g)" :placeholder="g.detectedTelemetry || 'Choose a folder'" spellcheck="false"
+                  @change="useTeleFolder(g.id, $event.target.value.trim())" :aria-label="g.name + ' telemetry folder'">
+                <button type="button" class="btn" @click="browseTele(g)">Browse…</button>
+                <button v-if="teleValue(g) && g.detectedTelemetry" type="button" class="btn btn-quiet" @click="useTeleFolder(g.id, '')">Use the found folder</button>
+              </div>
+            </div>
+            <div v-if="g.extraLog" class="setting manage-row">
+              <div class="setting-text">
+                <h3>Extra telemetry log</h3>
+                <p>While you drive, SetupMan records what the MoTeC files lack: car position (for an exact track map), fuel, lap validity, slip angle and slip ratio, brake pressure, brake pad and disc wear, ride height, pitch and roll. About 10 readings per second, a few MB per hour, stored in SetupMan's own folder and included in full backups.</p>
+              </div>
+              <label class="switch switch-lg"><input type="checkbox" :checked="!s.games[g.id]?.extraLogOff" @change="setExtraLog(g.id, $event.target.checked)"><span></span><span class="sr">Extra telemetry log for {{ g.short }}</span></label>
+            </div>
+              <div v-if="g.telemetryLaps" class="setting manage-row">
+                <div class="setting-text">
+                  <h3>Telemetry laps</h3>
+                  <p>{{ g.short }} keeps telemetry for as many laps as each setup's Telemetry laps value (Electronics), up to 99. Sets 99 in the setups in the {{ g.short }} folder that have fewer; you see the list first, and a backup of the folder is made before anything changes. Not while driving.</p>
+                </div>
+                <button v-if="g.managed" type="button" class="btn" @click="openTeleLaps(g)">Set telemetry laps to 99…</button>
+                <span v-else class="setting-hint">Needs folder management (Settings → Games → {{ g.short }}).</span>
+              </div>
           </article>
         </section>
 

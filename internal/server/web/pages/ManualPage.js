@@ -165,7 +165,7 @@ export const ManualPage = {
             <section id="m-weekend">
               <h2>A race weekend, step by step</h2>
               <ol class="manual-steps">
-                <li><b>Before practice:</b> check that the extra telemetry log is enabled (Settings → Games → ACC); for an LFM race, have your LFM ID in Settings → General.</li>
+                <li><b>Before practice:</b> check that the extra telemetry log is enabled (Settings → Telemetry); for an LFM race, have your LFM ID in Settings → General.</li>
                 <li><b>Practice</b> in the setup you plan to race. If <b>Manual setup select</b> appears, click the right setup once. Drive at least 5 clean laps on race fuel.</li>
                 <li><b>Race prep:</b> choose the race and its temperature; it ranks your setups and shows the fuel plan from your practice laps. For another temperature, use <b>More → Adjust for another temperature</b> on the setup.</li>
                 <li><b>Fuel calculator</b> (from the track page): race length, mandatory stops, pit loss (filled in from your recorded stops when the box is empty) and safety margin; the fuel to start with and to add per stop.</li>
@@ -179,9 +179,9 @@ export const ManualPage = {
           <template v-else-if="tab === 'telemetry'">
             <section id="m-tele-files">
               <h2>Where it comes from</h2>
-              <p>ACC writes MoTeC telemetry files (Documents\\Assetto Corsa Competizione\\MoTeC). SetupMan reads them and never changes, moves or deletes them; Settings → Games → ACC shows the folder and lets you choose another. New files are read in the background, never while you drive.</p>
+              <p>ACC writes MoTeC telemetry files (Documents\\Assetto Corsa Competizione\\MoTeC). SetupMan reads them and never changes, moves or deletes them; Settings → Telemetry shows the folder and lets you choose another. New files are read in the background, never while you drive.</p>
               <p>ACC keeps one MoTeC file for as long as you stay on a server, so practice, qualifying and race can be in one file. The Sessions tab shows each session you drove as its own entry, with its own laps, best lap and setup.</p>
-              <p>ACC keeps telemetry only for as many laps as the setup's <b>Telemetry laps</b> value (Electronics, at most 99). With folder management enabled, Settings → Games → ACC → <b>Set telemetry laps to 99…</b> lists the setups in the folder that have fewer and sets 99 in the ones you select, after a backup of the folder. Nothing else in the files changes and the setups get no new version.</p>
+              <p>ACC keeps telemetry only for as many laps as the setup's <b>Telemetry laps</b> value (Electronics, at most 99). With folder management enabled, Settings → Telemetry → <b>Set telemetry laps to 99…</b> lists the setups in the folder that have fewer and sets 99 in the ones you select, after a backup of the folder. Nothing else in the files changes and the setups get no new version.</p>
               <p>ACC saves a session again and again while you drive, and each save keeps the full data (speed, pedals, tyres …) of its last laps only. SetupMan puts the saves of a session together and shows every lap once, taking its data from whichever save still has it. A lap no save has data for keeps its lap time and is marked <b>No data</b>; it can't be analysed.</p>
               <p>Laps that are not full laps (out-lap, in-lap, a restart, a cut or being sent back to the pits) are greyed out and not counted. Laps through the pit lane are full laps.</p>
             </section>
@@ -213,7 +213,7 @@ export const ManualPage = {
               <p>Select <b>3D</b> on the Track card of the lap analysis. Every lap is drawn on its own driving line on the real, hilly track, with a wall standing on it: choose the channel for the wall's <b>height</b> (e.g. speed) and for its <b>colour</b> (e.g. Throttle / brake: green on the throttle, red on the brakes, grey while coasting). Point at the graphs and a marker per lap shows exactly where the car was; click a line to move the cursor there. Drag to rotate, right-drag to move, wheel to zoom; the camera stays where you put it.</p>
               <ul>
                 <li><b>Exact position</b>: laps driven with SetupMan's extra telemetry log use the car position the game reported. Older laps are drawn on the track's typical line and marked “approximate position”; their channel values are still their own.</li>
-                <li><b>Satellite</b>: sharp photos at every track with your own free MapTiler key (Settings → Games → ACC). They load from MapTiler while you are online and are not stored.</li>
+                <li><b>Satellite</b>: sharp photos at every track with your own free MapTiler key (Settings → Telemetry). They load from MapTiler while you are online and are not stored.</li>
                 <li><b>Aerial photo</b>: for tracks where a government offers aerial photos under an open licence (Zandvoort, Zolder, Spa, Nürburgring, Red Bull Ring, Paul Ricard, Barcelona, Valencia, Suzuka, the US tracks), <b>Download aerial photo for offline use</b> keeps them on this PC (a few MB to about 25 MB per track). Delete them on the view or in Settings.</li>
                 <li>The terrain is downloaded the first time you open a track in 3D and kept. The first time also places the game's track on the real map, which takes a few seconds.</li>
               </ul>
@@ -228,7 +228,7 @@ export const ManualPage = {
             </section>
             <section id="m-tele-extra">
               <h2>Extra telemetry log</h2>
-              <p>MoTeC files have no car position, fuel, lap validity or brake wear. While you drive, SetupMan records those and more (slip angle and ratio, brake pressure, temperature and wear, ride height, pitch and roll) about 10 times per second in its own folder: a few MB per hour, included in full backups. With it, the track map follows the car's real position, brakes over a session shows the wear, and the extra channels appear under <b>Channels</b>, marked “extra”. It can be disabled in Settings → Games → ACC.</p>
+              <p>MoTeC files have no car position, fuel, lap validity or brake wear. While you drive, SetupMan records those and more (slip angle and ratio, brake pressure, temperature and wear, ride height, pitch and roll) about 10 times per second in its own folder: a few MB per hour, included in full backups. With it, the track map follows the car's real position, brakes over a session shows the wear, and the extra channels appear under <b>Channels</b>, marked “extra”. It can be disabled in Settings → Telemetry.</p>
             </section>
           </template>
 

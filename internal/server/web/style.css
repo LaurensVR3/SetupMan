@@ -1280,3 +1280,4 @@ th.tt-num { text-align: right; }
 .kept-photos li { display: flex; gap: 12px; align-items: center; }
 .kept-photos li > span:first-child { flex: 1; }
 .kept-size { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.setting-hint { color: var(--ink-2); font-size: 13px; }

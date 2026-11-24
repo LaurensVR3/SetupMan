@@ -38,6 +38,14 @@ function pathAt(p, d) {
   };
   return [cr(p.e[i0], p.e[lo], p.e[hi], p.e[i3]), cr(p.h[i0], p.h[lo], p.h[hi], p.h[i3]), -cr(p.n[i0], p.n[lo], p.n[hi], p.n[i3])];
 }
+// keep only points whose distance goes up, so the search along the lap works
+function increasing(p) {
+  const keep = [];
+  for (let i = 0; i < p.dist.length; i++) if (!keep.length || p.dist[i] >= p.dist[keep[keep.length - 1]]) keep.push(i);
+  if (keep.length === p.dist.length) return p;
+  const pick = (a) => keep.map((i) => a[i]);
+  return { ...p, e: pick(p.e), n: pick(p.n), h: pick(p.h), dist: pick(p.dist) };
+}
 function terrainAt(t, e, n) {
   const x = Math.max(0, Math.min(t.cols - 1.000001, (e - t.e0) / t.step));
   const y = Math.max(0, Math.min(t.rows - 1.000001, (n - t.n0) / t.step));
@@ -103,7 +111,7 @@ export const Tele3D = {
       for (const l of props.laps) {
         if (l.key in paths) continue;
         paths[l.key] = null;
-        try { paths[l.key] = markRaw(await get(`/api/telemetry/files/${l.fileId}/laps/${l.n}/path`)); }
+        try { paths[l.key] = markRaw(increasing(await get(`/api/telemetry/files/${l.fileId}/laps/${l.n}/path`))); }
         catch (e) { error.value = e.message; }
       }
     }
@@ -179,6 +187,7 @@ export const Tele3D = {
 
     // ground: plain shaded terrain, plus photo blocks along the track when a photo source is on
     function buildGround() {
+      if (!renderer || !scene.value) return; // not set up yet: onMounted builds it
       clear(groups.ground);
       for (const t of photoTextures) t.dispose();
       photoTextures = [];
@@ -296,7 +305,7 @@ export const Tele3D = {
       clear(groups.laps);
       pick = [];
       const total = props.view.total;
-      if (!total || !THREE) return;
+      if (!total || !renderer) return;
       const hRange = range(props.laps.map((l) => l.h));
       const cRange = props.wall.c === PEDALS ? null : range(props.laps.map((l) => l.c));
       const size = props.wall.size;
@@ -347,9 +356,10 @@ export const Tele3D = {
 
     // one marker per lap at the cursor: a ball on the driving line and a pin up the wall
     function buildMarkers() {
+      if (!renderer) return;
       clear(groups.markers);
       const d = props.view.cursor;
-      if (d === null || !THREE) { redraw(); return; }
+      if (d === null) { redraw(); return; }
       const hRange = range(props.laps.map((l) => l.h));
       props.laps.forEach((l) => {
         const p = paths[l.key];

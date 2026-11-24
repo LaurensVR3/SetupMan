@@ -21,7 +21,7 @@ import (
 // ErrNo3D: SetupMan has no real-world data for this track.
 var ErrNo3D = errors.New("no 3D map data for this track yet")
 
-const scene3DVersion = 2
+const scene3DVersion = 3
 
 // Path3D is a line in the scene: metres east, north and up, with the distance along the lap.
 type Path3D struct {
@@ -295,8 +295,12 @@ func (l *Library) lapPositions(fileID int64, n int) *lapPos {
 		if x == 0 && z == 0 {
 			continue
 		}
+		d := dist(float64(extra.Data[ti][r]) / 1000)
+		if n := len(p.dist); n > 0 && d < p.dist[n-1] {
+			continue // a row where the lap clock already restarted (the next lap's first reading)
+		}
 		p.x, p.y, p.z = append(p.x, x), append(p.y, extra.Data[yi][r]), append(p.z, z)
-		p.dist = append(p.dist, dist(float64(extra.Data[ti][r])/1000))
+		p.dist = append(p.dist, d)
 	}
 	if len(p.x) < 50 {
 		return nil
