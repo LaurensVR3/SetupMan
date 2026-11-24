@@ -52,8 +52,10 @@ func extraFields() []extraField {
 		{game.ExtraChannel{Name: "AIR_TEMP", Unit: "°C"}, 'p', offAirTemp, false},
 		{game.ExtraChannel{Name: "ROAD_TEMP", Unit: "°C"}, 'p', offRoadTemp, false},
 		{game.ExtraChannel{Name: "BRAKE_BIAS"}, 'p', offBrakeBias, false},
-		{game.ExtraChannel{Name: "TC_ACTIVE"}, 'p', 672, true},
-		{game.ExtraChannel{Name: "ABS_ACTIVE"}, 'p', 676, true},
+		// TC and ABS at work: physics tc @204 and abs @252 (floats, as ACC's MoTeC TC and ABS channels).
+		// tcinAction @672 and absInAction @676 stay 0 in ACC (race log 2026-11-23: 0 in 49,396 rows), D-182.
+		{game.ExtraChannel{Name: "TC_ACTIVE"}, 'p', 204, false},
+		{game.ExtraChannel{Name: "ABS_ACTIVE"}, 'p', 252, false},
 		{game.ExtraChannel{Name: "TC_LEVEL"}, 'g', offTC, true},
 		{game.ExtraChannel{Name: "TC_CUT"}, 'g', 1272, true},
 		{game.ExtraChannel{Name: "ENGINE_MAP"}, 'g', offEngineMap, true},

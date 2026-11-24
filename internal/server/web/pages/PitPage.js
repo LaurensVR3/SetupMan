@@ -42,7 +42,7 @@ export const PitPage = {
     // No stop left: show the fuel left over or short at the flag instead of fuel to add (D-178).
     const finish = computed(() => { const f = data.value?.fuel; return !!f && !f.reason && f.stopsPlanned === 0; });
     const spare = (v) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(1);
-    const tyreSet = (i) => { const t = data.value?.tyres; return t && t.pitMenuKnown && Math.abs(t.pitMenu[i] - t.advice[i]) < 0.05; };
+    const tyreSet = (i) => { const t = data.value?.tyres; return t && t.pitMenuKnown && t.baseKnown && Math.abs(t.pitMenu[i] - t.advice[i]) < 0.05; };
     return { data, error, WHEELS, psi, signed, litres, deltaClass, arrow, clock, lapTime, sessionName, fuelSet, tyreSet, finish, spare };
   },
   template: `
@@ -79,7 +79,7 @@ export const PitPage = {
         </section>
 
         <section class="pit-block" aria-labelledby="pit-tyres-h">
-          <h2 id="pit-tyres-h" class="pit-label">{{ data.tyres.pitMenuKnown ? 'Pressures to set' : 'Pressure change' }}
+          <h2 id="pit-tyres-h" class="pit-label">{{ data.tyres.baseKnown ? 'Pressures to set' : 'Pressure change' }}
             <span class="pit-target">target {{ psi(data.tyres.target) }} hot · {{ data.tyres.wet ? 'wet' : 'dry' }}</span></h2>
           <!-- per tyre: the pressure to set and, as big, the change from the pit menu (rig 2026-11-21:
                "I want to see the +-0.x psi more clearly") -->
@@ -87,7 +87,7 @@ export const PitPage = {
             <div v-for="(w, i) in WHEELS" :key="w" class="pit-tyre">
               <span class="pit-tyre-name">{{ w }}</span>
               <span class="pit-tyre-main">
-                <span v-if="data.tyres.pitMenuKnown" class="pit-tyre-value" :class="{ 'pit-ok': tyreSet(i) }">{{ psi(data.tyres.advice[i]) }}</span>
+                <span v-if="data.tyres.baseKnown" class="pit-tyre-value" :class="{ 'pit-ok': tyreSet(i) }">{{ psi(data.tyres.advice[i]) }}</span>
                 <span class="pit-delta" :class="deltaClass(data.tyres.change[i])">{{ arrow(data.tyres.change[i]) }}{{ signed(data.tyres.change[i]) }}</span>
               </span>
               <span class="pit-tyre-sub"><template v-if="data.tyres.pitMenuKnown">menu {{ psi(data.tyres.pitMenu[i]) }} · </template>hot {{ psi(data.tyres.average[i]) }}</span>
@@ -112,7 +112,7 @@ export const PitPage = {
         <details class="pit-how">
           <summary>How this is worked out</summary>
           <p v-if="data.fuel && !data.fuel.reason">Fuel: {{ data.fuel.fuelPerLap.toFixed(2) }} L per lap over the last {{ data.fuel.laps }} valid laps (out-laps, in-laps and stops not counted), {{ data.fuel.lapsToGo.toFixed(1) }} laps to go<template v-if="data.fuel.timed"> from the time left</template>. Stops before the last one add a {{ data.fuel.margin }} L safety margin (fuel calculator); the last stop adds the minimum to the flag, rounded up to whole litres for the pit menu. With no stop left, the big number is the fuel left over at the flag (green) or short (red). Stint plan: {{ data.fuel.endurance ? 'longest stints, the last two equal' : 'equal stints' }}<template v-if="data.fuel.setupName">, from the setup {{ data.fuel.setupName }}</template><template v-if="data.fuel.maxStintMs">; the server allows {{ clock(data.fuel.maxStintMs) }} per stint</template>.<template v-if="!data.fuel.setupName"> SetupMan recognises the setup when you leave the pits, by comparing what the car reports (fuel; in ACC also the pit-menu tyre pressures, TC, ABS and engine map) with your setups for this car and track. When it can't tell, Manual setup select under the top bar sets it with one click.</template></p>
-          <p v-if="!data.tyres.reason">Tyres: the average hot pressure of each tyre over the last {{ data.tyres.laps }} lap{{ data.tyres.laps === 1 ? '' : 's' }} is compared with the target (Settings → Games); the difference is added to the pressure now set in the pit menu.</p>
+          <p v-if="!data.tyres.reason">Tyres: the average hot pressure of each tyre over the last {{ data.tyres.laps }} lap{{ data.tyres.laps === 1 ? '' : 's' }} on these tyres is compared with the target (Settings → Games); the difference is added to the cold pressures these tyres were fitted with<template v-if="data.tyres.baseKnown"> (<template v-for="(w, i) in WHEELS" :key="w">{{ w.toLowerCase() }} {{ psi(data.tyres.base[i]) }}<template v-if="i < 3">, </template></template> psi)</template>. Changing the pit menu doesn't change the advice; a value that matches turns green.</p>
           <p v-if="data.tyres.liveKnown">Hot pressures now: <template v-for="(w, i) in WHEELS" :key="w">{{ w.toLowerCase() }} {{ psi(data.tyres.live[i]) }}<template v-if="i < 3">, </template></template> psi.</p>
         </details>
       </template>

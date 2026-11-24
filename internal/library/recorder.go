@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"setupman/internal/game"
 	"setupman/internal/history"
 	"setupman/internal/lastopened"
+	"setupman/internal/naming"
 	"setupman/internal/store"
 )
 
@@ -64,6 +66,13 @@ type recorder struct {
 	lastKey    string
 	// leaving a server (D-177): when the game went back to its main menu
 	offSince time.Time
+	// tyre advice (D-182): the cold pressures of the tyres on the car (from the first reading of the
+	// session, or the pressures fitted at a stop), since when, and the hot average of the last lap
+	coldBase  [4]float64
+	coldKnown bool
+	coldSince time.Time
+	lastHot   [4]float64
+	hotKnown  bool
 }
 
 // Choice is one setup offered in manual setup select.
@@ -133,6 +142,45 @@ func inPits(t game.Telemetry) bool { return t.InPit || (t.PitLaneKnown && t.InPi
 func pitKey(t game.Telemetry) string {
 	return fmt.Sprintf("%.0f|%d|%d|%d|%v|%.1f %.1f %.1f %.1f|%.0f", t.Fuel, t.TC, t.ABS, t.Map, t.PitMenuKnown,
 		t.PitPressures[0], t.PitPressures[1], t.PitPressures[2], t.PitPressures[3], t.PitFuel)
+}
+
+// noteColdPressures keeps the cold pressures of the tyres on the car, the base of the tyre advice
+// (D-182; owner 2026-11-24: the advice moved while the pit menu was changed, so one click became
+// two). The first reading of a session is cold. Leaving the pits, the tyres are new when the car's
+// pressures equal the pit menu's (they were fitted at those) or are clearly below the last lap's hot
+// average (cold again, e.g. after the garage); otherwise the tyres stayed on and the base stays.
+func (l *Library) noteColdPressures(r *recorder, t game.Telemetry, leaving bool) {
+	if !t.PressuresKnown {
+		return
+	}
+	if !r.coldKnown {
+		r.coldBase, r.coldKnown, r.coldSince = round4(t.Pressures), true, time.Now()
+		return
+	}
+	if !leaving {
+		return
+	}
+	menu := t.PitMenuKnown
+	for w := 0; menu && w < 4; w++ {
+		menu = math.Abs(t.Pressures[w]-t.PitPressures[w]) <= 0.3
+	}
+	cooler := false
+	if r.hotKnown {
+		cooler = (r.lastHot[0]+r.lastHot[1]+r.lastHot[2]+r.lastHot[3])-(t.Pressures[0]+t.Pressures[1]+t.Pressures[2]+t.Pressures[3]) > 4*0.8
+	}
+	switch {
+	case menu:
+		r.coldBase, r.coldSince = round4(t.PitPressures), time.Now()
+	case cooler:
+		r.coldBase, r.coldSince = round4(t.Pressures), time.Now()
+	}
+}
+
+func round4(p [4]float64) [4]float64 {
+	for i := range p {
+		p[i] = math.Round(p[i]*10) / 10
+	}
+	return p
 }
 
 // setupKey sums up the values that come from the loaded setup and that the driver rarely changes
@@ -220,6 +268,7 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 	} else if !r.wasInPits && inPits(t) {
 		logPits(g, t, true)
 	}
+	l.noteColdPressures(r, t, r.wasInPits && !inPits(t))
 	r.wasInPits = inPits(t)
 	if k := setupKey(t); k != "" {
 		r.lastKey = k
@@ -279,6 +328,7 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 				lap.Pressures[i] = r.pSum[i] / float64(r.pN)
 			}
 			lap.HasPressures = true
+			r.lastHot, r.hotKnown = lap.Pressures, true
 		}
 		lap.Wet = r.wet
 		if err := l.db.InsertLap(lap); err != nil {
@@ -334,16 +384,32 @@ func (l *Library) matchSetup(g game.Game, r *recorder, t game.Telemetry) {
 		paths = append(paths, p)
 	}
 
+	// the air temperature each setup was made for, from its name (D-181)
+	rules := l.Settings().TempRules
+	airs := make([]float64, len(names))
+	for k, n := range names {
+		if lo, hi, ok := naming.ParseWith(n, rules).TempFor("air"); ok {
+			airs[k] = float64(lo+hi) / 2
+		}
+	}
+	tm, _ := g.(game.SetupTempMatcher)
 	byValues := func(among []int) []int { // the best-fitting indexes into ids
 		if m == nil || len(among) == 0 {
 			return nil
 		}
 		sub := make([][]byte, len(among))
+		subAir := make([]float64, len(among))
 		for k, i := range among {
-			sub[k] = contents[i]
+			sub[k], subAir[k] = contents[i], airs[i]
+		}
+		found := []int(nil)
+		if tm != nil {
+			found = tm.MatchSetupTemps(t, sub, subAir)
+		} else {
+			found = m.MatchSetup(t, sub)
 		}
 		var out []int
-		for _, k := range m.MatchSetup(t, sub) {
+		for _, k := range found {
 			if k >= 0 && k < len(among) {
 				out = append(out, among[k])
 			}

@@ -9,6 +9,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"setupman/internal/game"
 	"setupman/internal/naming"
@@ -78,7 +79,9 @@ type TyreAdvice struct {
 	Change       [4]float64 `json:"change"`  // target − average
 	PitMenu      [4]float64 `json:"pitMenu"` // as now set in the pit menu
 	PitMenuKnown bool       `json:"pitMenuKnown"`
-	Advice       [4]float64 `json:"advice"` // pit menu + change
+	Base         [4]float64 `json:"base"` // cold pressures of the tyres on the car (D-182)
+	BaseKnown    bool       `json:"baseKnown"`
+	Advice       [4]float64 `json:"advice"` // base + change: the pressures to set, not moved by the pit menu (D-182)
 	Live         [4]float64 `json:"live"`   // hot pressures right now
 	LiveKnown    bool       `json:"liveKnown"`
 	Reason       string     `json:"reason,omitempty"`
@@ -95,9 +98,11 @@ func (l *Library) PitAdvice() PitAdvice {
 	var car, track, kind string
 	var setupID int64
 	var maxStint int
+	var cold coldTyres
 	for g, r := range l.recs {
 		if r != nil && r.sessionID != 0 {
 			id, sessionID, car, track, kind, setupID, maxStint = g, r.sessionID, r.car, r.track, r.kind, r.setupID, r.maxStintMs
+			cold = coldTyres{base: r.coldBase, known: r.coldKnown, since: r.coldSince}
 			break
 		}
 	}
@@ -135,7 +140,7 @@ func (l *Library) PitAdvice() PitAdvice {
 		}
 	}
 	a.Fuel = fuelAdvice(laps, t, l.fuelMargin(id, car, track), plan)
-	a.Tyres = tyreAdvice(laps, t, dry, wet)
+	a.Tyres = tyreAdvice(laps, t, dry, wet, cold)
 	return a
 }
 
@@ -252,8 +257,16 @@ func fuelAdvice(laps []store.Lap, t game.Telemetry, margin float64, plan stintPl
 	return f
 }
 
-func tyreAdvice(laps []store.Lap, t game.Telemetry, dryTarget, wetTarget float64) *TyreAdvice {
-	a := &TyreAdvice{PitMenu: t.PitPressures, PitMenuKnown: t.PitMenuKnown, Live: t.Pressures, LiveKnown: t.PressuresKnown}
+// coldTyres: the cold pressures of the tyres on the car and since when (D-182).
+type coldTyres struct {
+	base  [4]float64
+	known bool
+	since time.Time
+}
+
+func tyreAdvice(laps []store.Lap, t game.Telemetry, dryTarget, wetTarget float64, cold coldTyres) *TyreAdvice {
+	a := &TyreAdvice{PitMenu: t.PitPressures, PitMenuKnown: t.PitMenuKnown, Live: t.Pressures, LiveKnown: t.PressuresKnown,
+		Base: cold.base, BaseKnown: cold.known}
 	switch {
 	case t.WetKnown:
 		a.Wet = t.WetTyres
@@ -266,7 +279,7 @@ func tyreAdvice(laps []store.Lap, t game.Telemetry, dryTarget, wetTarget float64
 	}
 	var used []store.Lap
 	for i := len(laps) - 1; i >= 0 && len(used) < pressureLaps; i-- {
-		if l := laps[i]; !l.Pit && l.HasPressures && l.Wet == a.Wet {
+		if l := laps[i]; !l.Pit && l.HasPressures && l.Wet == a.Wet && (!cold.known || !l.At.Before(cold.since)) { // laps on these tyres
 			used = append(used, l)
 		}
 	}
@@ -282,8 +295,8 @@ func tyreAdvice(laps []store.Lap, t game.Telemetry, dryTarget, wetTarget float64
 		}
 		a.Average[i] = round1(sum / float64(len(used)))
 		a.Change[i] = round1(a.Target - a.Average[i])
-		if a.PitMenuKnown {
-			a.Advice[i] = round1(a.PitMenu[i] + a.Change[i])
+		if a.BaseKnown {
+			a.Advice[i] = round1(a.Base[i] + a.Change[i])
 		}
 	}
 	return a

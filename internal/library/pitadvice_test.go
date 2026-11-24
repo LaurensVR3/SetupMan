@@ -64,7 +64,7 @@ func TestPitAdvice(t *testing.T) {
 	}
 	front, rear := [4]float64{26.4, 26.6, 27.3, 27.5}, [4]float64{26.6, 26.4, 27.5, 27.3}
 
-	feed(0, 0, true, front, 0.9) // grid / pit box
+	feed(0, 0, true, [4]float64{26.0, 26.0, 25.5, 25.5}, 0.9) // grid / pit box: cold tyres, as the pit menu
 	feed(0, 0, false, front, 0.1)
 	for lap := 1; lap <= 6; lap++ {
 		p := front
@@ -109,6 +109,14 @@ func TestPitAdvice(t *testing.T) {
 	if ty.Average[0] != 26.5 || ty.Change[0] != 0.5 || ty.Advice[0] != 26.5 || ty.Change[2] != -0.4 || ty.Advice[2] != 25.1 {
 		t.Errorf("pressures: avg %v change %v advice %v", ty.Average, ty.Change, ty.Advice)
 	}
+
+	// Changing the pit menu doesn't move the advice (D-182: one click became two in the race).
+	base.PitPressures = [4]float64{26.5, 26.5, 25.1, 25.1}
+	feed(6, 105000, false, rear, 0.0)
+	if ty := l.PitAdvice().Tyres; ty.Advice[0] != 26.5 || ty.Advice[2] != 25.1 {
+		t.Errorf("advice moved with the pit menu: %v", ty.Advice)
+	}
+	base.PitPressures = [4]float64{26.0, 26.0, 25.5, 25.5}
 
 	// Two mandatory stops left: the fuel still needed is split over them.
 	base.StopsLeft = 2

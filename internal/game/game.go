@@ -87,6 +87,12 @@ type SetupMatcher interface {
 	MatchSetup(t Telemetry, candidates [][]byte) []int
 }
 
+// SetupTempMatcher also takes the air temperature each setup was made for (from its name, 0 =
+// unknown): tyre pressures adjusted for today's air temperature still fit the setup (D-181).
+type SetupTempMatcher interface {
+	MatchSetupTemps(t Telemetry, candidates [][]byte, airs []float64) []int
+}
+
 // SetupCacher is implemented by games that read all setup files when they list them and keep them
 // in memory, so a file's last-opened time doesn't say which setup is loaded (ACC, rig log
 // 2026-11-21, D-149).
