@@ -209,6 +209,10 @@ func nameTemps(m naming.Meta, kind string) string {
 		return track + ", " + air
 	case m.Air > 0 && m.Track > 0:
 		return air + ", " + track
+	case m.Air > 0: // one temperature read as air ("27C", D-146): showed "0 °C" before
+		return air
+	case m.Track > 0:
+		return track
 	case m.TempMin > 0 && m.TempMax > m.TempMin:
 		return fmt.Sprintf("%d–%d °C", m.TempMin, m.TempMax)
 	default:

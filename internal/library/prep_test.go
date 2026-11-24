@@ -3,6 +3,7 @@ package library
 import (
 	"os"
 	"path/filepath"
+	"setupman/internal/naming"
 	"strings"
 	"testing"
 	"time"
@@ -104,5 +105,15 @@ func TestPrepCloserTemperatureFirst(t *testing.T) {
 	}
 	if got[0].Name != "R 14C" {
 		t.Errorf("first = %s, want R 14C (closer to 17 °C)", got[0].Name)
+	}
+}
+
+// A name with one temperature read as air ("BGK R 27C"): "air 27 °C", not "0 °C" (bug 2026-11-24).
+func TestNameTempsSingle(t *testing.T) {
+	if got := nameTemps(naming.Meta{Air: 27}, "air"); got != "air 27 °C" {
+		t.Errorf("got %q", got)
+	}
+	if got := nameTemps(naming.Meta{Track: 35}, "air"); got != "track 35 °C" {
+		t.Errorf("got %q", got)
 	}
 }
