@@ -34,3 +34,20 @@ func TestLapSessions(t *testing.T) {
 		t.Errorf("unsplit file: %d laps", len(got))
 	}
 }
+
+// A lap's extra log is its own session's, not the file's main session (a file with several).
+func TestLapExtraSession(t *testing.T) {
+	laps := []store.TeleLap{{N: 1, SessionID: 19}, {N: 2}, {N: 3, SessionID: 20}, {N: 4}}
+	for i, want := range []int64{19, 19, 20, 20} {
+		if got := lapExtraSession(laps, i, 99); got != want {
+			t.Errorf("lap %d → session %d, want %d", laps[i].N, got, want)
+		}
+	}
+	if lapIndex(laps, 3) != 2 || lapIndex(laps, 9) != -1 {
+		t.Errorf("lapIndex")
+	}
+	// one session, a lap without a link: the file's session
+	if got := lapExtraSession([]store.TeleLap{{N: 1}, {N: 2, SessionID: 5}}, 0, 5); got != 5 {
+		t.Errorf("unlinked lap of a one-session file → %d", got)
+	}
+}

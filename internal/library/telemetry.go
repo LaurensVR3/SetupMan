@@ -962,21 +962,17 @@ func (l *Library) TelemetryLap(fileID int64, n int, names []string, withMap bool
 	if err != nil {
 		return nil, err
 	}
-	var lap *store.TeleLap
-	for i := range laps {
-		if laps[i].N == n {
-			lap = &laps[i]
-		}
-	}
-	if lap == nil {
+	i := lapIndex(laps, n)
+	if i < 0 {
 		return nil, history.ErrNotFound
 	}
+	lap := &laps[i]
 	lf, err := l.teleOpen(f)
 	if err != nil {
 		return nil, err
 	}
 	defer lf.Close()
-	extra := l.extraLog(f.Game, f.SessionID)
+	extra := l.extraLog(f.Game, lapExtraSession(laps, i, f.SessionID)) // the lap's own session: a file can hold several (D-188)
 	var xlap *telemetry.ExtraLap
 	if extra != nil && lap.Complete {
 		if x, ok := extra.FindLap(lap.LapMs); ok {

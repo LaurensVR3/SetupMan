@@ -38,7 +38,7 @@ func (s *Server) handleGames(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleGame(w http.ResponseWriter, r *http.Request) {
 	d, ok := s.lib.Game(r.PathValue("game"))
 	if !ok {
-		writeError(w, http.StatusNotFound, "unknown game")
+		writeError(w, http.StatusNotFound, "This game is not supported by SetupMan.")
 		return
 	}
 	writeJSON(w, http.StatusOK, d)
@@ -73,7 +73,7 @@ func (s *Server) handleCheckFolder(w http.ResponseWriter, r *http.Request) {
 		Folder string `json:"folder"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	writeJSON(w, http.StatusOK, s.lib.CheckFolder(r.PathValue("game"), strings.TrimSpace(req.Folder)))
@@ -88,7 +88,7 @@ func (s *Server) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	st := settings.Defaults()
 	if err := json.NewDecoder(r.Body).Decode(&st); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid settings: "+err.Error())
+		writeError(w, http.StatusBadRequest, "The settings could not be read. Reload the page and try again.")
 		return
 	}
 	if st.Games == nil {

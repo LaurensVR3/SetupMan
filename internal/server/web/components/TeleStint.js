@@ -3,7 +3,6 @@
 // telemetry log; brake temperatures from it or, for its last laps, from ACC's own files.
 import { ref, computed } from "vue";
 import { get } from "../api.js";
-import { lapTime } from "./LapTimes.js";
 
 // a small line chart: one line per wheel, laps along the bottom
 const StintChart = {
@@ -65,7 +64,6 @@ export const TeleStint = {
     }
     const laps = computed(() => data.value?.laps || []);
     const hasPad = computed(() => laps.value.some((l) => l.pad));
-    const hasDisc = computed(() => laps.value.some((l) => l.disc));
     const hasTemp = computed(() => laps.value.some((l) => l.temp));
     const tempLaps = computed(() => laps.value.filter((l) => l.temp).length);
     // per wheel: first and last life, used in total, per normal lap (no pit lane) and per hour driven
@@ -91,7 +89,7 @@ export const TeleStint = {
     const f2 = (v) => (v === null || v === undefined ? "–" : v.toFixed(2));
     const f3 = (v) => (v === null || v === undefined ? "–" : v.toFixed(3));
     const f0 = (v) => (v === null || v === undefined ? "–" : v.toFixed(0));
-    return { data, error, loading, load, laps, hasPad, hasDisc, hasTemp, tempLaps, pad, disc, temps, f0, f2, f3, lapTime };
+    return { data, error, loading, load, laps, hasPad, hasTemp, tempLaps, pad, disc, temps, f0, f2, f3 };
   },
   template: `
     <section class="stint">
@@ -101,7 +99,7 @@ export const TeleStint = {
       </div>
       <p v-if="error" class="notice notice-error">{{ error }}</p>
       <template v-if="data">
-        <p v-if="!data.hasExtra" class="panel-hint">Brake wear needs SetupMan's extra telemetry log, which records it while you drive (Settings → Games). This session was driven without it<template v-if="hasTemp">; the brake temperatures below come from ACC's own files<template v-if="tempLaps < laps.length">, which kept them for the last {{ tempLaps === 1 ? 'lap' : tempLaps + ' laps' }} of this session only</template></template>.</p>
+        <p v-if="!data.hasExtra" class="panel-hint">Brake wear needs SetupMan's extra telemetry log, which records it while you drive (Settings → Telemetry). This session was driven without it<template v-if="hasTemp">; the brake temperatures below come from ACC's own files<template v-if="tempLaps < laps.length">, which kept them for the last {{ tempLaps === 1 ? 'lap' : tempLaps + ' laps' }} of this session only</template></template>.</p>
         <div v-if="hasPad || hasTemp" class="stint-legend">
           <span v-for="(w, i) in data.wheels" :key="w" :style="{ '--c': 'var(--lap-' + i + ')' }">{{ w }}</span>
         </div>

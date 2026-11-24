@@ -42,7 +42,7 @@ func historyError(w http.ResponseWriter, err error) {
 func (s *Server) handleSetup(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	d, err := s.lib.SetupDetail(id)
@@ -56,12 +56,12 @@ func (s *Server) handleSetup(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUpdateSetup(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	var in history.Info
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request: "+err.Error())
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	st, err := s.lib.UpdateSetupInfo(id, in)
@@ -75,14 +75,14 @@ func (s *Server) handleUpdateSetup(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRelink(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	var in struct {
 		ParentVersionID int64 `json:"parentVersionId"` // 0 = no parent
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request: "+err.Error())
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	if err := s.lib.Relink(id, in.ParentVersionID); err != nil {
@@ -95,7 +95,7 @@ func (s *Server) handleRelink(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid version id")
+		writeError(w, http.StatusBadRequest, msgNoVersion)
 		return
 	}
 	v, fields, err := s.lib.VersionFields(id)
@@ -110,7 +110,7 @@ func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleLatest(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	name, v, fields, err := s.lib.LatestFields(id)
@@ -145,7 +145,7 @@ func (s *Server) handleHistoryPreview(apply bool) http.HandlerFunc {
 			NameThreshold float64 `json:"nameThreshold"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request: "+err.Error())
+			writeError(w, http.StatusBadRequest, msgBadRequest)
 			return
 		}
 		if in.Threshold < 50 || in.Threshold > 100 || in.NameThreshold < 40 || in.NameThreshold > 100 {

@@ -216,7 +216,6 @@ export const TelemetryTrackPage = {
       if (l.valid === false) out.push("Invalid");
       return out;
     }
-    const sessionLapLabel = (f, l) => [many.value ? f.carName : "", f.setupName || when(f.startedAt), "lap " + l.lap].filter(Boolean).join(", ");
     const anySessionFuel = (d) => d.laps.some((l) => l.fuelUsed);
     const anySessionTemps = (d) => d.laps.some((l) => l.hasTemps);
     const timedLaps = (d) => d.laps.filter((l, i) => l.lap > 0 && l.lapMs > 0 && i < d.laps.length - 1 && (l.complete || noData(l))).length;
@@ -261,7 +260,7 @@ export const TelemetryTrackPage = {
       laps, files, best, overallBest, shownBest, refLapNo, recentLaps, fSetup, fKind, fPeriod, fValid, fPit, shown, kinds, anyInvalid, anyPit, anyTemps, setupsWithLaps, knownSetups,
       filtered, filtersOn, resetFilters, sel, selIndex, pick, clearSel, selInfo, lapLabel, analyse, ref0, bestVsRef, compareCars, setupSel, toggleSetup,
       setupBy, compareSetups, setupGroups, showEmpty, days, months, jumpTo, firstOfMonth, emptyCount, sessionsWithLaps, open, details, toggle, fk, flags,
-      noData, sessionLapLabel, anySessionFuel, anySessionTemps, timedLaps, setSetup, setRef, editing, draft, editNote, saveNote, gap, isBest, carBest,
+      noData, anySessionFuel, anySessionTemps, timedLaps, setSetup, setRef, editing, draft, editNote, saveNote, gap, isBest, carBest,
       lapTime, plural, bytes, duration, when, dateLabel, kindLabel, classCls, PAGE, MAX_LAPS };
   },
   template: `
@@ -450,7 +449,7 @@ export const TelemetryTrackPage = {
                         <tr v-for="l in details[fk(f)].laps" :key="l.fileId + ':' + l.n" :class="{ dim: !l.complete || l.valid === false, picked: selIndex(l.fileId, l.n) >= 0 }">
                           <td class="tt-pick">
                             <label v-if="!noData(l)" class="lap-check" :style="selIndex(l.fileId, l.n) >= 0 ? { '--c': colors[selIndex(l.fileId, l.n)] } : {}">
-                              <input type="checkbox" :checked="selIndex(l.fileId, l.n) >= 0" @change="pick({ ...l, carName: f.carName, setupName: f.setupName, startedAt: f.startedAt })" :aria-label="'Compare lap ' + l.lap"><span></span>
+                              <input type="checkbox" :checked="selIndex(l.fileId, l.n) >= 0" @change="pick({ ...l, carName: f.carName, setupName: l.lapSetupName || f.setupName, startedAt: f.startedAt })" :aria-label="'Compare lap ' + l.lap"><span></span>
                             </label>
                           </td>
                           <td class="tt-num tt-rank">{{ l.lap }}</td>

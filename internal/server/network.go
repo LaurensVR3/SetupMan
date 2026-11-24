@@ -116,7 +116,7 @@ func (s *Server) handlePin(w http.ResponseWriter, r *http.Request) {
 		PIN string `json:"pin"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024)).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	nw := s.lib.Settings().Network
@@ -186,7 +186,7 @@ func (s *Server) handleSetNetwork(w http.ResponseWriter, r *http.Request) {
 		RequirePIN *bool `json:"requirePin"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	st := s.store.Load()

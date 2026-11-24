@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -127,7 +129,11 @@ type Photos struct {
 type Job struct {
 	done, total int
 	err         string
+	finished    bool // the download ended and its record (photos.json) is written
 }
+
+// running: the job is still downloading or writing its record.
+func (j *Job) running() bool { return !j.finished && j.err == "" }
 
 type manifest struct {
 	Source string `json:"source"`
@@ -151,7 +157,7 @@ func (m *Maps) PhotoStatus(track string, g telemetry.GeoTrack) Photos {
 	}
 	m.mu.Lock()
 	if j := m.jobs[track]; j != nil {
-		p.Busy = j.total > 0 && j.done < j.total && j.err == ""
+		p.Busy = j.running()
 		if p.Busy {
 			p.Have = j.done
 		}
@@ -173,7 +179,7 @@ func (m *Maps) DownloadPhotos(track string, g telemetry.GeoTrack) error {
 		return err
 	}
 	m.mu.Lock()
-	if j := m.jobs[track]; j != nil && j.done < j.total && j.err == "" {
+	if j := m.jobs[track]; j != nil && j.running() {
 		m.mu.Unlock()
 		return nil
 	}
@@ -227,6 +233,7 @@ func (m *Maps) DownloadPhotos(track string, g telemetry.GeoTrack) error {
 		mf := manifest{Source: s.ID, Tiles: len(tiles), Bytes: size, When: time.Now().Format(time.RFC3339)}
 		b, _ := json.Marshal(mf)
 		os.WriteFile(filepath.Join(dir, "photos.json"), b, 0o644)
+		job.finished = true // only now may the photos be deleted (DeletePhotos waits for this)
 	}()
 	return nil
 }
@@ -241,10 +248,13 @@ func (m *Maps) fetchTile(s Source, dir string, t Tile) (int64, error) {
 	var ct string
 	var err error
 	for attempt := 0; attempt < 3; attempt++ {
-		if b, ct, err = m.get(s.tileURL(t)); err == nil {
+		if b, ct, err = m.getTile(s.tileURL(t)); err == nil || errors.Is(err, errNoTile) {
 			break
 		}
 		time.Sleep(time.Duration(attempt+1) * time.Second)
+	}
+	if errors.Is(err, errNoTile) {
+		return 0, nil // outside the service's photos (the edge of its country): skipped, not a problem
 	}
 	if err != nil {
 		return 0, err
@@ -256,6 +266,31 @@ func (m *Maps) fetchTile(s Source, dir string, t Tile) (int64, error) {
 		return 0, err
 	}
 	return int64(len(b)), os.WriteFile(p, b, 0o644)
+}
+
+// errNoTile: the photo service has no photo for a tile (it answered "404 Not Found").
+var errNoTile = errors.New("no photo for this tile")
+
+// getTile downloads one tile like get, but tells a missing tile (errNoTile) apart from other problems.
+func (m *Maps) getTile(url string) ([]byte, string, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	resp, err := m.Client.Do(req)
+	if err != nil {
+		return nil, "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, "", errNoTile
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", fmt.Errorf("%s: %s", url, resp.Status)
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
+	return b, resp.Header.Get("Content-Type"), err
 }
 
 // PhotoTile is the file of one kept tile ("" when not kept).
@@ -279,7 +314,7 @@ func (m *Maps) DeletePhotos(track string) error {
 		return err
 	}
 	m.mu.Lock()
-	if j := m.jobs[track]; j != nil && j.done < j.total && j.err == "" {
+	if j := m.jobs[track]; j != nil && j.running() {
 		m.mu.Unlock()
 		return errors.New("a download is running")
 	}

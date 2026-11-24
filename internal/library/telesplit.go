@@ -38,6 +38,29 @@ func lapSessions(laps []store.TeleLap) (order []int64, of []int64) {
 	return order, of
 }
 
+// lapIndex is the position of lap number n in laps (-1 when it isn't there).
+func lapIndex(laps []store.TeleLap, n int) int {
+	for i := range laps {
+		if laps[i].N == n {
+			return i
+		}
+	}
+	return -1
+}
+
+// lapExtraSession is the recorded session whose extra log holds lap i: the lap's own session; for
+// a lap without one in a file with several sessions, the session lapSessions gives it; else the
+// file's session. (A file can hold practice, qualifying and race, each with its own log, D-188.)
+func lapExtraSession(laps []store.TeleLap, i int, fileSession int64) int64 {
+	if laps[i].SessionID != 0 {
+		return laps[i].SessionID
+	}
+	if _, of := lapSessions(laps); of != nil {
+		return of[i]
+	}
+	return fileSession
+}
+
 // partLaps returns the laps of one recorded session in a file (all laps when the file isn't split
 // or session is 0).
 func partLaps(laps []store.TeleLap, session int64) []store.TeleLap {

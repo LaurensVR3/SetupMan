@@ -48,7 +48,7 @@ func (s *Server) handleLapPath3D(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	n, okN := lapN(r)
 	if !ok || !okN {
-		writeError(w, http.StatusBadRequest, "invalid lap")
+		writeError(w, http.StatusBadRequest, msgNoLap)
 		return
 	}
 	p, err := s.lib.TelemetryLap3D(id, n)

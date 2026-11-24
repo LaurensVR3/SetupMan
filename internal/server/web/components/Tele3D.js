@@ -4,7 +4,7 @@
 // Photos: MapTiler satellite with the user's own key (loaded by the browser, never stored), or the
 // offline government aerial photos SetupMan downloaded. Drawn only when something changes (D-13).
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, markRaw } from "vue";
-import { get, post, api, enc } from "../api.js";
+import { get, post, enc } from "../api.js";
 import { valueAt, bytes } from "../telemetry.js";
 
 const R = 6378137;
@@ -95,6 +95,7 @@ export const Tele3D = {
     const labels = ref([]);
     let THREE = null, Orbit = null, renderer = null, cam = null, world = null, controls = null, ro = null, raf = 0;
     let groups = { ground: null, laps: null, markers: null };
+    let gone = false; // the view was closed: async work that comes back afterwards stops
     let photoTextures = [];
     // wall size in metres, from the camera distance; one uniform shared by every wall
     const wallSize = { value: 40 };
@@ -475,22 +476,16 @@ export const Tele3D = {
     }
     function watchDownload() { // only while a download runs (a few minutes at most)
       clearTimeout(poll);
-      if (!scene.value?.photos?.busy) return;
+      if (gone || !scene.value?.photos?.busy) return;
       poll = setTimeout(async () => {
         try {
           const s = await get(`/api/telemetry/3d/${enc(props.game)}/${enc(props.track)}`);
+          if (gone) return;
           scene.value = markRaw({ ...scene.value, photos: s.photos, credits: s.credits });
           if (!s.photos.busy && s.photos.have >= s.photos.tiles && photo.value !== "maptiler") photo.value = "offline";
         } catch { /* try again */ }
         watchDownload();
       }, 1500);
-    }
-    async function deletePhotos() {
-      try {
-        const p = await api("DELETE", `/api/telemetry/3d/${enc(props.game)}/${enc(props.track)}/photos`);
-        scene.value = markRaw({ ...scene.value, photos: p });
-        if (photo.value === "offline") photo.value = "none";
-      } catch (e) { error.value = e.message; }
     }
     const credits = computed(() => {
       const s = scene.value;
@@ -512,8 +507,9 @@ export const Tele3D = {
       try {
         [THREE, Orbit] = await Promise.all([import("three"), import("three/orbit").then((m) => m.OrbitControls)]);
       } catch { error.value = "The 3D view could not start in this browser."; loading.value = false; return; }
+      if (gone) return;
       await loadScene();
-      if (!scene.value) return;
+      if (gone || !scene.value) return;
       try { setup3D(); } catch { error.value = "The 3D view needs WebGL, which this browser or graphics driver doesn't offer."; return; }
       frame();
       buildGround();
@@ -522,11 +518,14 @@ export const Tele3D = {
       renderer.domElement.addEventListener("pointerdown", onDown);
       renderer.domElement.addEventListener("pointerup", onUp);
       await loadPaths();
+      if (gone) return;
       await followPlacement();
+      if (gone) return;
       buildLaps();
       watchDownload();
     });
     onBeforeUnmount(() => {
+      gone = true;
       cancelAnimationFrame(raf);
       clearTimeout(poll);
       ro && ro.disconnect();
@@ -537,8 +536,11 @@ export const Tele3D = {
         for (const g of Object.values(groups)) clear(g);
         for (const t of photoTextures) t.dispose();
         controls.dispose();
+        renderer.forceContextLoss(); // give the graphics card's memory back now, not when the browser gets round to it
         renderer.dispose();
         renderer.domElement.remove();
+        renderer = null; // the drawing functions check renderer and stop
+        controls = null;
       }
     });
     watch(() => props.laps.map((l) => l.key).join(), async () => { await loadPaths(); await followPlacement(); buildLaps(); });
@@ -548,9 +550,8 @@ export const Tele3D = {
 
     // the wheel over a turn label zooms the view (not the page)
     const toCanvas = (e) => renderer && renderer.domElement.dispatchEvent(new WheelEvent("wheel", e));
-    const channelLabel = (n) => (n === LAPCOL ? "Lap colour" : n === PEDALS ? "Throttle / brake" : props.channels.find((c) => c.name === n)?.label || n);
     return { box, canvasBox, scene, error, loading, photo, online, offline, offlineReady, credits, labels, exactness,
-      downloadPhotos, deletePhotos, channelLabel, toCanvas, bytes, PEDALS, LAPCOL };
+      downloadPhotos, toCanvas, bytes, PEDALS, LAPCOL };
   },
   template: `
     <div class="t3d" ref="box">
@@ -569,8 +570,8 @@ export const Tele3D = {
           </select>
         </label>
         <span class="t3d-notes">
-          <span v-if="scene && scene.source === 'calculated'" class="tag tag-warn" title="No lap at this track has SetupMan's extra log yet, so the track was placed from a line calculated from speed and yaw rate (± a few metres). Drive a session with SetupMan running for exact positions.">placed ± a few m</span>
-          <span v-if="scene && scene.noTerrain" class="tag tag-warn" :title="scene.noTerrain">no terrain</span>
+          <span v-if="scene && scene.source === 'calculated'" class="tag tag-warn" title="No lap at this track has SetupMan's extra log yet, so the track was placed from speed and steering data (accurate to a few metres). Drive a session with SetupMan running for an exact placement.">Approximate placement</span>
+          <span v-if="scene && scene.noTerrain" class="tag tag-warn" :title="scene.noTerrain">No terrain</span>
           <template v-if="offline.source">
             <span v-if="offline.busy" class="tag">Aerial photo {{ offline.have }}/{{ offline.tiles }}</span>
             <button v-else-if="offline.error" type="button" class="btn btn-sm" :title="offline.error" @click="downloadPhotos">Retry aerial photo</button>
@@ -593,7 +594,7 @@ export const Tele3D = {
         <p v-else-if="error" class="t3d-msg is-error">{{ error }}</p>
         <div class="t3d-legend">
           <span v-for="(x, i) in exactness" :key="i"><i class="lap-dot" :style="{ background: x.color }"></i>{{ x.label }}
-            <span v-if="x.exact === false" class="tag tag-warn" title="This lap has no SetupMan extra log: it is drawn on the track's typical line. The channel values are this lap's own.">approximate position</span></span>
+            <span v-if="x.exact === false" class="tag tag-warn" title="This lap has no SetupMan extra log: it is drawn on the track's typical line. The channel values are this lap's own.">Approximate position</span></span>
         </div>
         <div v-if="credits.length" class="t3d-credits">
           <a v-if="photo === 'maptiler'" href="https://www.maptiler.com/" target="_blank" rel="noopener" class="t3d-maptiler"><img src="https://api.maptiler.com/resources/logo.svg" alt="MapTiler" height="18"></a>

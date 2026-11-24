@@ -211,7 +211,10 @@ func (l *Library) resumeSession(g game.Game, t game.Telemetry) *recorder {
 	laps, _ := l.db.LapsForSession(s.ID)
 	r := &recorder{sessionID: s.ID, car: s.Car, track: strings.ToLower(s.Track), kind: s.Kind, lastLaps: t.CompletedLaps,
 		lapStartFuel: t.Fuel, lapPit: true, wasInPits: inPits(t), matchPending: true, startLaps: t.CompletedLaps,
-		stintStart: time.Now(), laps: len(laps), setupID: s.SetupID, versionID: s.VersionID, manual: s.Match == "manual"}
+		stintStart: time.Now(), laps: len(laps), setupID: s.SetupID, versionID: s.VersionID, manual: s.Match == "manual",
+		// the car's values now count as the ones of the kept setup, so a setup picked by hand still
+		// gives way once another setup is loaded (D-177); unknown yet ("") is filled in later
+		setKey: setupKey(t), lastKey: setupKey(t)}
 	if s.SetupID != 0 {
 		if st, _ := l.db.Setup(s.SetupID); st != nil {
 			r.setupName = st.Name
@@ -317,6 +320,11 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 	r.wasInPits = inPits(t)
 	if k := setupKey(t); k != "" {
 		r.lastKey = k
+		if r.setKey == "" && r.setupID != 0 {
+			// the setup was set before the car's values were known (picked by hand early, or kept
+			// after a restart): these are its values, so a later change shows another setup (D-177)
+			r.setKey = k
+		}
 	}
 	if r.matchPending && t.Fuel > 0 && !inPits(t) {
 		r.matchPending = false

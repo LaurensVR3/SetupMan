@@ -37,7 +37,7 @@ func TestFitToGeoRecoversPlacement(t *testing.T) {
 	for i := range es {
 		de, dn := es[i]-want.E, ns[i]-want.N
 		x, z := c*de+s*dn, -s*de+c*dn // turn back
-		xs[i], zs[i] = x, -z         // mirror back
+		xs[i], zs[i] = x, -z          // mirror back
 	}
 	f, ok := FitToGeo(g, xs, zs, false)
 	if !ok || f.RMS > 0.5 {

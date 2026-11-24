@@ -113,7 +113,7 @@ export const SettingsPage = {
       try {
         await post(`/api/games/${enc(id)}/backups`);
         await loadBackups();
-        showToast("Backup made.");
+        showToast("Backup created.");
       } catch (e) {
         showToast(e.message, 7000);
       } finally {
@@ -157,7 +157,7 @@ export const SettingsPage = {
     const size = (n) => (n >= 1 << 20 ? (n / (1 << 20)).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
     async function createFull() {
       full.busy = true;
-      try { await post("/api/full-backups"); await loadFull(); await loadBackups(); showToast("Full backup made."); }
+      try { await post("/api/full-backups"); await loadFull(); await loadBackups(); showToast("Full backup created."); }
       catch (e) { showToast(e.message, 7000); } finally { full.busy = false; }
     }
     async function uploadFull(ev) {
@@ -344,8 +344,15 @@ export const SettingsPage = {
       return parts.length ? "Recorded laps: " + parts.join(", ") + "." : "";
     };
     const setEndurance = (id, v) => save((n) => { gameCfg(n, id).enduranceMinutes = Math.max(5, Math.min(1440, Number(v) || 45)); });
+    // Planned standing time at a pit stop (D-192): kept within 5–300 s; empty or not a number = the
+    // default (0 = 30 s). The box shows the value actually kept.
+    const setPitStill = (id, el) => {
+      const x = Math.round(Number(el.value));
+      const sec = String(el.value).trim() === "" || !Number.isFinite(x) ? 0 : Math.min(300, Math.max(5, x));
+      el.value = sec || 30;
+      save((n) => { gameCfg(n, id).pitStillSeconds = sec; });
+    };
     // Pit stop advice targets (D-124); empty or invalid = the default.
-    const setPitStill = (id, v) => save((n) => { const x = Math.round(Number(v)); gameCfg(n, id).pitStillSeconds = x >= 5 && x <= 300 ? x : 0; });
     const setTarget = (id, key, v) => save((n) => { const x = Math.round(Number(v) * 10) / 10; if (x >= 15 && x <= 40) gameCfg(n, id)[key] = x; else delete gameCfg(n, id)[key]; });
     let thrTimer;
     function setThreshold(v) {
@@ -594,7 +601,7 @@ export const SettingsPage = {
                 <p>Race prep and the fuel calculator plan each pit stop as the measured drive through the pit lane plus this standing time (tyres and fuel, no repairs). The standing time you measured, repairs included, is shown next to it.</p>
               </div>
               <label class="minutes">
-                <input type="number" min="5" max="300" step="1" :value="s.games[g.id]?.pitStillSeconds || 30" @change="setPitStill(g.id, $event.target.value)" :aria-label="g.name + ' planned standing time at a pit stop'"> s
+                <input type="number" min="5" max="300" step="1" :value="s.games[g.id]?.pitStillSeconds || 30" @change="setPitStill(g.id, $event.target)" :aria-label="g.name + ' planned standing time at a pit stop'"> s
               </label>
             </div>
             <div class="setting">
@@ -959,6 +966,9 @@ export const SettingsPage = {
           <h2>Credits</h2>
           <p>Brand logos: Wikimedia Commons. Logos are trademarks of their owners and are only used to identify the cars.</p>
           <p>Real values for ACC cars: the open-source Race Element project.</p>
+          <p>3D track view: three.js (MIT licence).</p>
+          <p>3D map data: race track lines © OpenStreetMap contributors (ODbL); terrain: Mapzen terrain tiles; satellite photos: MapTiler, with your own key; offline aerial photos: government sources, credited on the view.</p>
+          <p>Official turn numbers: circuit maps from Wikimedia Commons.</p>
         </section>
         <TeleLapsDialog ref="teleLapsDlg" :game="teleLapsGame.id" :short="teleLapsGame.short" />
       </template>

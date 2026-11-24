@@ -270,7 +270,7 @@ func (l *Library) summary(g game.Game) GameSummary {
 	case !s.visible:
 		sum.Status = "hidden"
 	case s.folder == "":
-		sum.Status, sum.Message = "no-folder", "No setup folder found. Choose one in Settings."
+		sum.Status, sum.Message = "no-folder", "No setups folder found. Choose one in Settings → Games."
 	case s.err != "":
 		sum.Status, sum.Message = "error", s.err
 	case s.scan == nil:

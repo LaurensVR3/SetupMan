@@ -16,7 +16,7 @@ func TestParseACCRace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := parseRace(352146, body, "111")
+	r, err := parseRace(100001, body, "111")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestParseACCRace(t *testing.T) {
 	if r.SignedOff() || r.Entries != 2 {
 		t.Errorf("driver in the entry list counted as signed off: %+v", r)
 	}
-	if r2, _ := parseRace(352146, body, "999"); r2.HasCar || !r2.SignedOff() {
+	if r2, _ := parseRace(100001, body, "999"); r2.HasCar || !r2.SignedOff() {
 		t.Error("car found for a driver who is not in the entry list")
 	}
 	if (Race{}).SignedOff() {
@@ -53,7 +53,7 @@ func TestParseACCRace(t *testing.T) {
 // The next-race answer: only the race numbers are used, and the account fields are not kept.
 func TestNextRaceIDsKeepsOnlyRaces(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `{"user":{"id":111,"email":"x@example.com","password":"hash"},"race":[{"race_id":352146,"track":"x"},{"race_id":352147}]}`)
+		fmt.Fprint(w, `{"user":{"id":111,"email":"x@example.com","password":"hash"},"race":[{"race_id":100001,"track":"x"},{"race_id":100002}]}`)
 	}))
 	defer srv.Close()
 	old := NextURL
@@ -61,7 +61,7 @@ func TestNextRaceIDsKeepsOnlyRaces(t *testing.T) {
 	defer func() { NextURL = old }()
 	c := New()
 	ids, err := c.NextRaceIDs("111")
-	if err != nil || len(ids) != 2 || ids[0] != 352146 || ids[1] != 352147 {
+	if err != nil || len(ids) != 2 || ids[0] != 100001 || ids[1] != 100002 {
 		t.Fatalf("ids %v %v", ids, err)
 	}
 	for _, e := range c.cache {

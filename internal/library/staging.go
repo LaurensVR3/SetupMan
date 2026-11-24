@@ -57,7 +57,7 @@ type ManageResult struct {
 func (l *Library) SetManaged(gameID string, on bool) (ManageResult, error) {
 	g := l.game(gameID)
 	if g == nil || l.db == nil || l.Backups == nil {
-		return ManageResult{}, errors.New("not available")
+		return ManageResult{}, errors.New("This is not available for this game.")
 	}
 	if !on {
 		return ManageResult{}, l.saveGameSetting(gameID, func(gs *settings.Game) { gs.Managed, gs.ManagedFolder = false, "" })
@@ -458,7 +458,7 @@ func (l *Library) stageLocked(gameID string, setupID, versionID int64) error {
 	}
 	target := filepath.Join(root, filepath.FromSlash(rel))
 	if !isInside(root, target) {
-		return errors.New("refusing to write outside the setups folder")
+		return errors.New("SetupMan only changes files inside the setups folder.")
 	}
 	// The file may hold a save from the game that SetupMan hasn't read yet (it reads new saves a
 	// few seconds after they appear). Store it first, and don't overwrite it unasked (D-138).
@@ -524,7 +524,7 @@ func (l *Library) unstageLocked(gameID string, setupID int64) error {
 	}
 	target := filepath.Join(root, filepath.FromSlash(s.RelPath))
 	if !isInside(root, target) {
-		return errors.New("refusing to touch a file outside the setups folder")
+		return errors.New("SetupMan only changes files inside the setups folder.")
 	}
 	// Make sure the library holds exactly this content before the file goes.
 	if _, err := l.secureFile(gameID, s, target); err != nil {
@@ -713,7 +713,7 @@ func (l *Library) createBackup(gameID, reason string) (folderbackup.Summary, err
 // PlanRestore says what restoring a backup into the game's setups folder would change (D-81, D-138).
 func (l *Library) PlanRestore(gameID, id string) (folderbackup.Plan, error) {
 	if l.Backups == nil {
-		return folderbackup.Plan{}, errors.New("not available")
+		return folderbackup.Plan{}, errors.New("This is not available for this game.")
 	}
 	return l.Backups.PlanRestore(gameID, id, l.folderOf(gameID))
 }
@@ -722,7 +722,7 @@ func (l *Library) PlanRestore(gameID, id string) (folderbackup.Plan, error) {
 // backup (D-81, D-138).
 func (l *Library) RestoreBackup(gameID, id string) (folderbackup.Result, error) {
 	if l.Backups == nil {
-		return folderbackup.Result{}, errors.New("not available")
+		return folderbackup.Result{}, errors.New("This is not available for this game.")
 	}
 	if l.Live() == game.LiveDriving {
 		return folderbackup.Result{}, errors.New("backups can't be restored while driving; restore from the pits or the menu")
@@ -796,7 +796,7 @@ func (l *Library) renameFile(s *store.Setup, newName string) error {
 	}
 	to := filepath.Join(root, filepath.FromSlash(rel))
 	if !isInside(root, from) || !isInside(root, to) {
-		return errors.New("refusing to rename outside the setups folder")
+		return errors.New("SetupMan only changes files inside the setups folder.")
 	}
 	prevRel, prevName := s.RelPath, s.Name
 	s.RelPath = rel
@@ -913,7 +913,7 @@ func (l *Library) SetTelemetryLaps(gameID string, ids []int64) ([]ManyResult, er
 		return out, ErrNotManaged
 	}
 	if l.Live() == game.LiveDriving {
-		return out, errors.New("not while driving: try again once you are back in the menus")
+		return out, errors.New("Telemetry laps can't be changed while driving; change them from the pits or the menu.")
 	}
 	editor, ok := l.game(gameID).(game.Editor)
 	if !ok {
@@ -955,7 +955,7 @@ func (l *Library) setTelemetryLapsLocked(gameID string, s *store.Setup, editor g
 	}
 	target := filepath.Join(root, filepath.FromSlash(s.RelPath))
 	if !isInside(root, target) {
-		return errors.New("refusing to write outside the setups folder")
+		return errors.New("SetupMan only changes files inside the setups folder.")
 	}
 	// A save the game made seconds ago is stored first (D-138); the file itself is then edited,
 	// so whatever it holds keeps every other value.

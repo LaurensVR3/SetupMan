@@ -52,12 +52,6 @@ func SteamGame(appID string) (installed bool, dir string) {
 	return false, ""
 }
 
-// IsFile reports whether p is an existing file.
-func IsFile(p string) bool {
-	st, err := os.Stat(p)
-	return err == nil && !st.IsDir()
-}
-
 // IsDir reports whether p is an existing folder.
 func IsDir(p string) bool {
 	st, err := os.Stat(p)

@@ -3,7 +3,7 @@
 import { ref, reactive, computed, watch } from "vue";
 import { get, post, enc } from "../api.js";
 import { showToast } from "../store.js";
-import { dateTime, plural } from "../format.js";
+import { dateTime, plural, sentence } from "../format.js";
 import { SessionBadge } from "./FamilyTree.js";
 import { ManageNotice } from "./ManageNotice.js";
 
@@ -32,7 +32,7 @@ export const DuplicatesDialog = {
       try {
         const res = (await post("/api/setups/delete", { ids: remove.value })).results;
         const ok = res.filter((r) => !r.error), bad = res.filter((r) => r.error);
-        showToast(`${plural(ok.length, "duplicate")} removed (in the bin for 30 days).` + (bad.length ? ` ${bad.length} not removed: ${bad[0].error}.` : ""), 9000);
+        showToast(`${plural(ok.length, "duplicate")} removed (in the bin for 30 days).` + (bad.length ? ` ${bad.length} not removed: ${sentence(bad[0].error)}` : ""), 9000);
         dlg.value.close();
       } catch (e) { showToast(e.message, 7000); } finally { st.busy = false; }
     }
@@ -41,7 +41,7 @@ export const DuplicatesDialog = {
   template: `
     <dialog ref="dlg" class="confirm dup-dialog">
       <h2>Remove duplicates</h2>
-      <p>Per set, select the setup to keep; the others are removed from {{ short }} and from SetupMan's lists. They stay in the bin for 30 days (Settings → Bin).</p>
+      <p>Per set, select the setup to keep; the others are removed from {{ short }} and from SetupMan's lists. They stay in the bin for 30 days (Settings → Backups &amp; bin).</p>
       <div class="segmented" role="radiogroup" aria-label="Which duplicates">
         <button type="button" role="radio" :aria-checked="!st.near" :class="{ on: !st.near }" @click="st.near = false">Identical only</button>
         <button type="button" role="radio" :aria-checked="st.near" :class="{ on: st.near }" @click="st.near = true">Also near-duplicates (≥ {{ threshold }}% alike)</button>

@@ -24,7 +24,7 @@ export const ManageNotice = {
   },
   template: `
     <div class="notice notice-error manage-notice">
-      <p><b>Folder management is disabled for {{ short }}.</b> SetupMan {{ action }} in the {{ short }} setups folder only when folder management is enabled. Enabling it first creates a full backup of the folder, which can be restored at any time (Settings → Backups).</p>
+      <p><b>Folder management is disabled for {{ short }}.</b> SetupMan {{ action }} in the {{ short }} setups folder only when folder management is enabled. Enabling it first creates a full backup of the folder, which can be restored at any time (Settings → Backups &amp; bin).</p>
       <button type="button" class="btn btn-sm" :disabled="st.busy" @click="enable">{{ st.busy ? 'Creating backup…' : 'Enable folder management' }}</button>
       <template v-if="st.problems">
         <p>Folder management was not enabled: some setups differ from the copy stored in SetupMan.</p>

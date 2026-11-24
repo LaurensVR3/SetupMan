@@ -270,7 +270,7 @@ func (l *Library) mergeGameSave(gameID string, s *store.Setup) bool {
 		from := filepath.Join(root, filepath.FromSlash(s.RelPath))
 		to := filepath.Join(root, filepath.FromSlash(t.RelPath))
 		if !isInside(root, from) || !isInside(root, to) {
-			return errors.New("refusing to change files outside the setups folder")
+			return errors.New("SetupMan only changes files inside the setups folder.")
 		}
 		raw, err := lastopened.ReadFile(from)
 		if err != nil {

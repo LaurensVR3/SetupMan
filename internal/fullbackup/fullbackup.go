@@ -27,7 +27,6 @@ import (
 const (
 	ReasonManual        = "Created by you"
 	ReasonBeforeRestore = "Automatic, before restoring a full backup"
-	ReasonFromFile      = "Added from a file"
 )
 
 const (

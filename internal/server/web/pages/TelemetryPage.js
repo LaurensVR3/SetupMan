@@ -90,7 +90,7 @@ export const TelemetryPage = {
             <h1 class="page-title">Telemetry</h1>
             <p v-if="g.files" class="tl-hero-sub">{{ plural(g.files, 'session') }} with {{ plural(g.laps, 'full lap') }} {{ period }}, read from {{ g.short }}'s MoTeC files.</p>
             <p v-else-if="g.folder" class="tl-hero-sub">No full laps yet. {{ g.short }} writes a MoTeC file for every session while its telemetry option is on.</p>
-            <p v-else class="tl-hero-sub">{{ g.short }}'s MoTeC folder was not found. Choose it in <router-link :to="'/settings?tab=games&game=' + g.game">Settings → Games</router-link>.</p>
+            <p v-else class="tl-hero-sub">{{ g.short }}'s MoTeC folder was not found. Choose it in <router-link to="/settings?tab=telemetry">Settings → Telemetry</router-link>.</p>
           </div>
           <div class="tl-hero-tools">
             <label class="tl-search">
@@ -156,9 +156,9 @@ export const TelemetryPage = {
         </section>
 
         <footer class="tl-foot">
-          <p v-if="g.folder">Telemetry folder <code>{{ g.folder }}</code>, {{ bytes(g.diskBytes) }} in {{ g.diskFiles.toLocaleString() }} files. {{ g.short }} saves a session several times while you drive; SetupMan puts the saves of a session together and shows every lap once.<template v-if="g.empty">{{ ' ' + plural(g.empty, 'session') }} without a full lap (only an out-lap, or a file without ACC's lap clock, as in the oldest files) {{ g.empty === 1 ? 'is' : 'are' }} not listed.</template></p>
+          <p v-if="g.folder">Telemetry folder <code>{{ g.folder }}</code>, {{ bytes(g.diskBytes) }} in {{ g.diskFiles.toLocaleString() }} files. {{ g.short }} saves a session several times while you drive; SetupMan puts the saves of a session together and shows every lap once.<template v-if="g.empty">{{ ' ' + plural(g.empty, 'session') }} without a full lap (only an out-lap, or a file without {{ g.short }}'s lap clock, as in the oldest files) {{ g.empty === 1 ? 'is' : 'are' }} not listed.</template></p>
           <p v-if="g.extraOn">Extra telemetry log enabled: SetupMan adds car position, fuel, lap validity, slip, brake pressure, brake wear and ride height while you drive<template v-if="g.extraFiles"> ({{ plural(g.extraFiles, 'session') }} so far, {{ bytes(g.extraBytes) }})</template>.</p>
-          <p v-else>Extra telemetry log disabled. Enable it in <router-link :to="'/settings?tab=games&game=' + g.game">Settings → Games</router-link> for car position, fuel and lap validity.</p>
+          <p v-else>Extra telemetry log disabled. Enable it in <router-link to="/settings?tab=telemetry">Settings → Telemetry</router-link> for car position, fuel and lap validity.</p>
         </footer>
       </template>
     </main>`,

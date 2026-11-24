@@ -30,7 +30,7 @@ func (s *Server) handlePit(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSession(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid session id")
+		writeError(w, http.StatusBadRequest, msgNoSession)
 		return
 	}
 	d, err := s.lib.SessionReport(id)
@@ -49,7 +49,7 @@ func (s *Server) handleSession(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSetupLaps(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	d, err := s.lib.SetupLapTimes(id)
@@ -64,14 +64,14 @@ func (s *Server) handleSetupLaps(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSessionSetup(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid session id")
+		writeError(w, http.StatusBadRequest, msgNoSession)
 		return
 	}
 	var in struct {
 		SetupID int64 `json:"setupId"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	if err := s.lib.SetSessionSetup(id, in.SetupID); err != nil {
@@ -86,14 +86,14 @@ func (s *Server) handleStintSetup(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	n, err := strconv.Atoi(r.PathValue("n"))
 	if !ok || err != nil {
-		writeError(w, http.StatusBadRequest, "invalid stint")
+		writeError(w, http.StatusBadRequest, msgNoStint)
 		return
 	}
 	var in struct {
 		SetupID int64 `json:"setupId"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	if err := s.lib.SetStintSetup(id, n, in.SetupID); err != nil {
@@ -109,7 +109,7 @@ func (s *Server) handleRecordingSetup(w http.ResponseWriter, r *http.Request) {
 		SetupID int64 `json:"setupId"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil || in.SetupID == 0 {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	if err := s.lib.SetRecordingSetup(in.SetupID); err != nil {

@@ -34,7 +34,7 @@ func telemetryError(w http.ResponseWriter, err error) {
 	case errors.Is(err, library.ErrSetupMismatch):
 		writeError(w, http.StatusBadRequest, "That setup is for another car. Choose a setup of this session's car.")
 	case errors.Is(err, library.ErrTeleGone):
-		writeError(w, http.StatusGone, "This session's MoTeC file is no longer in ACC's telemetry folder.")
+		writeError(w, http.StatusGone, "This session's MoTeC file is no longer in the game's telemetry folder.")
 	case errors.Is(err, library.ErrNoHistory):
 		writeError(w, http.StatusServiceUnavailable, err.Error())
 	default:
@@ -62,7 +62,7 @@ func (s *Server) handleTelemetryFiles(w http.ResponseWriter, r *http.Request) {
 	}
 	v, err := s.lib.TelemetryTrack(r.PathValue("game"), track)
 	if errors.Is(err, history.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "No telemetry for this track in SetupMan. Its files may have been removed from ACC's MoTeC folder.")
+		writeError(w, http.StatusNotFound, "No telemetry for this track in SetupMan. Its files may have been removed from the game's MoTeC folder.")
 		return
 	}
 	if err != nil {
@@ -83,7 +83,7 @@ func (s *Server) handleTelemetryReindex(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleTelemetryFile(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid telemetry id")
+		writeError(w, http.StatusBadRequest, msgNoSession)
 		return
 	}
 	session, _ := strconv.ParseInt(r.URL.Query().Get("session"), 10, 64) // one session of a file (D-188)
@@ -101,7 +101,7 @@ func (s *Server) handleTelemetryLap(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	n, okN := lapN(r)
 	if !ok || !okN {
-		writeError(w, http.StatusBadRequest, "invalid lap")
+		writeError(w, http.StatusBadRequest, msgNoLap)
 		return
 	}
 	var names []string
@@ -124,7 +124,7 @@ func (s *Server) handleTelemetryLap(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleTelemetryStint(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid telemetry id")
+		writeError(w, http.StatusBadRequest, msgNoSession)
 		return
 	}
 	session, _ := strconv.ParseInt(r.URL.Query().Get("session"), 10, 64)
@@ -142,7 +142,7 @@ func (s *Server) handleTelemetrySetup(w http.ResponseWriter, r *http.Request) {
 		SetupID int64 `json:"setupId"`
 	}
 	if !ok || json.NewDecoder(r.Body).Decode(&in) != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	if err := s.lib.SetTelemetrySetup(id, in.SetupID); err != nil {
@@ -160,7 +160,7 @@ func (s *Server) handleTelemetryNote(w http.ResponseWriter, r *http.Request) {
 		Lap  *int   `json:"lap"`
 	}
 	if !ok || json.NewDecoder(r.Body).Decode(&in) != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	n := -1
@@ -181,7 +181,7 @@ func (s *Server) handleTelemetryReference(w http.ResponseWriter, r *http.Request
 		On bool `json:"on"`
 	}
 	if !ok || !okN || json.NewDecoder(r.Body).Decode(&in) != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	if err := s.lib.SetTelemetryReference(id, n, in.On); err != nil {
@@ -194,7 +194,7 @@ func (s *Server) handleTelemetryReference(w http.ResponseWriter, r *http.Request
 func (s *Server) handleSetupTelemetry(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	files, err := s.lib.TelemetryForSetup(id)
@@ -208,7 +208,7 @@ func (s *Server) handleSetupTelemetry(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSessionTelemetry(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid session id")
+		writeError(w, http.StatusBadRequest, msgNoSession)
 		return
 	}
 	files, err := s.lib.TelemetryForSession(id)

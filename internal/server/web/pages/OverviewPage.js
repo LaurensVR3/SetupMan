@@ -4,13 +4,13 @@ import { useRouter } from "vue-router";
 import { showToast } from "../store.js";
 import { useDrop, readFiles } from "../drop.js";
 import { get, post } from "../api.js";
-import { ago, eventText } from "../format.js";
+import { ago, eventText, sentence } from "../format.js";
 import { usePageData } from "./load.js";
-import { Stat, DupBadge, EmptyState, Loading, setCrumbs } from "../components/common.js";
+import { Stat, EmptyState, Loading, setCrumbs } from "../components/common.js";
 import { LastOpenedNotice } from "../components/LastOpenedNotice.js";
 
 export const OverviewPage = {
-  components: { Stat, DupBadge, EmptyState, Loading, LastOpenedNotice },
+  components: { Stat, EmptyState, Loading, LastOpenedNotice },
   setup() {
     setCrumbs([]);
     const { data, error } = usePageData(async () => {
@@ -66,7 +66,7 @@ export const OverviewPage = {
         const res = await post("/api/shared/import", { files });
         const one = res.items.length === 1 ? res.items[0] : null;
         if (one && one.setupId) router.push("/setup/" + one.setupId); // imported, or already there
-        if (one) showToast(one.result === "imported" ? `${one.name} added to your library.` : `${one.name}: ${one.reason}.`, 7000);
+        if (one) showToast(one.result === "imported" ? `${one.name} added to your library.` : `${one.name}: ${sentence(one.reason)}`, 7000);
         else shared.value = res;
       } catch (e) { showToast(e.message, 7000); } finally { opening.value = false; }
     }

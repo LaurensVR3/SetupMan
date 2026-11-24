@@ -1,4 +1,4 @@
-// SetupMan – manage simracing setups.
+// SetupMan – manage sim racing setups.
 //
 // Runs in the background with an icon in the Windows system tray (spec D-70) and serves
 // its UI on 127.0.0.1, opened in the default browser. "Stop SetupMan" in the tray menu quits.

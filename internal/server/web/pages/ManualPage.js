@@ -10,7 +10,7 @@ const TABS = [
     ["duplicates", "Duplicates"], ["folder", "Choosing what the game shows"], ["names", "Names"], ["temp", "Adjusting for temperature"], ["share", "Sharing, importing and downloading"]] },
   { id: "racing", label: "Driving and racing", sections: [["laps", "Lap times and sessions"], ["recognition", "Which setup you drive"], ["prep", "Race prep"],
     ["lfm", "Low Fuel Motorsport"], ["fuel", "Fuel calculator"], ["pit", "Pit stop advice"], ["weekend", "A race weekend, step by step"]] },
-  { id: "telemetry", label: "Telemetry", sections: [["tele-files", "Where it comes from"], ["tele-find", "Finding a lap"], ["tele-analysis", "Lap analysis"],
+  { id: "telemetry", label: "Telemetry", sections: [["tele-files", "Where it comes from"], ["tele-find", "Finding a lap"], ["tele-analysis", "Lap analysis"], ["tele-3d", "3D track view"],
     ["tele-turns", "Turn numbers"], ["tele-brakes", "Brakes over a session"], ["tele-extra", "Extra telemetry log"]] },
   { id: "backups", label: "Backups", sections: [["backup-kinds", "Two kinds of backup"], ["backup-where", "Where backups are"], ["log", "Log file"]] },
   { id: "devices", label: "Other devices", sections: [["network", "Phone, tablet and other PCs"], ["lan", "setupman.lan instead of an IP address"], ["lan-trouble", "If it does not work"]] },
@@ -52,7 +52,7 @@ export const ManualPage = {
             <section id="m-welcome">
               <h2>What SetupMan does</h2>
               <p>SetupMan keeps every setup you have, with every change you ever made, and helps you choose, compare and tidy them. It records your laps while you drive, works out fuel and pit stops, and analyses ACC's telemetry.</p>
-              <p>It runs in the background, with an icon next to the clock: click it and choose <b>Open</b>. It finds your games and their setups folders by itself; if it can't, set the folder in <router-link to="/settings?tab=games">Settings → Games</router-link>.</p>
+              <p>It runs in the background, with an icon next to the clock: click the icon to open SetupMan; right-click it for <b>Open SetupMan</b>, <b>Start with Windows</b> and <b>Stop SetupMan</b>. It finds your games and their setups folders by itself; if it can't, set the folder in <router-link to="/settings?tab=games">Settings → Games</router-link>.</p>
               <p>SetupMan only <b>reads</b> your setups until you enable folder management (see <a href="#/manual" @click.prevent="go('folder')">Choosing what the game shows</a>). It keeps its own copy of every setup and every change, so nothing gets lost.</p>
             </section>
             <section id="m-games">
@@ -94,7 +94,7 @@ export const ManualPage = {
             </section>
             <section id="m-duplicates">
               <h2>Duplicates</h2>
-              <p><b>Duplicates</b> are setups that are identical, or at least 95% the same (near-duplicates; the percentage is set in Settings). <b>Remove duplicates…</b> on a track page, or on the game page for all tracks, lists every duplicate set with one setup selected to keep: preferably a name without a copy mark such as “(2)”, then the name that follows the naming standard best, then the newest. The others go to the bin.</p>
+              <p><b>Duplicates</b> are setups that are identical, or at least 95% the same (near-duplicates; the percentage is set in Settings → Comparing &amp; history). <b>Remove duplicates…</b> on a track page, or on the game page for all tracks, lists every duplicate set with one setup selected to keep: preferably a name without a copy mark such as “(2)”, then the name that follows the naming standard best, then the newest. The others go to the bin.</p>
             </section>
             <section id="m-folder">
               <h2>Choosing what the game shows</h2>
@@ -141,7 +141,7 @@ export const ManualPage = {
             <section id="m-prep">
               <h2>Race prep</h2>
               <p><b>Race prep</b> (top bar, or the button on a track page) answers “which setup tonight?”. Choose car, track, session, its length and the expected temperature, and whether that is the air or the track temperature. SetupMan ranks your setups: first the ones made for that session, then the ones whose name has that temperature (e.g. 3040 = air 30 °C, track 40 °C) or comes closest, then the ones with your fastest recorded laps at a similar temperature (within 3 °C). Each setup says why it is ranked there.</p>
-              <p>For the chosen setup it shows the fuel plan, from its own recorded laps where possible, with safety margin and tank size from the fuel calculator. The time lost per pit stop is measured from your own recorded stops on that track (cars of the same class first, else any car): drive one full stop with SetupMan running and it is known. Until then the fuel calculator's value is used. With folder management enabled, <b>Show in the game</b> or <b>Show only this one</b> puts it in the game's setup list in one click. Your choices are remembered, also for other devices.</p>
+              <p>For the chosen setup it shows the fuel plan, from its own recorded laps where possible, with safety margin and tank size from the fuel calculator. A pit stop is planned as the drive through the pit lane, measured from your own recorded stops on that track (cars of the same class first, else any car), plus a planned standing time for tyres and fuel without repairs (Settings → Games → <b>Pit stop: standing still</b>, 30 s by default). Drive one full stop with SetupMan running and the pit lane is known; until then the fuel calculator's value is used. The standing time you measured is shown for information; repairing damage can cost about a lap. <b>How this is calculated</b> shows what the plan is based on. With folder management enabled, <b>Show in the game</b> or <b>Show only this one</b> puts it in the game's setup list in one click. Your choices are remembered, also for other devices.</p>
             </section>
             <section id="m-lfm">
               <h2>Low Fuel Motorsport</h2>
@@ -152,14 +152,15 @@ export const ManualPage = {
               <h2>Fuel calculator</h2>
               <p>Open it from the top bar, or from a track page to remember the numbers for that car and track and to use your recorded laps.</p>
               <p><b>Race:</b> race length, average lap time and fuel per lap, plus any mandatory stops, the time a stop costs, a safety margin and the tank size. The <b>pit window</b> is the time in the race when a stop is allowed, in minutes, as the race rules say. The answer is the fuel to start with and to add at each stop, in whole litres, rounded up.</p>
+              <p><b>Time lost per pit stop:</b> once you have driven a stop on that track with SetupMan running, it is filled in as the measured drive through the pit lane plus a planned standing time for tyres and fuel, without repairs (Settings → Games → <b>Pit stop: standing still</b>, 30 s by default); <b>Use this</b> puts that value back after you changed it. The standing time you measured is shown for information; repairing damage can cost about a lap. Until a stop has been driven on that track, the value you enter is used. <b>How this is calculated</b> shows what the plan is based on.</p>
               <p><b>Qualifying:</b> under 12 minutes is one run; longer sessions are two runs, each with an out-lap. It uses your best lap.</p>
             </section>
             <section id="m-pit">
               <h2>Pit stop advice</h2>
-              <p>During an ACC or AC session, the <b>Pit stop</b> page in the top bar shows what to set in the pit menu for the next stop. It fits one phone screen without scrolling: fuel to add, the pressures to set per tyre and the main facts; <b>How this is worked out</b> explains the numbers. A value shown in green is already set in the pit menu. It updates by itself, so it can stay open on a phone, tablet or second screen (see <a href="#/manual" @click.prevent="go('network')">Other devices</a>). SetupMan does not change the pit menu itself; enter the values in the game.</p>
+              <p>During an ACC or AC session, the <b>Pit stop</b> page in the top bar shows what to set in the pit menu for the next stop. It fits one phone screen without scrolling: fuel to add, the pressures to set per tyre and the main facts; <b>How this is calculated</b> explains the numbers. A value shown in green is already set in the pit menu. It updates by itself, so it can stay open on a phone, tablet or second screen (see <a href="#/manual" @click.prevent="go('network')">Other devices</a>). SetupMan does not change the pit menu itself; enter the values in the game.</p>
               <p><b>Fuel to add:</b> the average fuel use and lap time of your last 5 valid laps (out-laps and in-laps not counted) give the laps still to go and the fuel needed to finish, including the safety margin from the fuel calculator (2 L unless set otherwise). The advice is marked provisional until 3 valid laps are recorded.</p>
               <p><b>Stint plan:</b> nothing needs to be chosen during the race. With a race (R) setup the fuel is split evenly over the stops still needed. With an Endurance setup every stint is as long as the tank and the server's maximum stint time allow, and the last two stints are equal. The tank size and the maximum stint time come from ACC. Extra stops are planned when one stop can't add enough fuel.</p>
-              <p><b>Tyre pressures:</b> the average hot pressure of each tyre over the last 3 laps is compared with the target (27.0 psi on dry tyres, 30.0 psi on wets; Settings → Games). The difference is added to the pressure now set in the pit menu.</p>
+              <p><b>Tyre pressures:</b> the average hot pressure of each tyre over the last 3 laps is compared with the target (27.0 psi on dry tyres, 30.0 psi on wets; Settings → Games). The difference is added to the cold pressures the current tyres were fitted with. Changing the pit menu does not change the advice; a value that matches the pit menu turns green.</p>
               <p><b>AC</b> does not report its pit menu, mandatory stops, maximum stint time or rain tyres. The page then shows the pressure change per tyre instead of the value to set, and plans only the stops that fuel requires. Set the target pressures for the AC car you race in Settings → Games.</p>
             </section>
             <section id="m-weekend">
@@ -168,7 +169,7 @@ export const ManualPage = {
                 <li><b>Before practice:</b> check that the extra telemetry log is enabled (Settings → Telemetry); for an LFM race, have your LFM ID in Settings → General.</li>
                 <li><b>Practice</b> in the setup you plan to race. If <b>Manual setup select</b> appears, click the right setup once. Drive at least 5 clean laps on race fuel.</li>
                 <li><b>Race prep:</b> choose the race and its temperature; it ranks your setups and shows the fuel plan from your practice laps. For another temperature, use <b>More → Adjust for another temperature</b> on the setup.</li>
-                <li><b>Fuel calculator</b> (from the track page): race length, mandatory stops, pit loss (filled in from your recorded stops when the box is empty) and safety margin; the fuel to start with and to add per stop.</li>
+                <li><b>Fuel calculator</b> (from the track page): race length, mandatory stops, the time a stop costs (filled in from your recorded stops when the box is empty) and safety margin; the fuel to start with and to add per stop.</li>
                 <li><b>During the race:</b> keep <b>Pit stop</b> open on a phone or tablet; it shows the fuel to add and the pressures to set before each stop.</li>
                 <li><b>Afterwards:</b> under Telemetry, open the race session for its laps and <b>Show brake wear and temperatures</b>, and compare laps in the lap analysis.</li>
               </ol>
@@ -192,13 +193,13 @@ export const ManualPage = {
               <ul>
                 <li><b>Best laps</b>: every full lap, fastest first, filtered by setup, session type and period, leaving out invalid and pit-lane laps when SetupMan recorded them.</li>
                 <li><b>Setups</b>: every setup driven there (per car) with its fastest lap, the gap to the fastest setup and the average of its best five laps; tick two or more and select <b>Compare fastest laps</b>.</li>
-                <li><b>Sessions</b>: the sessions by day (<b>Go to</b> jumps to a month); open one for every lap, its note and the setup you drove. Sessions SetupMan recorded get their setup automatically (and change along when you correct it with <b>Wrong setup?</b>); for older sessions, choose the setup in the list.</li>
+                <li><b>Sessions</b>: the sessions by day (<b>Go to</b> jumps to a month); open one for every lap, its note and the setup you drove. The session's fastest lap is purple; click a lap time to open that lap in the lap analysis. Sessions SetupMan recorded get their setup automatically (and change along when you correct it with <b>Change setup…</b>); for older sessions, choose the setup in the list. A session driven with several setups shows them per stint, for example “Setup A → Setup B”, with a <b>Setup</b> column in the lap list; <b>Change per stint</b> opens the session to correct a stint's setup.</li>
               </ul>
-              <p>The star makes a lap the <b>reference lap</b> for that car on that track; <b>Fastest vs reference</b> compares the two in one click.</p>
+              <p>The star makes a lap the <b>reference lap</b> for that car on that track (one reference lap per car per track); <b>Fastest vs reference</b> compares the two in one click.</p>
             </section>
             <section id="m-tele-analysis">
               <h2>Lap analysis</h2>
-              <p>Tick up to four laps anywhere and select <b>Compare laps</b>. The lap analysis puts them on top of each other along the distance from the line, each stretched to the length of the first lap (blue); the others are orange, teal and pink. Laps are named “Lap n” within one session, by their setup when you compare setups, otherwise by their day; by their car when the cars differ.</p>
+              <p>Tick up to four laps anywhere and select <b>Compare laps</b>. The lap analysis puts them on top of each other along the distance from the line, each stretched to the length of the first lap (blue); the others are orange, teal and pink. Laps are named “Lap n” within one session, by their setup when you compare setups, otherwise by their day; by their car when the cars differ. Each lap's card has <b>Make reference</b> to make it the reference lap for that car on that track; the current one shows <b>Reference lap</b>.</p>
               <ul>
                 <li><b>Result</b>: the difference over the lap, where the second lap lost and gained the most (click to zoom in), top speed, full throttle and time on the brakes of every lap.</li>
                 <li><b>Time difference</b> to the first lap: shaded red where the second lap loses time, green where it gains. <b>Compare against this</b> makes another lap the first.</li>
@@ -210,11 +211,11 @@ export const ManualPage = {
             </section>
             <section id="m-tele-3d">
               <h2>3D track view</h2>
-              <p>Select <b>3D</b> on the Track card of the lap analysis. Every lap is drawn on its own driving line on the real, hilly track, with a wall standing on it: choose the channel for the wall's <b>height</b> (e.g. speed) and for its <b>colour</b> (e.g. Throttle / brake: green on the throttle, red on the brakes, grey while coasting). Point at the graphs and a marker per lap shows exactly where the car was; click a line to move the cursor there. Drag to rotate, right-drag to move, wheel to zoom; the camera stays where you put it.</p>
+              <p>Select <b>3D</b> on the Track card of the lap analysis. Every lap is drawn on its own driving line on the real, hilly track, with a wall standing on it: choose the channel for the wall's <b>height</b> (e.g. speed) and for its <b>colour</b>. The colour is the lap's own colour by default; choose <b>Throttle / brake</b> (green on the throttle, red on the brakes, grey while coasting) or any other channel instead. The wall's size follows the zoom by itself, so it stays readable close up and from far away. All controls are on one line above the view; the <b>i</b> button explains how to move around. Point at the graphs and a marker per lap shows exactly where the car was; click a line to move the cursor there. Drag to rotate, right-drag to move, wheel to zoom; the camera stays where you put it. The 3D view stays at the top of the page while you scroll through the graphs below it.</p>
               <ul>
                 <li><b>Exact position</b>: laps driven with SetupMan's extra telemetry log use the car position the game reported. Older laps are drawn on the track's typical line and marked “approximate position”; their channel values are still their own.</li>
                 <li><b>Satellite</b>: sharp photos at every track with your own free MapTiler key (Settings → Telemetry). They load from MapTiler while you are online and are not stored.</li>
-                <li><b>Aerial photo</b>: for tracks where a government offers aerial photos under an open licence (Zandvoort, Zolder, Spa, Nürburgring, Red Bull Ring, Paul Ricard, Barcelona, Valencia, Suzuka, the US tracks), <b>Download aerial photo for offline use</b> keeps them on this PC (a few MB to about 25 MB per track). Delete them on the view or in Settings.</li>
+                <li><b>Aerial photo</b>: for tracks where a government offers aerial photos under an open licence (Zandvoort, Zolder, Spa, Nürburgring, Red Bull Ring, Paul Ricard, Barcelona, Valencia, Suzuka, the US tracks), <b>Download aerial photo</b> keeps them on this PC for offline use (a few MB to about 25 MB per track). Delete them in Settings → Telemetry.</li>
                 <li>The terrain is downloaded the first time you open a track in 3D and kept. The first time also places the game's track on the real map, which takes a few seconds.</li>
               </ul>
             </section>

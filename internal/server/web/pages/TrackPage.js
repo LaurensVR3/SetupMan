@@ -8,7 +8,8 @@ import { useRoute, useRouter } from "vue-router";
 import { get, post, put, enc } from "../api.js";
 import { useDrop, readFiles } from "../drop.js";
 import { store, stagingDone, showToast } from "../store.js";
-import { dateTime, pct, plural } from "../format.js";
+import { dateTime, pct, plural, sentence } from "../format.js";
+import { kindLabel } from "../telemetry.js";
 import { usePageData } from "./load.js";
 import { Loading, setCrumbs } from "../components/common.js";
 import { SimilarityGrid } from "../components/SimilarityGrid.js";
@@ -138,7 +139,7 @@ export const TrackPage = {
       try { stagingDone(await fn(), done); } catch (e) { showToast(e.message, 7000); } finally { busy.value = false; }
     }
     const stage = (id, name) => act(() => post("/api/setups/" + id + "/stage", {}), name + ` is shown in ${G.value}.`);
-    const unstage = (id, name) => act(() => post("/api/setups/" + id + "/unstage"), name + ` is hidden from ${G.value}. It stays safe in SetupMan.`);
+    const unstage = (id, name) => act(() => post("/api/setups/" + id + "/unstage"), name + ` is hidden from ${G.value}. It remains stored in SetupMan.`);
     const keep = (id, name) => act(() => post("/api/setups/" + id + "/keep"), name + ` stays in ${G.value}.`);
     // Several setups in one request: one folder lock and one rescan (D-138).
     async function many(list, path, done) {
@@ -151,14 +152,14 @@ export const TrackPage = {
         else showToast((ok ? done(ok) + " " : "") + `${plural(bad.length, "setup")} could not be changed. ${bad[0].name || "Setup"}: ${bad[0].error}`, 10000);
       } catch (e) { showToast(e.message, 7000); } finally { busy.value = false; }
     }
-    const hideSelected = () => many(selShown.value, "unstage", (n) => `${plural(n, "setup")} hidden from ${G.value}. They stay safe in SetupMan.`);
+    const hideSelected = () => many(selShown.value, "unstage", (n) => `${plural(n, "setup")} hidden from ${G.value}. They remain stored in SetupMan.`);
     const showSelected = () => many(selHidden.value, "stage", (n) => `${plural(n, "setup")} shown in ${G.value}.`);
     function showOnlySelected() {
       const d = data.value;
       const ids = selShown.value.map((r) => r.id);
       const n = d.setups.length - ids.length;
       act(() => post(`/api/games/${enc(d.game.id)}/cars/${enc(d.car.id)}/tracks/${enc(d.track.id)}/keep-only`, { setupIds: ids }),
-        n ? `${G.value} now shows ${plural(ids.length, "setup")} here; ${plural(n, "setup")} hidden (safe in SetupMan).` : "Nothing to hide.");
+        n ? `${G.value} now shows ${plural(ids.length, "setup")} here; ${plural(n, "setup")} hidden (they remain stored in SetupMan).` : "Nothing to hide.");
     }
     async function tidyNames() {
       busy.value = true;
@@ -182,7 +183,7 @@ export const TrackPage = {
         const ok = res.filter((r) => !r.error), bad = res.filter((r) => r.error);
         delDlg.value.close();
         selected.value = [...bad.map((r) => r.id), ...delBlocked.value.map((r) => r.id)];
-        showToast(`${plural(ok.length, "setup")} deleted (in the bin for 30 days).` + (bad.length ? ` ${plural(bad.length, "setup")} could not be deleted. ${bad[0].name}: ${bad[0].error}.` : ""), 9000);
+        showToast(`${plural(ok.length, "setup")} deleted (in the bin for 30 days).` + (bad.length ? ` ${plural(bad.length, "setup")} could not be deleted. ${bad[0].name}: ${sentence(bad[0].error)}` : ""), 9000);
       } catch (e) { showToast(e.message, 7000); } finally { busy.value = false; }
     }
     const downloadIds = computed(() => (selected.value.length ? selected.value : rows.value.map((r) => r.id)).join(","));
@@ -212,7 +213,7 @@ export const TrackPage = {
     return { G, autoPicked, selCount, chosenLaps, rowClick, delBlocked, delIds, data, error, TABS, tab, setTab, tabCount, sorted, sortBy, sortMark, selected, isSel, toggle, allSelected, toggleAll, dupDlg,
       selShown, selHidden, chosen, pair, pickPair, groupCount, unassigned, assign, rows, families, bigFamilies, loners,
       busy, freshSetups, stage, unstage, keep, hideSelected, showSelected, showOnlySelected, tidyNames, downloadIds, delDlg, askDelete, doDelete,
-      importFiles, imported, dateTime, pct, plural };
+      importFiles, imported, dateTime, pct, plural, kindLabel };
   },
   template: `
     <main class="page page-wide">
@@ -234,7 +235,7 @@ export const TrackPage = {
         <div v-if="data.queued" class="banner banner-info" role="status"><h2>{{ plural(data.queued, 'queued change') }} will be applied when you stop driving</h2></div>
         <section v-if="freshSetups.length" class="banner" aria-labelledby="fresh-h">
           <h2 id="fresh-h">{{ freshSetups.length === 1 ? '1 new setup' : freshSetups.length + ' new setups' }} saved in {{ G }}</h2>
-          <p class="panel-hint panel-hint-tight">Keep it in {{ G }}'s list, or hide it so the list stays short. Hidden setups stay safe in SetupMan.</p>
+          <p class="panel-hint panel-hint-tight">Keep it in {{ G }}'s list, or hide it so the list stays short. Hidden setups remain stored in SetupMan.</p>
           <ul>
             <li v-for="f in freshSetups" :key="f.id">
               <span class="bn-name">{{ f.s.name }}</span>
@@ -248,7 +249,7 @@ export const TrackPage = {
           <p class="panel-hint panel-hint-tight">SetupMan recorded your laps but couldn't determine which setup was used. Select it, and the laps are added to that setup.</p>
           <ul>
             <li v-for="s in unassigned" :key="s.id">
-              <router-link :to="'/session/' + s.id" class="bn-name">{{ dateTime(s.startedAt) }}, {{ s.kind || 'session' }}, {{ s.laps }} laps</router-link>
+              <router-link :to="'/session/' + s.id" class="bn-name">{{ dateTime(s.startedAt) }}, {{ kindLabel(s.kind).toLowerCase() }}, {{ s.laps }} laps</router-link>
               <select @change="assign(s.id, Number($event.target.value))" :aria-label="'Setup used on ' + dateTime(s.startedAt)">
                 <option value="0">Choose the setup…</option>
                 <option v-for="o in rows" :key="o.id" :value="o.id">{{ o.name }}</option>
@@ -266,7 +267,7 @@ export const TrackPage = {
         <dialog ref="delDlg" class="confirm">
           <template v-if="delIds.length">
             <h2>Delete {{ delIds.length === 1 ? 'this setup' : delIds.length + ' setups' }}?</h2>
-            <p>{{ delIds.length === 1 ? 'It is' : 'They are' }} removed from {{ data.managed ? G + ' and from ' : '' }}SetupMan's lists, with all versions. The bin keeps {{ delIds.length === 1 ? 'it' : 'them' }} for 30 days: <router-link to="/settings?tab=backups">Settings → Bin</router-link> can restore {{ delIds.length === 1 ? 'it' : 'them' }} until then.</p>
+            <p>{{ delIds.length === 1 ? 'It is' : 'They are' }} removed from {{ data.managed ? G + ' and from ' : '' }}SetupMan's lists, with all versions. The bin keeps {{ delIds.length === 1 ? 'it' : 'them' }} for 30 days: <router-link to="/settings?tab=backups">Settings → Backups &amp; bin</router-link> can restore {{ delIds.length === 1 ? 'it' : 'them' }} until then.</p>
             <ul class="del-list"><li v-for="r in rows.filter((x) => delIds.includes(x.id)).slice(0, 8)" :key="r.key">{{ r.name }}</li><li v-if="delIds.length > 8">and {{ delIds.length - 8 }} more</li></ul>
           </template>
           <h2 v-else>The selected setups can't be deleted yet</h2>
@@ -285,7 +286,7 @@ export const TrackPage = {
             <span class="selbar-count">{{ selected.length ? selected.length + ' selected' : 'Select setups to act on them' }}</span>
             <button type="button" class="btn btn-sm" :disabled="selCount < 2" @click="setTab('compare')">Compare</button>
             <template v-if="data.managed">
-              <button type="button" class="btn btn-sm" :disabled="busy || !selShown.length" @click="showOnlySelected" :title="'The selected setups stay in ' + G + '; the others are hidden (they stay safe in SetupMan)'">Show only these in {{ G }}</button>
+              <button type="button" class="btn btn-sm" :disabled="busy || !selShown.length" @click="showOnlySelected" :title="'The selected setups stay in ' + G + '; the others are hidden (they remain stored in SetupMan)'">Show only these in {{ G }}</button>
               <button type="button" class="btn btn-sm" :disabled="busy || !selShown.length" @click="hideSelected">Hide from {{ G }}</button>
               <button type="button" class="btn btn-sm" :disabled="busy || !selHidden.length" @click="showSelected">Show in {{ G }}</button>
             </template>

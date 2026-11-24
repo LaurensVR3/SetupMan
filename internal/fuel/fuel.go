@@ -35,7 +35,6 @@ type Qualifying struct {
 // Stint is one stint of the plan.
 type Stint struct {
 	Laps      int     `json:"laps"`      // laps driven in this stint (race) or flying laps (qualifying)
-	OutLap    bool    `json:"outLap"`    // includes an out-lap (counted in Fuel)
 	Fuel      float64 `json:"fuel"`      // litres to have (start) or to add (stop)
 	FuelLabel string  `json:"fuelLabel"` // "Start with" / "Add at stop 1" / "Fill to"
 }
@@ -84,7 +83,7 @@ func CalcRace(in Race) (Plan, error) {
 		var st Stint
 		if i == 0 {
 			// Start fuel: first stint + the out-lap (formation lap), plus the safety margin.
-			st = Stint{Laps: laps, OutLap: true, Fuel: ceil(float64(laps+1)*in.FuelPerLap + in.Safety), FuelLabel: "Start with"}
+			st = Stint{Laps: laps, Fuel: ceil(float64(laps+1)*in.FuelPerLap + in.Safety), FuelLabel: "Start with"}
 			p.Steps = append(p.Steps, fmt.Sprintf("Start: (%d laps + 1 out-lap) × %.2f L + %.0f L safety = %.1f L, rounded up to %.0f L.",
 				laps, in.FuelPerLap, in.Safety, float64(laps+1)*in.FuelPerLap+in.Safety, st.Fuel))
 		} else {
@@ -224,7 +223,7 @@ func CalcQualifying(in Qualifying) (Plan, error) {
 		if i > 0 {
 			label = "Fill to"
 		}
-		p.Stints = append(p.Stints, Stint{Laps: laps, OutLap: true, Fuel: f, FuelLabel: label})
+		p.Stints = append(p.Stints, Stint{Laps: laps, Fuel: f, FuelLabel: label})
 		p.Steps = append(p.Steps, fmt.Sprintf("Stint %d: (1 out-lap + %d flying laps) × %.2f L = %.1f L, rounded up to %.0f L.",
 			i+1, laps, in.FuelPerLap, float64(laps+1)*in.FuelPerLap, f))
 		p.Total += f

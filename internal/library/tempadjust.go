@@ -67,7 +67,7 @@ type tempSample struct {
 func (l *Library) learnTempRules(gameID, car string) ([]TempRule, int, error) {
 	g := l.game(gameID)
 	if g == nil || l.db == nil {
-		return nil, 0, errors.New("not available")
+		return nil, 0, errors.New("This is not available for this game.")
 	}
 	all, err := l.db.SetupsForGame(gameID)
 	if err != nil {

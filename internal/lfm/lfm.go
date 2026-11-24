@@ -57,7 +57,7 @@ type Race struct {
 	Stops       int       `json:"stops"` // mandatory pit stops (-1 = not known)
 	CarModel    int       `json:"carModel"`
 	CarClass    string    `json:"carClass,omitempty"`
-	HasCar      bool      `json:"hasCar"` // the driver is in the entry list: CarModel is their car
+	HasCar      bool      `json:"hasCar"`  // the driver is in the entry list: CarModel is their car
 	Entries     int       `json:"entries"` // number of cars in the entry list
 }
 

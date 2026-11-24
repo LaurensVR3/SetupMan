@@ -194,3 +194,54 @@ func TestRecorderResumesAfterRestart(t *testing.T) {
 		t.Errorf("continued a session from an earlier run of the game: %+v", rec)
 	}
 }
+
+// A setup picked by hand still gives way to another loaded setup after SetupMan was restarted
+// during the session (D-177, A-5): the pick stays while the car's values stay, then SetupMan follows.
+func TestRecorderManualPickAfterRestart(t *testing.T) {
+	folder := setupFolder(t)
+	fg := &fakeGame{installed: true, folder: folder}
+	g := startedGame{fakeGame: fg, at: time.Now().Add(-time.Hour)}
+	l, _ := newLib(t, fg)
+	l.Apply()
+	td, _ := l.Track("acc", "ferrari_296_gt3", "spa")
+	idA, idB := td.SetupIDs[0], td.SetupIDs[1]
+	if _, err := l.EditSetup(idB, map[string]string{"basicSetup.strategy.fuel": "60"}, ""); err != nil {
+		t.Fatal(err)
+	}
+	s, _ := l.db.Setup(idB)
+	latest, _ := l.db.LatestVersion(idB)
+	s.DiskVersionID = latest.ID
+	l.db.UpdateSetup(s)
+
+	base := game.Telemetry{Live: true, Session: "practice", Car: "ferrari_296_gt3", Track: "spa", TC: 4, ABS: 3, Map: 1,
+		PitMenuKnown: true, PitPressures: [4]float64{25.3, 24.8, 25.1, 24.7}, Fuel: 32}
+	feed := func(tm game.Telemetry, laps int, inPit bool) {
+		tm.CompletedLaps, tm.InPit = laps, inPit
+		if laps > 0 {
+			tm.LastLapMs = 100000 + laps
+		}
+		l.feedTelemetry(g, tm, true)
+	}
+	feed(base, 0, true)
+	feed(base, 0, false)
+	if err := l.SetRecordingSetup(idB); err != nil {
+		t.Fatal(err)
+	}
+	// "restart": the recorder is gone, the session (with its hand-picked setup) is in the library
+	l.recMu.Lock()
+	l.recs, l.resumeTried = map[string]*recorder{}, nil
+	l.recMu.Unlock()
+	feed(base, 0, false)
+	if rec := l.Recording(); rec.SetupID != idB {
+		t.Fatalf("after the restart: %+v, want b (picked by hand)", rec)
+	}
+	feed(base, 1, false)
+	// another setup loaded in the pits: SetupMan follows it
+	other := base
+	other.PitPressures = [4]float64{25.4, 24.9, 25.3, 24.9}
+	feed(other, 1, true)
+	feed(other, 1, false)
+	if rec := l.Recording(); rec.SetupID != idA {
+		t.Errorf("after loading another setup: %+v, want a", rec)
+	}
+}

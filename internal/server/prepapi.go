@@ -107,7 +107,7 @@ func (s *Server) handleGetPrepInputs(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handlePutPrepInputs(w http.ResponseWriter, r *http.Request) {
 	var in json.RawMessage
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	if err := s.lib.SetSaved("prep", string(in)); err != nil {

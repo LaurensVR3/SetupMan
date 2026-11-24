@@ -132,3 +132,13 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }
+
+// Messages for requests SetupMan can't use (an old page, a deleted item): shown as they are in the UI.
+const (
+	msgBadRequest = "SetupMan could not read this request. Reload the page and try again."
+	msgNoSetup    = "This setup could not be found. Reload the page."
+	msgNoVersion  = "This version could not be found. Reload the page."
+	msgNoSession  = "This session could not be found. Reload the page."
+	msgNoStint    = "This stint could not be found. Reload the page."
+	msgNoLap      = "This lap could not be found. Reload the page."
+)

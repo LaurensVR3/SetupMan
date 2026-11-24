@@ -6,11 +6,13 @@ package library
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"math"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"setupman/internal/history"
 	"setupman/internal/maps3d"
@@ -37,7 +39,6 @@ type Scene3D struct {
 	Lat       float64         `json:"lat"` // origin of E, N
 	Lon       float64         `json:"lon"`
 	Source    string          `json:"source"` // how the track was placed: "position" (the game's car position) or "calculated"
-	FitRMS    float64         `json:"fitRms"` // metres
 	Line      Path3D          `json:"line"`   // the track's typical line (a lap of the fit)
 	Terrain   *maps3d.Terrain `json:"terrain,omitempty"`
 	NoTerrain string          `json:"noTerrain,omitempty"` // why there is no terrain (offline)
@@ -45,7 +46,8 @@ type Scene3D struct {
 	Credits   []string        `json:"credits"`
 
 	fit     telemetry.GeoFit
-	hOffset float64 // game height + hOffset = metres above sea level (position source)
+	hOffset float64   // game height + hOffset = metres above sea level (position source)
+	built   time.Time // when the scene was made: without terrain, the download is tried again after a minute
 }
 
 // kept3D is the fit stored in the library (KV), so it is worked out once per track.
@@ -63,8 +65,12 @@ type scene3DCache struct {
 	mu      sync.Mutex
 	scenes  map[string]*Scene3D
 	checked map[string]bool // a calculated fit: looked for an extra-log lap this run
+	failed  map[string]bool // laps ("file/lap") whose car positions could not place the track: not tried again this run
 	busy    sync.Mutex      // one fit at a time (a fit takes a few seconds)
 }
+
+// terrainRetry is how long a scene without terrain (offline) is kept before the download is tried again.
+const terrainRetry = time.Minute
 
 // Track3D returns the scene of a track, fitting the track and downloading the terrain the first time.
 func (l *Library) Track3D(gameID, track string) (*Scene3D, error) {
@@ -80,11 +86,11 @@ func (l *Library) Track3D(gameID, track string) (*Scene3D, error) {
 	key := gameID + "/" + track
 	c.mu.Lock()
 	if c.scenes == nil {
-		c.scenes, c.checked = map[string]*Scene3D{}, map[string]bool{}
+		c.scenes, c.checked, c.failed = map[string]*Scene3D{}, map[string]bool{}, map[string]bool{}
 	}
 	s := c.scenes[key]
 	c.mu.Unlock()
-	if s == nil || (s.Terrain == nil && s.NoTerrain != "") {
+	if s == nil || (s.Terrain == nil && s.NoTerrain != "" && time.Since(s.built) > terrainRetry) {
 		var err error
 		if s, err = l.buildScene3D(gameID, track, g); err != nil {
 			return nil, err
@@ -124,13 +130,13 @@ func (l *Library) buildScene3D(gameID, track string, g telemetry.GeoTrack) (*Sce
 		}
 		l.saveKept3D(kv, k)
 	}
-	s := &Scene3D{Track: track, Lat: g.Lat, Lon: g.Lon, Source: k.Source, FitRMS: math.Round(k.Fit.RMS*10) / 10, fit: k.Fit,
+	s := &Scene3D{Track: track, Lat: g.Lat, Lon: g.Lon, Source: k.Source, fit: k.Fit, built: time.Now(),
 		Credits: []string{"Track lines © OpenStreetMap contributors (ODbL)"}}
 	if l.Maps != nil {
 		t, err := l.Maps.Terrain(track, g)
 		if err != nil {
 			log.Printf("3D terrain %s: %v", track, err)
-			s.NoTerrain = "The terrain could not be downloaded (no internet connection?). It is kept once downloaded."
+			s.NoTerrain = "The terrain could not be downloaded. Check the internet connection; once downloaded, it is kept on this PC."
 		} else {
 			s.Terrain = t
 			s.Credits = append(s.Credits, maps3d.TerrainCredit)
@@ -259,11 +265,16 @@ func (l *Library) lapPositions(fileID int64, n int) *lapPos {
 	if err != nil || f == nil {
 		return nil
 	}
-	lap := l.teleLapOf(fileID, n)
-	if lap == nil || !lap.Complete {
+	laps, err := l.db.TelemetryLaps(fileID)
+	if err != nil {
 		return nil
 	}
-	extra := l.extraLog(f.Game, f.SessionID)
+	i := lapIndex(laps, n)
+	if i < 0 || !laps[i].Complete {
+		return nil
+	}
+	lap := &laps[i]
+	extra := l.extraLog(f.Game, lapExtraSession(laps, i, f.SessionID))
 	if extra == nil {
 		return nil
 	}
@@ -313,10 +324,8 @@ func (l *Library) teleLapOf(fileID int64, n int) *store.TeleLap {
 	if err != nil {
 		return nil
 	}
-	for i := range laps {
-		if laps[i].N == n {
-			return &laps[i]
-		}
+	if i := lapIndex(laps, n); i >= 0 {
+		return &laps[i]
 	}
 	return nil
 }
@@ -347,11 +356,21 @@ func (l *Library) TelemetryLap3D(fileID int64, n int) (*LapPath3D, error) {
 		return nil, err
 	}
 	p := l.lapPositions(fileID, n)
-	if p != nil && s.Source != "position" {
+	tried := fmt.Sprintf("%d/%d", fileID, n)
+	l.scene3D.mu.Lock()
+	failed := l.scene3D.failed[tried]
+	l.scene3D.mu.Unlock()
+	if p != nil && s.Source != "position" && !failed {
 		// the first lap with the car position at this track (e.g. driven since SetupMan started):
-		// place the track from it now, so this lap and the next are exact
+		// place the track from it now, so this lap and the next are exact. A lap that can't place it
+		// is remembered, so the fit (a few seconds) isn't redone each time the lap is opened.
 		if g, ok := telemetry.Geo(strings.ToLower(f.Track)); ok {
-			if k, ok := fitFromPositions(strings.ToLower(f.Track), g, p, fileID, n); ok {
+			k, ok := fitFromPositions(strings.ToLower(f.Track), g, p, fileID, n)
+			if !ok {
+				l.scene3D.mu.Lock()
+				l.scene3D.failed[tried] = true
+				l.scene3D.mu.Unlock()
+			} else {
 				l.saveKept3D("tele-3d/"+f.Game+"/"+strings.ToLower(f.Track), k)
 				l.scene3D.mu.Lock()
 				delete(l.scene3D.scenes, f.Game+"/"+strings.ToLower(f.Track))

@@ -578,12 +578,6 @@ func (q Q) UpdateVersionContent(id int64, content []byte, fileModified time.Time
 	return err
 }
 
-// UpdateVersionNote saves a note on one version.
-func (q Q) UpdateVersionNote(id int64, note string) error {
-	_, err := q.ex.Exec(`UPDATE versions SET note=? WHERE id=?`, note, id)
-	return err
-}
-
 // LatestVersion returns the newest version of a setup, or nil.
 func (q Q) LatestVersion(setupID int64) (*Version, error) {
 	v, err := scanVersion(q.ex.QueryRow(`SELECT `+versionCols+` FROM versions WHERE setup_id = ? ORDER BY seq DESC LIMIT 1`, setupID))

@@ -29,7 +29,7 @@ func (s *Server) registerTransfer() {
 func (s *Server) handleShare(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	q := r.URL.Query()

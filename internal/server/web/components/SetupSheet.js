@@ -107,7 +107,7 @@ export const SetupSheet = {
         <button v-if="editable && !editing" type="button" class="btn btn-primary" @click="editing = true">Change values</button>
         <span v-if="editing" class="sheet-editing">Use − and + or type a number. Numbers are the values stored in the setup file: clicks for most settings, not degrees.</span>
         <label class="switch" title="Settings the game doesn't show on its setup screens, such as the car name and values it works out itself"><input type="checkbox" v-model="showAll"><span></span>Also show hidden settings</label>
-        <span v-if="!editing" class="compare-count">Values are shown as in the game where SetupMan knows the car; other numbers are the game's own steps (clicks). Grey settings are not used for Similarity.</span>
+        <span v-if="!editing" class="compare-count">Values are shown as in the game where SetupMan knows the car; other numbers are the game's own steps (clicks). Settings in grey are ignored when comparing setups.</span>
       </div>
       <div class="sheet-grid">
         <section v-for="s in sections" :key="s.name" class="sheet-section">

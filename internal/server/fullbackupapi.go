@@ -55,7 +55,7 @@ func (s *Server) handleOpenFolder(w http.ResponseWriter, r *http.Request) {
 		Which string `json:"which"` // "full", "log" or a game id
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	var dir string

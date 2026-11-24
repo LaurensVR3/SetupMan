@@ -4,6 +4,9 @@ export function plural(n, one, many = one + "s") {
   return `${typeof n === "number" ? n.toLocaleString() : n} ${n === 1 ? one : many}`;
 }
 
+// A message as one sentence ending in a single full stop (server messages may end in one already).
+export const sentence = (s) => String(s || "").replace(/[.\s]+$/, "") + ".";
+
 // Round down so 99.99% never shows as 100%.
 export function pct(score) {
   return Math.floor(score * 10) / 10 + "%";

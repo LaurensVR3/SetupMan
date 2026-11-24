@@ -19,7 +19,7 @@ import (
 )
 
 // UserAgent identifies SetupMan to Wikimedia without any personal data.
-const UserAgent = "SetupMan/0.2 (open-source simracing setup manager)"
+const UserAgent = "SetupMan/0.2 (open-source sim racing setup manager)"
 
 // commonsFiles maps a brand (as used in the game name tables) to a Wikimedia Commons file.
 var commonsFiles = map[string]string{

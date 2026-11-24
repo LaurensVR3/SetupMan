@@ -1,7 +1,8 @@
-// Lap times of a setup (spec D-44, D-48): best lap ever, average of clean laps, fuel per lap,
+// Lap times of a setup (spec D-44, D-48): best lap, average of clean laps, fuel per lap,
 // per version; a graph of lap time against track temperature; the sessions it was driven in.
 import { computed } from "vue";
 import { dateTime } from "../format.js";
+import { kindLabel } from "../telemetry.js";
 
 export function lapTime(ms) {
   if (!ms) return "–";
@@ -50,12 +51,12 @@ export const LapTimes = {
   components: { TempGraph },
   props: { laps: Object, meta: Object, setupId: Number, options: Array },
   emits: ["assign"],
-  setup: () => ({ lapTime, dateTime }),
+  setup: () => ({ lapTime, dateTime, kindLabel }),
   template: `
     <div>
       <template v-if="laps && laps.overall.laps">
         <div class="stats lap-stats">
-          <div class="stat"><span class="stat-value">{{ lapTime(laps.overall.bestMs) }}</span><span class="stat-label">best lap ever</span></div>
+          <div class="stat"><span class="stat-value">{{ lapTime(laps.overall.bestMs) }}</span><span class="stat-label">best lap</span></div>
           <div class="stat"><span class="stat-value">{{ lapTime(laps.overall.avgMs) }}</span><span class="stat-label">average lap ({{ laps.overall.clean }} clean laps)</span></div>
           <div class="stat"><span class="stat-value">{{ laps.overall.fuelLaps ? laps.overall.fuelPerLap.toFixed(2) + ' L' : '–' }}</span><span class="stat-label">fuel per lap</span></div>
           <div class="stat"><span class="stat-value">{{ laps.overall.laps }}</span><span class="stat-label">laps recorded</span></div>
@@ -79,13 +80,13 @@ export const LapTimes = {
         <h3 class="lap-sub">Sessions</h3>
         <ul class="sessions">
           <li v-for="s in laps.sessions" :key="s.id">
-            <router-link :to="'/session/' + s.id" title="Session report: stints, every lap, fuel and tyre pressures">{{ dateTime(s.startedAt) }}, {{ s.kind || 'session' }}, {{ s.laps }} laps</router-link>
+            <router-link :to="'/session/' + s.id" title="Session report: stints, every lap, fuel and tyre pressures">{{ dateTime(s.startedAt) }}, {{ kindLabel(s.kind).toLowerCase() }}, {{ s.laps }} laps</router-link>
             <span class="muted-small">{{ s.match === 'manual' ? 'set by you' : 'recognised by SetupMan' }}</span>
-            <label class="sess-fix">Wrong setup?
+            <label class="sess-fix">Change setup…
               <select @change="$emit('assign', { sessionId: s.id, setupId: Number($event.target.value) })">
                 <option :value="setupId" selected>This setup</option>
                 <option v-for="o in options" :key="o.setupId" :value="o.setupId">{{ o.name }}</option>
-                <option :value="0">Not sure</option>
+                <option :value="0">Unknown setup</option>
               </select>
             </label>
           </li>

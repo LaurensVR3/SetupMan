@@ -7,7 +7,7 @@ import { ref, reactive, computed, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { get, put, post, enc } from "../api.js";
 import { stagingDone, showToast } from "../store.js";
-import { dateTime, shortDate, pct } from "../format.js";
+import { dateTime, shortDate } from "../format.js";
 import { usePageData } from "./load.js";
 import { Loading, setCrumbs } from "../components/common.js";
 import { FamilyTree, SessionBadge } from "../components/FamilyTree.js";
@@ -241,7 +241,7 @@ export const SetupPage = {
     async function unstage() {
       busy.value = true;
       try {
-        stagingDone(await post(`/api/setups/${data.value.setup.id}/unstage`), `${data.value.setup.name} is hidden from ${G.value}. It stays safe in SetupMan.`);
+        stagingDone(await post(`/api/setups/${data.value.setup.id}/unstage`), `${data.value.setup.name} is hidden from ${G.value}. It remains stored in SetupMan.`);
       } catch (e) { showToast(e.message, 7000); } finally { busy.value = false; }
     }
 
@@ -271,7 +271,7 @@ export const SetupPage = {
     const tabCount = (t) => (t === "history" ? data.value?.versions.length : t === "laps" ? laps.value?.overall?.laps || 0 : 0);
     const G = computed(() => data.value?.gameShort || "the game"); // short game name, e.g. "AC EVO"
     return { lapsOf, G, data, error, form, saved, saveError, relink, relinkVersions, linkText, TABS, tab, setTab, tabCount,
-      noteChanged, setSession, saveMeta, openRelink, applyRelink, dateTime, shortDate, pct,
+      noteChanged, setSession, saveMeta, openRelink, applyRelink, dateTime, shortDate,
       open, diffs, toggleDiff, cmp, parentCols, compareWithParent, versionText,
       busy, stage, unstage, inAcc, sheet, viewVersion, saving, saveEdits, diskSeq, diskBehind, laps, assignSession,
       delDlg, doDelete, undelete,
@@ -335,12 +335,12 @@ export const SetupPage = {
 
         <div v-if="data.setup.deletedAt && !data.setup.deletedAt.startsWith('0001')" class="banner" role="status">
           <h2>This setup is in the bin</h2>
-          <p class="panel-hint panel-hint-tight">It is permanently deleted 30 days after it was deleted.</p>
+          <p class="panel-hint panel-hint-tight">It will be permanently deleted 30 days after deletion.</p>
           <div><button type="button" class="btn btn-primary btn-sm" :disabled="busy" @click="undelete">Restore</button></div>
         </div>
         <dialog ref="delDlg" class="confirm">
           <h2>Delete {{ data.setup.name }}?</h2>
-          <p>It is removed from {{ G }} and from SetupMan's lists, with all {{ data.versions.length }} versions. The bin keeps it for 30 days; you can restore it in Settings → Bin until then.</p>
+          <p>It is removed from {{ G }} and from SetupMan's lists, with all {{ data.versions.length }} versions. The bin keeps it for 30 days; you can restore it in Settings → Backups &amp; bin until then.</p>
           <div class="picker-actions">
             <button type="button" class="btn" @click="delDlg.close()">Cancel</button>
             <button type="button" class="btn btn-danger-solid" :disabled="busy" @click="doDelete">Delete</button>
@@ -513,7 +513,7 @@ export const SetupPage = {
               <label>Race length (minutes)<input v-model="form.meta.raceMinutes" @change="saveMeta" inputmode="numeric" placeholder="e.g. 45"></label>
               <label>Pit stops<input v-model="form.meta.stops" @change="saveMeta" inputmode="numeric" placeholder="0"></label>
             </div>
-            <p class="panel-hint panel-hint-tight">Temperatures as the game shows them: “3040” in a name is air 30 °C, track 40 °C. A range (“23-27C”) or a single temperature (“23C”) in a name is shown as a range. Race length and pit stops give the stint length, which decides Race or Endurance.</p>
+            <p class="panel-hint panel-hint-tight">Temperatures as the game shows them: “3040” in a name is air 30 °C, track 40 °C. A range (“23-27C”) in a name is shown as a range; a single number (“23C”) is read as set in Settings → General → Temperatures in setup names. Race length and pit stops give the stint length, which decides Race or Endurance.</p>
           </section>
         </div>
       </template>

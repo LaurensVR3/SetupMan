@@ -51,7 +51,7 @@ func (s *Server) handleSetTeleLaps(w http.ResponseWriter, r *http.Request) {
 		IDs []int64 `json:"ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	res, err := s.lib.SetTelemetryLaps(r.PathValue("game"), in.IDs)
@@ -66,7 +66,7 @@ func (s *Server) handleSetTeleLaps(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleTemperature(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	var in struct {
@@ -74,7 +74,7 @@ func (s *Server) handleTemperature(w http.ResponseWriter, r *http.Request) {
 		Track int `json:"track"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	p, err := s.lib.ProposeTemperature(id, in.Air, in.Track)
@@ -118,7 +118,7 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 		IDs []int64 `json:"ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	res, err := s.lib.DeleteSetups(in.IDs)
@@ -133,7 +133,7 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUndelete(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	name, err := s.lib.RestoreDeleted(id)
@@ -160,7 +160,7 @@ func (s *Server) handleRenameTidy(w http.ResponseWriter, r *http.Request) {
 		IDs []int64 `json:"ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"results": s.lib.RenameTidy(in.IDs)})
@@ -180,14 +180,14 @@ func (s *Server) handleTidyPreview(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRename(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	var in struct {
 		Name string `json:"name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	name, err := s.lib.RenameSetup(id, in.Name)
@@ -202,7 +202,7 @@ func (s *Server) handleRename(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	var in struct {
@@ -210,7 +210,7 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 		NewName string            `json:"newName"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	res, err := s.lib.EditSetup(id, in.Edits, in.NewName)
@@ -237,7 +237,7 @@ func (s *Server) handleManage(w http.ResponseWriter, r *http.Request) {
 		On bool `json:"on"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	res, err := s.lib.SetManaged(r.PathValue("game"), in.On)
@@ -291,14 +291,14 @@ func (s *Server) handleRestore(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleStage(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	var in struct {
 		VersionID int64 `json:"versionId"` // 0 = latest
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	res, err := s.lib.Stage(id, in.VersionID)
@@ -312,7 +312,7 @@ func (s *Server) handleStage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUnstage(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	res, err := s.lib.Unstage(id)
@@ -326,7 +326,7 @@ func (s *Server) handleUnstage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleKeep(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "invalid setup id")
+		writeError(w, http.StatusBadRequest, msgNoSetup)
 		return
 	}
 	if err := s.lib.Keep(id); err != nil {
@@ -341,7 +341,7 @@ func (s *Server) handleKeepOnly(w http.ResponseWriter, r *http.Request) {
 		SetupIDs []int64 `json:"setupIds"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request")
+		writeError(w, http.StatusBadRequest, msgBadRequest)
 		return
 	}
 	res, err := s.lib.KeepOnly(r.PathValue("game"), r.PathValue("car"), r.PathValue("track"), in.SetupIDs)
