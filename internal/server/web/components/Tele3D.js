@@ -107,6 +107,15 @@ export const Tele3D = {
         catch (e) { error.value = e.message; }
       }
     }
+    // a lap with the car position can place the track anew (its first such lap): then the scene and
+    // every path are fetched again so they share one placement
+    async function followPlacement() {
+      if (!scene.value || !props.laps.some((l) => paths[l.key] && paths[l.key].scene !== scene.value.source)) return;
+      await loadScene();
+      for (const k of Object.keys(paths)) delete paths[k];
+      await loadPaths();
+      if (THREE && renderer) buildGround();
+    }
     const exactness = computed(() => props.laps.map((l) => ({ color: l.color, label: l.label, exact: paths[l.key]?.exact })));
 
     // ---- drawing ----
@@ -472,6 +481,7 @@ export const Tele3D = {
       renderer.domElement.addEventListener("pointerdown", onDown);
       renderer.domElement.addEventListener("pointerup", onUp);
       await loadPaths();
+      await followPlacement();
       buildLaps();
       watchDownload();
     });
@@ -490,7 +500,7 @@ export const Tele3D = {
         renderer.domElement.remove();
       }
     });
-    watch(() => props.laps.map((l) => l.key).join(), async () => { await loadPaths(); buildLaps(); });
+    watch(() => props.laps.map((l) => l.key).join(), async () => { await loadPaths(); await followPlacement(); buildLaps(); });
     watch(() => [props.laps.map((l) => (l.h ? 1 : 0) + (l.c ? 2 : 0) + (l.th ? 4 : 0) + (l.br ? 8 : 0) + l.color).join(), props.wall.h, props.wall.c, props.wall.size, props.view.total], () => buildLaps());
     watch(() => props.view.cursor, () => buildMarkers());
     watch(photo, () => { if (THREE && scene.value) buildGround(); });

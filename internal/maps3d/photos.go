@@ -15,7 +15,8 @@ import (
 )
 
 // Source is a government aerial photo service whose licence allows keeping the photos (Q-TL20).
-// Each was checked on 2026-11-24: tiles at the circuit, licence on the provider's metadata.
+// Each was checked on 2026-11-24: tiles at the circuit, licence and required credit on the provider's
+// metadata (GSI Japan: credit required; keeping tiles is not addressed explicitly in its terms).
 type Source struct {
 	ID      string `json:"id"`
 	Credit  string `json:"credit"` // shown on the view, as the licence asks
@@ -29,21 +30,21 @@ type Source struct {
 var sources = map[string]Source{
 	"nl": {ID: "nl", Credit: "Aerial photo: Beeldmateriaal Nederland / PDOK", Licence: "CC BY 4.0", Zoom: 18, kind: "xyz",
 		url: "https://service.pdok.nl/hwh/luchtfotorgb/wmts/v1_0/Actueel_orthoHR/EPSG:3857/{z}/{x}/{y}.jpeg"},
-	"be-vl": {ID: "be-vl", Credit: "Aerial photo: Digitaal Vlaanderen", Licence: "Modellicentie Gratis Hergebruik", Zoom: 18, kind: "wms",
+	"be-vl": {ID: "be-vl", Credit: "© Digitaal Vlaanderen – Orthofotomozaïek Vlaanderen 2025", Licence: "Vlaamse Open Data Licentie v1.2", Zoom: 18, kind: "wms",
 		url: "https://geo.api.vlaanderen.be/omw/wms", layer: "omwrgb25vl"},
 	"be-wa": {ID: "be-wa", Credit: "Aerial photo 2021: SPW – Service public de Wallonie", Licence: "CC BY 4.0", Zoom: 18, kind: "wms",
 		url: "https://geoservices.wallonie.be/geoserver/inspire_oi/ows", layer: "OI.OrthoimageCoverage.2021"},
 	"de-rp": {ID: "de-rp", Credit: "Aerial photo: ©GeoBasis-DE / LVermGeoRP", Licence: "dl-de/by-2-0", Zoom: 18, kind: "wms",
 		url: "https://geo4.service24.rlp.de/wms/rp_dop20.fcgi", layer: "rp_dop20"},
-	"at": {ID: "at", Credit: "Aerial photo: basemap.at", Licence: "CC BY 4.0", Zoom: 18, kind: "xyz",
+	"at": {ID: "at", Credit: "Data source: basemap.at", Licence: "CC BY 4.0", Zoom: 18, kind: "xyz",
 		url: "https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg"},
 	"fr": {ID: "fr", Credit: "Aerial photo: IGN – Géoplateforme", Licence: "Licence Ouverte Etalab 2.0", Zoom: 18, kind: "xyz",
 		url: "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}"},
 	"es": {ID: "es", Credit: "Aerial photo: PNOA cedido por © Instituto Geográfico Nacional", Licence: "CC BY 4.0", Zoom: 18, kind: "tms",
 		url: "https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{y}.jpeg"},
-	"jp": {ID: "jp", Credit: "Aerial photo: GSI Japan (地理院タイル)", Licence: "GSI terms of use (credit required)", Zoom: 18, kind: "xyz",
+	"jp": {ID: "jp", Credit: "出典: 国土地理院 (GSI Japan, 地理院タイル)", Licence: "GSI content terms, credit required", Zoom: 18, kind: "xyz",
 		url: "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg"},
-	"us": {ID: "us", Credit: "Aerial photo: USGS The National Map", Licence: "Public domain", Zoom: 16, kind: "xyz",
+	"us": {ID: "us", Credit: "USDA, USGS The National Map: Orthoimagery", Licence: "no use restrictions", Zoom: 16, kind: "xyz",
 		url: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"},
 }
 

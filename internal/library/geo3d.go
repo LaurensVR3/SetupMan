@@ -179,25 +179,11 @@ func (l *Library) fitTrack(gameID, track string, g telemetry.GeoTrack, onlyPosit
 		return kept3D{}, false
 	}
 	for _, r := range rows[:min(len(rows), 40)] {
-		p := l.lapPositions(r.FileID, r.N)
-		if p == nil {
-			continue
+		if p := l.lapPositions(r.FileID, r.N); p != nil {
+			if k, ok := fitFromPositions(track, g, p, r.FileID, r.N); ok {
+				return k, true
+			}
 		}
-		xs, zs := make([]float64, len(p.x)), make([]float64, len(p.x))
-		for i := range p.x {
-			xs[i], zs[i] = float64(p.x[i]), float64(p.z[i])
-		}
-		f, ok := telemetry.FitToGeo(g, xs, zs, false)
-		log.Printf("3D: %s placed from the car position of a lap (file %d lap %d): %.1f m, ok %v", track, r.FileID, r.N, f.RMS, ok)
-		if !ok {
-			continue
-		}
-		k := kept3D{V: scene3DVersion, Source: "position", Fit: f, FileID: r.FileID, Lap: r.N, Y: p.y, Dist: p.dist}
-		for i := range p.x {
-			e, n := f.Apply(xs[i], zs[i])
-			k.E, k.N = append(k.E, float32(e)), append(k.N, float32(n))
-		}
-		return k, true
 	}
 	if onlyPosition {
 		return kept3D{}, false
@@ -241,6 +227,25 @@ func (l *Library) fitTrack(gameID, track string, g telemetry.GeoTrack, onlyPosit
 		return k, true
 	}
 	return kept3D{}, false
+}
+
+// fitFromPositions places the track from one lap's car positions.
+func fitFromPositions(track string, g telemetry.GeoTrack, p *lapPos, fileID int64, n int) (kept3D, bool) {
+	xs, zs := make([]float64, len(p.x)), make([]float64, len(p.x))
+	for i := range p.x {
+		xs[i], zs[i] = float64(p.x[i]), float64(p.z[i])
+	}
+	f, ok := telemetry.FitToGeo(g, xs, zs, false)
+	log.Printf("3D: %s placed from the car position of a lap (file %d lap %d): %.1f m, ok %v", track, fileID, n, f.RMS, ok)
+	if !ok {
+		return kept3D{}, false
+	}
+	k := kept3D{V: scene3DVersion, Source: "position", Fit: f, FileID: fileID, Lap: n, Y: p.y, Dist: p.dist}
+	for i := range p.x {
+		e, nn := f.Apply(xs[i], zs[i])
+		k.E, k.N = append(k.E, float32(e)), append(k.N, float32(nn))
+	}
+	return k, true
 }
 
 // lapPos is a lap's car positions from the extra log, in the game's coordinates, with the distance
@@ -316,7 +321,8 @@ func (l *Library) teleLapOf(fileID int64, n int) *store.TeleLap {
 // the track's typical line stretched to the lap's length ("approximate position", Q-TL19).
 type LapPath3D struct {
 	Path3D
-	Exact bool `json:"exact"`
+	Exact bool   `json:"exact"`
+	Scene string `json:"scene"` // the scene's placement this path belongs to; the view reloads the scene when it differs
 }
 
 // TelemetryLap3D returns a lap's path in its track's scene.
@@ -336,9 +342,25 @@ func (l *Library) TelemetryLap3D(fileID int64, n int) (*LapPath3D, error) {
 	if err != nil {
 		return nil, err
 	}
+	p := l.lapPositions(fileID, n)
+	if p != nil && s.Source != "position" {
+		// the first lap with the car position at this track (e.g. driven since SetupMan started):
+		// place the track from it now, so this lap and the next are exact
+		if g, ok := telemetry.Geo(strings.ToLower(f.Track)); ok {
+			if k, ok := fitFromPositions(strings.ToLower(f.Track), g, p, fileID, n); ok {
+				l.saveKept3D("tele-3d/"+f.Game+"/"+strings.ToLower(f.Track), k)
+				l.scene3D.mu.Lock()
+				delete(l.scene3D.scenes, f.Game+"/"+strings.ToLower(f.Track))
+				l.scene3D.mu.Unlock()
+				if s, err = l.Track3D(f.Game, f.Track); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
 	if s.Source == "position" {
-		if p := l.lapPositions(fileID, n); p != nil {
-			out := &LapPath3D{Exact: true, Path3D: Path3D{Dist: p.dist}}
+		if p != nil {
+			out := &LapPath3D{Exact: true, Scene: s.Source, Path3D: Path3D{Dist: p.dist}}
 			for i := range p.x {
 				e, nn := s.fit.Apply(float64(p.x[i]), float64(p.z[i]))
 				out.E, out.N = append(out.E, float32(e)), append(out.N, float32(nn))
@@ -347,7 +369,7 @@ func (l *Library) TelemetryLap3D(fileID int64, n int) (*LapPath3D, error) {
 			return out, nil
 		}
 	}
-	out := &LapPath3D{Path3D: Path3D{E: s.Line.E, N: s.Line.N, H: s.Line.H, Dist: make(telemetry.Floats, len(s.Line.Dist))}}
+	out := &LapPath3D{Scene: s.Source, Path3D: Path3D{E: s.Line.E, N: s.Line.N, H: s.Line.H, Dist: make(telemetry.Floats, len(s.Line.Dist))}}
 	k := 1.0
 	if total := s.Line.Dist[len(s.Line.Dist)-1]; total > 0 && lap.DistM > 100 {
 		k = lap.DistM / float64(total)
