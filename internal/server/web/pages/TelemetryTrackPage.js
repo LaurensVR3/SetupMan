@@ -164,26 +164,31 @@ export const TelemetryTrackPage = {
     const firstOfMonth = (d, i) => i === 0 || days.value[i - 1].month !== d.month;
     const emptyCount = computed(() => files.value.filter((f) => !f.laps).length);
     const sessionsWithLaps = computed(() => files.value.filter((f) => f.laps).length);
+    // An entry is a file, or one game session of a file that holds several (f.part, D-188).
+    const fk = (f) => (f.part ? f.id + "-" + f.part : String(f.id));
     const open = reactive({}), details = reactive({});
-    async function load(id) {
-      details[id] = await get(`/api/telemetry/files/${id}`);
+    async function load(f) {
+      details[fk(f)] = await get(`/api/telemetry/files/${f.id}` + (f.part ? `?session=${f.part}` : ""));
     }
     async function toggle(f) {
-      if (open[f.id]) { delete open[f.id]; return; }
-      open[f.id] = true;
-      if (!details[f.id]) {
-        try { await load(f.id); } catch (e) { showToast(e.message); delete open[f.id]; }
+      const k = fk(f);
+      if (open[k]) { delete open[k]; return; }
+      open[k] = true;
+      if (!details[k]) {
+        try { await load(f); } catch (e) { showToast(e.message); delete open[k]; }
       }
     }
     // ?open=<session>: open it and scroll to it (also when the address changes on this page)
     watch(() => route.query.open, async (v) => {
       const id = Number(v);
       if (!id) return;
+      const f = files.value.find((x) => x.id === id) || { id };
+      const k = fk(f);
       try {
-        if (!details[id]) await load(id);
-        open[id] = true;
+        if (!details[k]) await load(f);
+        open[k] = true;
         await nextTick();
-        setTimeout(() => document.getElementById("f" + id)?.scrollIntoView({ block: "start" }), 50);
+        setTimeout(() => document.getElementById("f" + k)?.scrollIntoView({ block: "start" }), 50);
       } catch { /* not in this track's telemetry */ }
     }, { immediate: true });
     const noData = (l) => l.distM < NO_DATA;
@@ -205,13 +210,17 @@ export const TelemetryTrackPage = {
     // ---- actions
     async function setSetup(f, id) {
       try {
-        await put(`/api/telemetry/files/${f.id}/setup`, { setupId: Number(id) || 0 });
+        if (f.part) await put(`/api/sessions/${f.part}/setup`, { setupId: Number(id) || 0 }); // one game session of the file (D-188)
+        else await put(`/api/telemetry/files/${f.id}/setup`, { setupId: Number(id) || 0 });
         showToast(f.sessionId ? "Setup changed for this session and its recorded laps." : "Setup saved for this session.");
         reload();
       } catch (e) { showToast(e.message); }
     }
     async function refreshOpen() {
-      for (const id of Object.keys(details)) { try { await load(Number(id)); } catch { delete details[id]; } }
+      for (const k of Object.keys(details)) {
+        const f = files.value.find((x) => fk(x) === k);
+        try { if (f) await load(f); else delete details[k]; } catch { delete details[k]; }
+      }
     }
     async function setRef(l) {
       try {
@@ -237,7 +246,7 @@ export const TelemetryTrackPage = {
     return { data, error, tab, setTab, TABS, PERIODS, colors, allCars, carsWithLaps, chosen, carOn, toggleCar, allCarsOn, shownCars, many, carOf,
       laps, files, best, overallBest, shownBest, refLapNo, recentLaps, fSetup, fKind, fPeriod, fValid, fPit, shown, kinds, anyInvalid, anyPit, anyTemps, setupsWithLaps, knownSetups,
       filtered, filtersOn, resetFilters, sel, selIndex, pick, clearSel, selInfo, lapLabel, analyse, ref0, bestVsRef, compareCars, setupSel, toggleSetup,
-      setupBy, compareSetups, setupGroups, showEmpty, days, months, jumpTo, firstOfMonth, emptyCount, sessionsWithLaps, open, details, toggle, flags,
+      setupBy, compareSetups, setupGroups, showEmpty, days, months, jumpTo, firstOfMonth, emptyCount, sessionsWithLaps, open, details, toggle, fk, flags,
       noData, sessionLapLabel, anySessionFuel, anySessionTemps, timedLaps, setSetup, setRef, editing, draft, editNote, saveNote, gap, isBest, carBest,
       lapTime, plural, bytes, duration, when, dateLabel, kindLabel, classCls, PAGE, MAX_LAPS };
   },
@@ -386,9 +395,9 @@ export const TelemetryTrackPage = {
           <div v-for="(d, di) in days" :key="d.key" class="tt-day" :id="firstOfMonth(d, di) ? 'm-' + d.month : null">
             <h3 class="tt-day-head">{{ d.label }}<span>{{ plural(d.files.length, 'session') }}, {{ plural(d.laps, 'full lap') }}</span></h3>
             <ul class="tele-sessions">
-              <li v-for="f in d.files" :key="f.id" :id="'f' + f.id" class="tele-session" :class="{ open: open[f.id] }">
+              <li v-for="f in d.files" :key="fk(f)" :id="'f' + fk(f)" class="tele-session" :class="{ open: open[fk(f)] }">
                 <div class="ts-row" :class="{ 'has-car': many }">
-                  <button type="button" class="ts-toggle" @click="toggle(f)" :aria-expanded="!!open[f.id]">
+                  <button type="button" class="ts-toggle" @click="toggle(f)" :aria-expanded="!!open[fk(f)]">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
                     <span class="ts-when">{{ new Date(f.startedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) }}</span>
                     <span class="ts-kind" v-if="f.kind">{{ kindLabel(f.kind) }}</span>
@@ -409,18 +418,18 @@ export const TelemetryTrackPage = {
                     <span v-if="f.match === 'session'" class="tag" title="Linked to the session SetupMan recorded">Recorded</span>
                   </span>
                 </div>
-                <div v-if="open[f.id]" class="ts-laps">
+                <div v-if="open[fk(f)]" class="ts-laps">
                   <div class="ts-note">
                     <input v-if="editing === 'f' + f.id" v-model="draft" class="tt-note-input" maxlength="2000" placeholder="Note for this session" @keyup.enter="$event.target.blur()" @keyup.esc="editing = null" @blur="editing && saveNote(f.id)" aria-label="Session note" v-focus>
                     <button v-else type="button" class="tt-note-btn" @click="editNote('f' + f.id, f.note)">{{ f.note || 'Add a note for this session' }}</button>
-                    <span class="tt-muted">{{ bytes(f.size) }}, {{ f.channels }} channels<template v-if="details[f.id] && timedLaps(details[f.id]) > f.laps">, {{ plural(timedLaps(details[f.id]), 'timed lap') }} ({{ f.laps }} with data)</template></span>
+                    <span class="tt-muted">{{ bytes(f.size) }}, {{ f.channels }} channels<template v-if="details[fk(f)] && timedLaps(details[fk(f)]) > f.laps">, {{ plural(timedLaps(details[fk(f)]), 'timed lap') }} ({{ f.laps }} with data)</template></span>
                   </div>
-                  <p v-if="!details[f.id]" class="loading">Loading laps…</p>
+                  <p v-if="!details[fk(f)]" class="loading">Loading laps…</p>
                   <div v-else class="table-scroll">
                     <table class="tt-table">
-                      <thead><tr><th class="tt-pick"><span class="sr">Compare</span></th><th class="tt-num">Lap</th><th>Time</th><th class="tt-num">Gap</th><th></th><th v-if="anySessionFuel(details[f.id])" class="tt-num">Fuel</th><th v-if="anySessionTemps(details[f.id])" class="tt-num">Track °C</th><th><span class="sr">Reference</span></th></tr></thead>
+                      <thead><tr><th class="tt-pick"><span class="sr">Compare</span></th><th class="tt-num">Lap</th><th>Time</th><th class="tt-num">Gap</th><th></th><th v-if="anySessionFuel(details[fk(f)])" class="tt-num">Fuel</th><th v-if="anySessionTemps(details[fk(f)])" class="tt-num">Track °C</th><th><span class="sr">Reference</span></th></tr></thead>
                       <tbody>
-                        <tr v-for="l in details[f.id].laps" :key="l.fileId + ':' + l.n" :class="{ dim: !l.complete || l.valid === false, picked: selIndex(l.fileId, l.n) >= 0 }">
+                        <tr v-for="l in details[fk(f)].laps" :key="l.fileId + ':' + l.n" :class="{ dim: !l.complete || l.valid === false, picked: selIndex(l.fileId, l.n) >= 0 }">
                           <td class="tt-pick">
                             <label v-if="!noData(l)" class="lap-check" :style="selIndex(l.fileId, l.n) >= 0 ? { '--c': colors[selIndex(l.fileId, l.n)] } : {}">
                               <input type="checkbox" :checked="selIndex(l.fileId, l.n) >= 0" @change="pick({ ...l, carName: f.carName, setupName: f.setupName, startedAt: f.startedAt })" :aria-label="'Compare lap ' + l.lap"><span></span>
@@ -429,17 +438,17 @@ export const TelemetryTrackPage = {
                           <td class="tt-num tt-rank">{{ l.lap }}</td>
                           <td><b class="tl-time" :class="{ 'is-best': l.complete && l.lapMs === shownBest }">{{ lapTime(l.lapMs) }}</b></td>
                           <td class="tt-num tt-gap">{{ l.complete ? gap(l.lapMs, f.bestMs) : '' }}</td>
-                          <td><span v-for="t in flags(l, details[f.id].laps)" :key="t" class="lap-flag" :class="{ bad: t === 'Invalid' }"
+                          <td><span v-for="t in flags(l, details[fk(f)].laps)" :key="t" class="lap-flag" :class="{ bad: t === 'Invalid' }"
                             :title="t === 'No data' ? 'ACC kept only the lap time of this lap: it keeps the full data of the last laps of a session only.' : null">{{ t }}</span></td>
-                          <td v-if="anySessionFuel(details[f.id])" class="tt-num">{{ l.fuelUsed ? l.fuelUsed.toFixed(2) + ' L' : '' }}</td>
-                          <td v-if="anySessionTemps(details[f.id])" class="tt-num">{{ l.hasTemps ? l.road.toFixed(0) + ' °C' : '' }}</td>
+                          <td v-if="anySessionFuel(details[fk(f)])" class="tt-num">{{ l.fuelUsed ? l.fuelUsed.toFixed(2) + ' L' : '' }}</td>
+                          <td v-if="anySessionTemps(details[fk(f)])" class="tt-num">{{ l.hasTemps ? l.road.toFixed(0) + ' °C' : '' }}</td>
                           <td><button v-if="l.complete" type="button" class="ref-star" :class="{ on: l.reference }" @click="setRef(l)" :aria-pressed="l.reference"
                             :title="l.reference ? 'Reference lap for this car on this track. Click to clear.' : 'Make this the reference lap for this car on this track'">★</button></td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-                  <TeleStint v-if="details[f.id]" :file-id="f.id" />
+                  <TeleStint v-if="details[fk(f)]" :file-id="f.id" :session="f.part || 0" />
                 </div>
               </li>
             </ul>

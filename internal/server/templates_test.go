@@ -31,7 +31,7 @@ var (
 
 var jsWords = map[string]bool{"if": true, "for": true, "while": true, "switch": true, "return": true, "typeof": true, "function": true, "in": true, "of": true, "new": true}
 
-// templateRanges returns the start and end of each `template: ` ... `` string in a file.
+// templateRanges returns the start and end of each `template: ` ... “ string in a file.
 func templateRanges(src string) [][2]int {
 	var out [][2]int
 	for i := 0; ; {

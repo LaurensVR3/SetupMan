@@ -54,13 +54,13 @@ const StintChart = {
 
 export const TeleStint = {
   components: { StintChart },
-  props: { fileId: Number },
+  props: { fileId: Number, session: { type: Number, default: 0 } }, // session: one game session of the file (D-188)
   setup(props) {
     const data = ref(null), error = ref(""), loading = ref(false);
     async function load() {
       loading.value = true;
       error.value = "";
-      try { data.value = await get(`/api/telemetry/files/${props.fileId}/stint`); } catch (e) { error.value = e.message; }
+      try { data.value = await get(`/api/telemetry/files/${props.fileId}/stint` + (props.session ? `?session=${props.session}` : "")); } catch (e) { error.value = e.message; }
       finally { loading.value = false; }
     }
     const laps = computed(() => data.value?.laps || []);

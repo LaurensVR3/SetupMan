@@ -86,7 +86,8 @@ func (s *Server) handleTelemetryFile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid telemetry id")
 		return
 	}
-	d, err := s.lib.TelemetryFile(id)
+	session, _ := strconv.ParseInt(r.URL.Query().Get("session"), 10, 64) // one session of a file (D-188)
+	d, err := s.lib.TelemetryFile(id, session)
 	if err != nil {
 		telemetryError(w, err)
 		return
@@ -126,7 +127,8 @@ func (s *Server) handleTelemetryStint(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid telemetry id")
 		return
 	}
-	st, err := s.lib.TelemetryStint(id)
+	session, _ := strconv.ParseInt(r.URL.Query().Get("session"), 10, 64)
+	st, err := s.lib.TelemetryStint(id, session)
 	if err != nil {
 		telemetryError(w, err)
 		return

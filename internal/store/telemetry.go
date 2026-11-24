@@ -176,6 +176,8 @@ type TeleLap struct {
 	Air      float64 `json:"air,omitempty"`
 	Road     float64 `json:"road,omitempty"`
 	HasTemps bool    `json:"hasTemps,omitempty"`
+	// SessionID: the recorded session of the linked lap (0 = not linked), D-188
+	SessionID int64 `json:"sessionId,omitempty"`
 }
 
 // TeleKnown is what the indexer needs to know about a file it indexed before.
@@ -359,7 +361,7 @@ func (q Q) TelemetryFile(id int64) (*TeleFile, error) {
 // earlier save, from the same lap of the save the session is shown as (kt).
 const lapSelect = `SELECT t.file_id, t.n, t.sess_n, t.start_ms, t.lap_ms, t.full, t.complete, t.dist_m, t.turns, t.profile,
 	COALESCE(t.lap_id, kt.lap_id, 0), t.reference, t.note,
-	l.valid, COALESCE(l.pit, 0), COALESCE(l.fuel_used, 0), l.air, l.road`
+	l.valid, COALESCE(l.pit, 0), COALESCE(l.fuel_used, 0), l.air, l.road, COALESCE(l.session_id, 0)`
 
 const lapFrom = ` FROM telemetry_laps t
 	LEFT JOIN telemetry_laps kt ON kt.file_id = t.sess_file AND kt.sess_n = t.sess_n AND kt.file_id <> t.file_id
@@ -369,7 +371,7 @@ func scanLap(rows *sql.Rows, l *TeleLap, more ...any) error {
 	var valid sql.NullBool
 	var air, road sql.NullFloat64
 	dst := append([]any{&l.FileID, &l.N, &l.Lap, &l.StartMs, &l.LapMs, &l.Complete, &l.Timed, &l.DistM, &l.Turns, &l.Profile,
-		&l.LapID, &l.Reference, &l.Note, &valid, &l.Pit, &l.FuelUsed, &air, &road}, more...)
+		&l.LapID, &l.Reference, &l.Note, &valid, &l.Pit, &l.FuelUsed, &air, &road, &l.SessionID}, more...)
 	if err := rows.Scan(dst...); err != nil {
 		return err
 	}

@@ -636,6 +636,8 @@ type TeleFileView struct {
 	TrackName string             `json:"trackName"`
 	HasExtra  bool               `json:"hasExtra"`
 	Outline   *telemetry.Outline `json:"outline,omitempty"` // overview only
+	// Part: the recorded session this entry shows when one file holds several (D-188), 0 = the whole file
+	Part int64 `json:"part,omitempty"`
 }
 
 // carNames: readable car (with brand and class) and track names.
@@ -891,8 +893,9 @@ func (l *Library) teleOpen(f *store.TeleFile) (*motec.File, error) {
 	return lf, err
 }
 
-// TelemetryFile returns one file with its laps and the channels it holds.
-func (l *Library) TelemetryFile(id int64) (*TeleFileDetail, error) {
+// TelemetryFile returns one file with its laps and the channels it holds; session ≠ 0 shows only
+// the laps of that recorded session (a file that holds several, D-188).
+func (l *Library) TelemetryFile(id, session int64) (*TeleFileDetail, error) {
 	if l.db == nil {
 		return nil, ErrNoHistory
 	}
@@ -907,9 +910,17 @@ func (l *Library) TelemetryFile(id int64) (*TeleFileDetail, error) {
 	if err != nil {
 		return nil, err
 	}
+	extraSession := f.SessionID
 	d := &TeleFileDetail{File: l.teleView(*f), Laps: laps, Channels: []telemetry.ChannelInfo{}}
+	if session != 0 {
+		if _, of := lapSessions(laps); of != nil {
+			d.Laps = partLaps(laps, session)
+			d.File = l.partView(d.File, session, d.Laps)
+			extraSession = session
+		}
+	}
 	if lf, err := l.teleOpen(f); err == nil {
-		d.Channels = telemetry.Channels(lf, l.extraLog(f.Game, f.SessionID))
+		d.Channels = telemetry.Channels(lf, l.extraLog(f.Game, extraSession))
 		lf.Close()
 	}
 	if fid, n, ok, _ := l.db.TelemetryReference(f.Game, f.Car, f.Track); ok {
@@ -1139,8 +1150,10 @@ func (l *Library) TelemetryTrack(gameID, track string) (*TeleTrackView, error) {
 	if len(files) == 0 {
 		return nil, history.ErrNotFound
 	}
-	v.Files = files
 	v.TrackName = files[0].TrackName
+	files = l.splitFiles(files) // one entry per game session (D-188)
+	sort.SliceStable(files, func(i, j int) bool { return files[i].StartedAt.After(files[j].StartedAt) })
+	v.Files = files
 	cars := map[string]*TeleTrackCarView{}
 	var order []string
 	for _, f := range files {
@@ -1315,7 +1328,7 @@ type TeleStint struct {
 
 // TelemetryStint returns the brakes over a session: pad and disc life per lap from the extra log,
 // brake temperatures from the extra log or, for laps it doesn't cover, from the MoTeC file.
-func (l *Library) TelemetryStint(fileID int64) (*TeleStint, error) {
+func (l *Library) TelemetryStint(fileID, session int64) (*TeleStint, error) {
 	defer freeMemory()
 	if l.db == nil {
 		return nil, ErrNoHistory
@@ -1337,7 +1350,13 @@ func (l *Library) TelemetryStint(fileID int64) (*TeleStint, error) {
 	if err != nil {
 		return nil, err
 	}
-	extra := l.extraLog(f.Game, f.SessionID)
+	extraSession := f.SessionID
+	if session != 0 { // one session of a file that holds several (D-188)
+		if _, of := lapSessions(laps); of != nil {
+			laps, extraSession = partLaps(laps, session), session
+		}
+	}
+	extra := l.extraLog(f.Game, extraSession)
 	st := &TeleStint{Wheels: telemetry.Wheels, Laps: telemetry.Stint(laps, extra), HasExtra: extra != nil}
 	// brake temperatures from the MoTeC files for laps the extra log has none for (one file at a time)
 	byFile := map[int64][]int{}
