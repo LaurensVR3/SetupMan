@@ -100,6 +100,10 @@ func TestTidyWholeGame(t *testing.T) {
 	folder := setupFolder(t)
 	os.WriteFile(filepath.Join(folder, "ferrari_296_gt3", "Spa", "ABC 2327 q.json"), mustRead(t, "../games/acc/testdata/base.json"), 0o644)
 	os.WriteFile(filepath.Join(folder, "bmw_m4_gt4", "Monza", "race 45m.json"), mustRead(t, "../games/acc/testdata/base.json"), 0o644)
+	// a copy whose tidy name is taken by the other file: renaming would give "(2)" again, so it is
+	// not offered (rig 2026-11-24)
+	os.WriteFile(filepath.Join(folder, "bmw_m4_gt4", "Monza", "Q 1.7.13.json"), mustRead(t, "../games/acc/testdata/base.json"), 0o644)
+	os.WriteFile(filepath.Join(folder, "bmw_m4_gt4", "Monza", "Q 1.7.13 (2).json"), mustRead(t, "../games/acc/testdata/base.json"), 0o644)
 	g := &fakeGame{installed: true, folder: folder, live: game.LiveUnknown}
 	l, _ := newLib(t, g)
 	l.Backups = &folderbackup.Store{Dir: filepath.Join(t.TempDir(), "backups")}
@@ -117,6 +121,9 @@ func TestTidyWholeGame(t *testing.T) {
 	}
 	ids := []int64{}
 	for _, p := range plan {
+		if strings.HasPrefix(p.From, "Q 1.7.13") {
+			t.Errorf("offered although the tidy name is taken: %+v", p)
+		}
 		if p.CarName == "" || p.TrackName == "" || p.To == "" || p.To == p.From {
 			t.Errorf("bad plan entry: %+v", p)
 		}

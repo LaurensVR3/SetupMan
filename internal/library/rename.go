@@ -10,6 +10,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -52,6 +53,26 @@ func (l *Library) suggest(s *store.Setup, m naming.Meta, session string, wet boo
 	name := naming.Suggest(m, session, wet, s.Name)
 	if name == "" || strings.EqualFold(name, s.Name) {
 		return ""
+	}
+	// "X (2)" whose tidy name is X while another file is called X: renaming would give "X (2)"
+	// again, so the setup would be offered for tidying forever (rig 2026-11-24)
+	if strings.EqualFold(copyBase(s.Name), name) && s.RelPath != "" {
+		if root := l.folderOf(s.Game); root != "" {
+			dir, ext := path.Dir(s.RelPath), path.Ext(s.RelPath)
+			if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(dir+"/"+name+ext))); err == nil {
+				return ""
+			}
+		}
+	}
+	return name
+}
+
+// copyBase is a name without a trailing copy number: "X (2)" → "X".
+func copyBase(name string) string {
+	if i := strings.LastIndex(name, " ("); i > 0 && strings.HasSuffix(name, ")") {
+		if _, err := strconv.Atoi(name[i+2 : len(name)-1]); err == nil {
+			return name[:i]
+		}
 	}
 	return name
 }

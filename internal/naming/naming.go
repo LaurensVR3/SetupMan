@@ -43,22 +43,24 @@ type Meta struct {
 }
 
 var (
-	reVersion   = regexp.MustCompile(`^v?(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?$`)
-	reTempPair  = regexp.MustCompile(`^(\d{1,2})-(\d{1,2})c?$`)
-	reTemp4     = regexp.MustCompile(`^(\d{2})(\d{2})$`)
-	reTemp4Ses  = regexp.MustCompile(`^(\d{2})(\d{2})([qr])$`) // 2123R: 21–23 °C, race
-	reTempNum   = regexp.MustCompile(`^(\d{1,2})(?:c|°|°c)$`)  // 19c, 21°C
-	reSesVar    = regexp.MustCompile(`^([qr])[a-z]$`)          // QF, RF, RS: a qualifying or race variant
-	reDuration  = regexp.MustCompile(`^(.*?)(\d{1,3})(m|min|h)$`)
-	reCopy      = regexp.MustCompile(`^\(\d+\)$`)
-	reCode      = regexp.MustCompile(`^[A-Za-z]+\d+$`)          // TC25, tc046
-	reSesTemp4  = regexp.MustCompile(`^([qrw])(\d{2})(\d{2})$`) // R1516: race, 15–16 °C; W2429: 24–29 °C
-	reInitials  = regexp.MustCompile(`^[A-Z]{2,6}$`)
-	reStops     = regexp.MustCompile(`^(\d)(?:stp|stop|stops)$`)
-	stopWords   = map[string]bool{"stp": true, "stop": true, "stops": true}
-	sessionQ    = map[string]bool{"q": true, "quali": true, "qualy": true, "qualifying": true, "qual": true}
-	sessionR    = map[string]bool{"r": true, "race": true}
-	sessionEndu = map[string]bool{"endu": true, "endurance": true, "enduro": true}
+	reVersion  = regexp.MustCompile(`^v?(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?$`)
+	reTempPair = regexp.MustCompile(`^(\d{1,2})-(\d{1,2})c?$`)
+	reTemp4    = regexp.MustCompile(`^(\d{2})(\d{2})$`)
+	reTemp4Ses = regexp.MustCompile(`^(\d{2})(\d{2})([qr])$`)    // 2123R: 21–23 °C, race
+	reTempNum  = regexp.MustCompile(`^(\d{1,2})(?:c|°|°c)$`)     // 19c, 21°C
+	reSesVar   = regexp.MustCompile(`^([qr])[a-z]$`)             // QF, RF, RS: a qualifying or race variant
+	reDuration = regexp.MustCompile(`^(.*?)(\d{1,4})(m|min|h)$`) // up to 1440m (24h)
+	reCopy     = regexp.MustCompile(`^\(\d+\)$`)
+	reCode     = regexp.MustCompile(`^[A-Za-z]+\d+$`)          // TC25, tc046
+	reSesTemp4 = regexp.MustCompile(`^([qrw])(\d{2})(\d{2})$`) // R1516: race, 15–16 °C; W2429: 24–29 °C
+	reInitials = regexp.MustCompile(`^[A-Z]{2,6}$`)
+	// a provider written with a dash in front: "-abesports"
+	reDashInitials = regexp.MustCompile(`^-[A-Za-z][A-Za-z0-9]+$`)
+	reStops        = regexp.MustCompile(`^(\d)(?:stp|stop|stops)$`)
+	stopWords      = map[string]bool{"stp": true, "stop": true, "stops": true}
+	sessionQ       = map[string]bool{"q": true, "quali": true, "qualy": true, "qualifying": true, "qual": true}
+	sessionR       = map[string]bool{"r": true, "race": true}
+	sessionEndu    = map[string]bool{"endu": true, "endurance": true, "enduro": true}
 )
 
 type token struct {
@@ -85,7 +87,7 @@ func Parse(name string) Meta {
 	if len(toks) > 0 {
 		first := toks[0].text
 		switch {
-		case strings.HasPrefix(first, "-") && len(first) > 2:
+		case reDashInitials.MatchString(first): // one dash, then a letter: "---24h-R" is no provider
 			m.Initials = first[1:]
 		// A name that is only initials ("BGK", up to 4 letters) counts too; a longer single word
 		// ("HOTLAP") or a word with a meaning ("WET") does not.

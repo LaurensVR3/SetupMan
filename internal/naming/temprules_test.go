@@ -20,10 +20,10 @@ func TestTempRules(t *testing.T) {
 		{"hungo 22c", 22, 0, 0, 0, "R 22C hungo"},                // no initials: the default
 		{"RNG R 2327", 0, 0, 23, 27, "RNG R 2327"},               // this author writes ranges
 		{"RNG R 21 25", 0, 0, 21, 25, "RNG R 2125"},
-		{"TRK R 38C", 0, 38, 0, 0, "TRK R 38C"},             // this author gives the track temperature
-		{"EIT R 20C", 0, 0, 20, 20, "EIT R 20C"},            // not said
-		{"ABC R 23-27C", 0, 0, 23, 27, "ABC R 2327"},        // a dash is always a range
-		{"-rng_3040_test", 0, 0, 30, 40, "rng R 3040 test"}, // "-name" initials, any case
+		{"TRK R 38C", 0, 38, 0, 0, "TRK R 38C"},              // this author gives the track temperature
+		{"EIT R 20C", 0, 0, 20, 20, "EIT R 20C"},             // not said
+		{"ABC R 23-27C", 0, 0, 23, 27, "ABC R 2327"},         // a dash is always a range
+		{"-rng_3040_test", 0, 0, 30, 40, "-rng R 3040 test"}, // "-name" initials, any case
 	}
 	for _, c := range cases {
 		m := ParseWith(c.name, rules)

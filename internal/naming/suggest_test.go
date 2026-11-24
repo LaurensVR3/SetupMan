@@ -13,7 +13,7 @@ func TestSuggest(t *testing.T) {
 		{"SCG F296 HUN  1.42.9   Q 21 25", SessionQ, false, "SCG Q 2125 1.42.9 F296 HUN"},
 		{"hungo25m 2530", SessionR, false, "R 25m 2530 hungo"},
 		{"LA 296 HUN Q", SessionQ, false, "LA Q 296 HUN"},
-		{"-abesports_HUN_23_27", "", false, "abesports 2327 HUN"},
+		{"-abesports_HUN_23_27", "", false, "-abesports 2327 HUN"},
 		{"45m 1 stp 2026", SessionR, false, "R 45m 1stop 2026"},
 		{"hungo", "", true, "WET hungo"},
 		{"tst", "", false, "tst"},
@@ -23,14 +23,21 @@ func TestSuggest(t *testing.T) {
 		{"GO2 296 GT3 SIL E R01 23C", SessionR, false, "R 23C GO2 GT3 296 SIL E"},
 		{"ABC 1313 R 1.10.4 tc36", SessionR, false, "ABC R 1313 1.10.4 tc36"}, // air 13, track 13
 		{"19c 21c CDA4 QF DRY 02", SessionQ, false, "Q 1921 CDA4 QF DRY 02"},
-		{"BGK R WET 1.10.2 RW", SessionR, true, "BGK R WET 1.10.2 RW"}, // WET once (rig 2026-11-24)
+		{"BGK R WET 1.10.2 RW", SessionR, true, "BGK R WET 1.10.2"}, // WET once; RW says race + wet again (rig 2026-11-24)
 		{"GO2 MUSTANG SPA MED wet", "", true, "WET GO2 MUSTANG SPA MED"},
 		{"HUN W2429", "", true, "HUN WET 2429"},
-		{"SPA WET", "", false, "SPA WET"}, // dry tyres: the word is the driver's, kept
+		{"SPA WET", "", false, "SPA WET"},
+		{"---24h-R 1.10.4", "", false, "1.10.4 ---24h-R"}, // not a "-provider": no dash lost on each tidy
+		{"-abesports 2327 1.9.5 HUN", "", false, "-abesports 2327 1.9.5 HUN"}, // the dash is kept, so it stays the provider
+		{"R 1440m nurb", SessionR, false, "R 1440m nurb"}, // dry tyres: the word is the driver's, kept
 	}
 	for _, c := range cases {
 		if got := Suggest(Parse(c.name), c.session, c.wet, c.name); got != c.want {
 			t.Errorf("Suggest(%q) = %q, want %q", c.name, got, c.want)
+		}
+		// a tidy name stays as it is when tidied again
+		if again := Suggest(Parse(c.want), c.session, c.wet, c.want); again != c.want {
+			t.Errorf("Suggest(%q) again = %q", c.want, again)
 		}
 	}
 	// Reading a suggested name back gives the same details (names stay consistent).

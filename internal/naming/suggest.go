@@ -17,7 +17,11 @@ import (
 func Suggest(m Meta, session string, wet bool, original string) string {
 	var parts []string
 	if m.Initials != "" {
-		parts = append(parts, m.Initials)
+		if reInitials.MatchString(m.Initials) {
+			parts = append(parts, m.Initials)
+		} else {
+			parts = append(parts, "-"+m.Initials) // "-abesports": the dash keeps it readable as the provider
+		}
 	}
 	switch session {
 	case SessionQ:
@@ -59,8 +63,9 @@ func Suggest(m Meta, session string, wet bool, original string) string {
 	}
 	parts = append(parts, m.Codes...)
 	for _, w := range Rest(original, m) {
-		if wet && (strings.EqualFold(w, "wet") || strings.EqualFold(w, "w")) {
-			continue // already written as WET above (rig 2026-11-24: "WET … MED WET")
+		low := strings.ToLower(w)
+		if wet && (low == "wet" || low == "w" || (session != "" && (low == "rw" || low == "qw"))) {
+			continue // already written as WET (and the session) above (rig 2026-11-24: "WET … MED WET", "R WET … RW")
 		}
 		parts = append(parts, w)
 	}
