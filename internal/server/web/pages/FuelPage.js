@@ -33,13 +33,20 @@ export const DAMAGE_NOTE = "Damage repair makes a stop longer: with damage, plan
 // Where a planned pit stop time loss comes from (D-173, D-187, D-192), e.g. "39.8 s in the pit lane + 30 s standing still …".
 export function pitSource(pm, gameId) {
   const n = pm.stops === 1 ? "1 stop" : `${pm.stops} stops`;
-  const who = pm.class ? `with ${pm.class} cars` : pm.sameCar ? "with this car" : "with any car";
-  const parts = pm.timed ? `${pm.laneSeconds.toFixed(1)} s in the pit lane (measured) + ${pitStill(gameId)} s standing still (planned; measured ${pm.stillSeconds.toFixed(1)} s, repairs included); ` : "";
-  return `${parts}measured from ${n} ${who} on this track`;
+  const who = pm.class ? `${pm.class} cars` : pm.sameCar ? "this car" : "any car";
+  return pm.timed ? `${pm.laneSeconds.toFixed(1)} s pit lane + ${pitStill(gameId)} s standing still (${n}, ${who})` : `measured from ${n}, ${who}`;
+}
+// The pit stop lines of "How this is calculated" (D-192): what is planned, what was measured, damage.
+export function pitLines(pm, gameId, seconds) {
+  if (!pm) return [];
+  const out = [`Pit stop: ${seconds.toFixed(1)} s lost = ${pitSource(pm, gameId)}`];
+  if (pm.timed) out.push(`Standing still planned at ${pitStill(gameId)} s (Settings → Games); you measured ${pm.stillSeconds.toFixed(1)} s, repairs included`);
+  out.push(DAMAGE_NOTE);
+  return out;
 }
 
 export const PlanView = {
-  props: { plan: Object, kind: String },
+  props: { plan: Object, kind: String, basis: { type: Array, default: () => [] } },
   template: `
     <div class="fuel-result">
       <div class="fuel-big">
@@ -53,6 +60,8 @@ export const PlanView = {
       <p v-for="w in plan.warnings" :key="w" class="notice notice-error">{{ w }}</p>
       <details class="fuel-steps">
         <summary>How this is calculated</summary>
+        <ul v-if="basis.length" class="fuel-basis"><li v-for="b in basis" :key="b">{{ b }}</li></ul>
+        <slot></slot>
         <ol><li v-for="s in plan.steps" :key="s">{{ s }}</li></ol>
       </details>
     </div>`,
@@ -173,7 +182,7 @@ export const FuelPage = {
               <label>Fuel per lap<span class="unit-input"><input v-model="inputs.race.fuelPerLap" inputmode="decimal" placeholder="3.2"> L</span></label>
               <label>Mandatory pit stops<span class="unit-input"><input v-model="inputs.race.stops" inputmode="numeric" placeholder="0"></span></label>
               <label v-if="Number(inputs.race.stops) > 0">Time lost per pit stop<span class="unit-input"><input v-model="inputs.race.pitLoss" inputmode="decimal" placeholder="25"> s</span>
-                <small v-if="pitMeasured">{{ planned().toFixed(1) }} s: {{ pitText() }}. {{ DAMAGE_NOTE }}
+                <small v-if="pitMeasured">{{ planned().toFixed(1) }} s = {{ pitText() }}. {{ DAMAGE_NOTE }}
                   <button v-if="Number(String(inputs.race.pitLoss).replace(',', '.')) !== Number(planned().toFixed(1))" type="button" class="btn-link" @click.prevent="useMeasuredPit">Use this</button></small>
                 <small v-else>Measured automatically once you drive a full pit stop on this track with SetupMan running.</small></label>
               <label>Safety margin<span class="unit-input"><input v-model="inputs.race.safety" inputmode="decimal" placeholder="2"> L</span></label>

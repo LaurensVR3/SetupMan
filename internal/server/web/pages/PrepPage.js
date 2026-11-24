@@ -7,7 +7,7 @@ import { store, stagingDone, showToast } from "../store.js";
 import { setCrumbs, EmptyState } from "../components/common.js";
 import { SessionBadge } from "../components/FamilyTree.js";
 import { lapTime } from "../components/LapTimes.js";
-import { PlanView, pitSource, pitPlanSeconds, DAMAGE_NOTE } from "./FuelPage.js";
+import { PlanView, pitPlanSeconds, pitLines } from "./FuelPage.js";
 
 const SESSIONS = [["Q", "Qualifying"], ["R", "Race"], ["Endurance", "Endurance"]];
 
@@ -154,9 +154,8 @@ export const PrepPage = {
             safety: fs.safety !== undefined && fs.safety !== "" ? num(fs.safety) : 2, tank: num(fs.tank), windowOpen: num(fs.windowOpen), windowClose: num(fs.windowClose) }) };
           plan.basis = [`Average lap ${lapTime(avg[0] * 1000)} (${avg[1]})`, `${fuelPerLap[0].toFixed(2)} L per lap (${fuelPerLap[1]})`,
             stops ? `${stops} mandatory ${stops === 1 ? "stop" : "stops"}` : "no mandatory stop"];
-          if (stops) plan.basis.push(pm ? `${pitLoss.toFixed(1)} s lost per pit stop (${pitSource(pm, inp.game)}). ${DAMAGE_NOTE.replace(/\.$/, "")}`
-            : pitLoss ? `${pitLoss} s lost per pit stop (the fuel calculator)`
-            : "Time lost per pit stop not known yet: counted as 0 s. Drive a full pit stop on this track, or enter it in the fuel calculator.");
+          if (stops) plan.basis.push(...(pm ? pitLines(pm, inp.game, pitLoss) : [pitLoss ? `${pitLoss} s lost per pit stop (the fuel calculator)`
+            : "Time lost per pit stop not known yet: counted as 0 s. Drive a full pit stop on this track, or enter it in the fuel calculator."]));
         }
       } catch (e) { plan.error = e.message; }
     }, { immediate: true });
@@ -356,8 +355,9 @@ export const PrepPage = {
             <p v-if="plan.missing" class="panel-hint">{{ plan.missing }} <router-link :to="trackPage + '/fuel'">Fuel calculator</router-link></p>
             <p v-else-if="plan.error" class="notice notice-error">{{ plan.error }}</p>
             <template v-else-if="plan.result">
-              <p class="panel-hint">Based on {{ plan.basis.join(', ') }}. Pit loss, safety margin and tank come from the <router-link :to="trackPage + '/fuel'">fuel calculator</router-link>.</p>
-              <PlanView :plan="plan.result.plan" :kind="plan.result.kind" />
+              <PlanView :plan="plan.result.plan" :kind="plan.result.kind" :basis="plan.basis">
+                <p class="fuel-basis-note">Safety margin and tank size come from the <router-link :to="trackPage + '/fuel'">fuel calculator</router-link>.</p>
+              </PlanView>
             </template>
           </section>
         </div>
