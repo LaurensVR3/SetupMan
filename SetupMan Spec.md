@@ -440,7 +440,10 @@ telemetry metrics stay in Phase 4.
 ### Open questions (need the user's answer)
 - Q-G1. AC EVO setting names: please check against the game's setup screen – which are "Differential coast / power", "Bump stop gap / rate", "Fast bump / Fast rebound", "Alignment value 4.4" (front only), "Electronics value 5.4 / 5.5", "Aero value 6.4", "Spring value 2.4 / 2.5" (GT4 and GT2 only)? Wheel order is assumed FL, FR, RL, RR. (The user will answer when possible; no reminders, 2026-11-19.)
 - Q-TL7. AC writes no telemetry files: should SetupMan log AC telemetry itself? (Raise when T5 comes.)
-- Q-PR1. Use the temperature rule (D-181) in Race prep too: for the chosen setup, show the cold pressures adjusted for the expected air temperature (e.g. made for 27 °C, race 30 °C → every tyre −0.3 psi)?
+- Q-PR1 answered 2026-11-24: yes, and go further: recommend the fastest setup and the pressure adjustment needed. But Race prep put 2727 first (7 short low-fuel practice laps, 1:41.100) over 3040 (47 laps, mostly the race on a full tank, 1:42.470), while 2727 overheated the tyres. Owner: "Ideally, dry tires are 85-90C and wets 60-75C. My setups usually operate at the upper end of that temp range." Design questions:
+- Q-PR2. Tyre temperature to judge by: ACC's tyre core temperature (MoTeC TYRE_TAIR, the value ACC's HUD shows), averaged over each clean lap; good = dry 85–90 °C, wet 60–75 °C, best at the upper end (dry 88–90, wet 72–75)?
+- Q-PR3. Ranking: tyres in the window first, then the fastest average lap corrected for fuel load (about 0.03 s per litre, so race laps on a full tank compare fairly with low-fuel practice laps)?
+- Q-PR4. Minimum laps: a setup's lap time and tyre temperatures count only from 5 clean laps; below that it is listed as "too few laps to judge"?
 - Q-AU1. Audit 2026-11-23: which of A-1 … A-10 should be built, and in what order? (Proposed: A-9 first as a safety fix, then A-1, A-2, A-7, A-4, A-5; A-3, A-6, A-8 small.)
 
 
