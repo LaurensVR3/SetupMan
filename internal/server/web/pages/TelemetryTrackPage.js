@@ -112,6 +112,8 @@ export const TelemetryTrackPage = {
       const l = (data.value?.laps || []).find((x) => x.fileId === s.fileId && x.n === s.n);
       return { time: lapTime(s.lapMs || l?.lapMs), label: s.label || (l ? lapLabel(l) : "Lap") };
     };
+    // purple in an opened session: its fastest full lap that was not invalid (as on a timing screen)
+    const sessionBest = (l, f) => !!(l.complete && l.valid !== false && f.bestMs && l.lapMs === f.bestMs);
     const analyse = (list) => router.push({ path: "/telemetry/analyse", query: { laps: list.map(lapKey).join(",") } });
     // the reference lap of the car of the fastest lap in view
     const ref0 = computed(() => (best.value ? carOf(best.value.car)?.reference || null : null));
@@ -243,7 +245,7 @@ export const TelemetryTrackPage = {
     const isBest = (l) => shownBest.value && l.lapMs === shownBest.value;
     const carBest = (l) => carOf(l.car)?.bestMs === l.lapMs;
 
-    return { data, error, tab, setTab, TABS, PERIODS, colors, allCars, carsWithLaps, chosen, carOn, toggleCar, allCarsOn, shownCars, many, carOf,
+    return { sessionBest, data, error, tab, setTab, TABS, PERIODS, colors, allCars, carsWithLaps, chosen, carOn, toggleCar, allCarsOn, shownCars, many, carOf,
       laps, files, best, overallBest, shownBest, refLapNo, recentLaps, fSetup, fKind, fPeriod, fValid, fPit, shown, kinds, anyInvalid, anyPit, anyTemps, setupsWithLaps, knownSetups,
       filtered, filtersOn, resetFilters, sel, selIndex, pick, clearSel, selInfo, lapLabel, analyse, ref0, bestVsRef, compareCars, setupSel, toggleSetup,
       setupBy, compareSetups, setupGroups, showEmpty, days, months, jumpTo, firstOfMonth, emptyCount, sessionsWithLaps, open, details, toggle, fk, flags,
@@ -332,7 +334,7 @@ export const TelemetryTrackPage = {
                     </label>
                   </td>
                   <td class="tt-num tt-rank">{{ i + 1 }}</td>
-                  <td><b class="tl-time" :class="{ 'is-best': isBest(l) }" :title="isBest(l) ? 'Fastest lap on this track' : carBest(l) && many ? 'Fastest lap of this car here' : null">{{ lapTime(l.lapMs) }}</b></td>
+                  <td><button type="button" class="tl-time tl-open" :class="{ 'is-best': isBest(l) }" @click="analyse([l])" :title="(isBest(l) ? 'Fastest lap on this track. ' : carBest(l) && many ? 'Fastest lap of this car here. ' : '') + 'Open this lap in Lap analysis'">{{ lapTime(l.lapMs) }}</button></td>
                   <td class="tt-num tt-gap">{{ gap(l.lapMs, best && best.lapMs) }}</td>
                   <td v-if="many" class="tt-carcell"><span v-if="l.class" class="class-chip" :class="classCls(l.class)">{{ l.class }}</span>{{ l.carName }}</td>
                   <td class="tt-setup"><router-link v-if="l.setupId && l.setupName" :to="'/setup/' + l.setupId">{{ l.setupName }}</router-link><span v-else class="tt-muted">Setup not known</span></td>
@@ -436,7 +438,8 @@ export const TelemetryTrackPage = {
                             </label>
                           </td>
                           <td class="tt-num tt-rank">{{ l.lap }}</td>
-                          <td><b class="tl-time" :class="{ 'is-best': l.complete && l.lapMs === shownBest }">{{ lapTime(l.lapMs) }}</b></td>
+                          <td><button v-if="!noData(l)" type="button" class="tl-time tl-open" :class="{ 'is-best': sessionBest(l, f) }" @click="analyse([l])" :title="(sessionBest(l, f) ? 'Fastest lap of this session. ' : '') + 'Open this lap in Lap analysis'">{{ lapTime(l.lapMs) }}</button>
+                            <b v-else class="tl-time">{{ lapTime(l.lapMs) }}</b></td>
                           <td class="tt-num tt-gap">{{ l.complete ? gap(l.lapMs, f.bestMs) : '' }}</td>
                           <td><span v-for="t in flags(l, details[fk(f)].laps)" :key="t" class="lap-flag" :class="{ bad: t === 'Invalid' }"
                             :title="t === 'No data' ? 'ACC kept only the lap time of this lap: it keeps the full data of the last laps of a session only.' : null">{{ t }}</span></td>

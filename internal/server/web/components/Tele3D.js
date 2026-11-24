@@ -11,6 +11,10 @@ const R = 6378137;
 const BAND = 300; // photos for this far around the track (as the offline set)
 const MAPTILER = "https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=";
 export const PEDALS = "@pedals"; // colour: throttle green / brake red
+export const LAPCOL = "@lap";     // colour: the lap's own colour (default)
+// wall heights as fractions of the wall size: a low wall for the lowest value, the top bands
+const W_MIN = 0.06, W_BAND = 0.07, W_EDGE = 0.025;
+const wallTop = (k) => W_MIN + Math.max(0, Math.min(1, k));
 
 // ---- small helpers ----
 function css(el, name) { return getComputedStyle(el).getPropertyValue(name).trim(); }
@@ -92,6 +96,19 @@ export const Tele3D = {
     let THREE = null, Orbit = null, renderer = null, cam = null, world = null, controls = null, ro = null, raf = 0;
     let groups = { ground: null, laps: null, markers: null };
     let photoTextures = [];
+    // wall size in metres, from the camera distance; one uniform shared by every wall
+    const wallSize = { value: 40 };
+    function liftByWallSize(shader) {
+      shader.uniforms.uWall = wallSize;
+      shader.vertexShader = ["attribute float wallF;", "uniform float uWall;", shader.vertexShader.replace("#include <begin_vertex>", ["#include <begin_vertex>", "transformed.y += wallF * uWall;"].join(String.fromCharCode(10)))].join(String.fromCharCode(10));
+    }
+    function sizeWalls() {
+      if (!controls) return;
+      const s = Math.max(6, Math.min(320, cam.position.distanceTo(controls.target) * 0.1));
+      if (Math.abs(s - wallSize.value) / wallSize.value < 0.02) return;
+      wallSize.value = s;
+      if (props.view.cursor !== null) buildMarkers();
+    }
     const disposeList = [];
     const own = (o) => { disposeList.push(o); return o; };
 
@@ -150,7 +167,7 @@ export const Tele3D = {
       controls = new Orbit(cam, renderer.domElement);
       controls.screenSpacePanning = false; // right-drag moves over the ground
       controls.maxPolarAngle = Math.PI * 0.49;
-      controls.addEventListener("change", redraw);
+      controls.addEventListener("change", () => { sizeWalls(); redraw(); });
       for (const k of Object.keys(groups)) { groups[k] = new THREE.Group(); world.add(groups[k]); }
       theme();
       resize();
@@ -168,13 +185,17 @@ export const Tele3D = {
       for (let i = 0; i < L.e.length; i++) { e0 = Math.min(e0, L.e[i]); e1 = Math.max(e1, L.e[i]); n0 = Math.min(n0, L.n[i]); n1 = Math.max(n1, L.n[i]); h += L.h[i]; }
       h /= L.e.length || 1;
       const cx = (e0 + e1) / 2, cz = -(n0 + n1) / 2, size = Math.max(e1 - e0, n1 - n0);
-      controls.target.set(cx, h, cz);
-      const dir = new THREE.Vector3(-0.25, 0.55, 0.8).normalize();
-      const dist = (size * 0.62) / Math.tan(((cam.fov / 2) * Math.PI) / 180) / Math.min(1, cam.aspect);
+      controls.target.set(cx, h, cz + (n1 - n0) * 0.08); // a little towards the camera: the near side looks bigger
+      // fit the track to the view: its width against the horizontal field of view, its depth
+      // (seen at an angle from the south) against the vertical one
+      const dir = new THREE.Vector3(-0.2, 0.62, 0.76).normalize();
+      const t = Math.tan(((cam.fov / 2) * Math.PI) / 180);
+      const dist = 1.15 * Math.max((e1 - e0) / 2 / (t * cam.aspect), ((n1 - n0) * 1.25) / 2 / t);
       cam.position.set(cx + dir.x * dist, h + dir.y * dist, cz + dir.z * dist);
       controls.maxDistance = size * 4;
       controls.minDistance = 15;
       controls.update();
+      sizeWalls();
     }
 
     function clear(g) {
@@ -302,13 +323,12 @@ export const Tele3D = {
     // every lap: its driving line on the ground and its wall
     let pick = []; // each lap's line points and their distances, to click on
     function buildLaps() {
+      const total = props.view.total;
+      if (!total || !renderer) return; // not set up yet: onMounted builds it
       clear(groups.laps);
       pick = [];
-      const total = props.view.total;
-      if (!total || !renderer) return;
       const hRange = range(props.laps.map((l) => l.h));
-      const cRange = props.wall.c === PEDALS ? null : range(props.laps.map((l) => l.c));
-      const size = props.wall.size;
+      const cRange = props.wall.c === PEDALS || props.wall.c === LAPCOL ? null : range(props.laps.map((l) => l.c));
       const step = 2;
       props.laps.forEach((l, li) => {
         const p = paths[l.key];
@@ -321,34 +341,45 @@ export const Tele3D = {
         const line = { e: pts.map((q) => q[0]), n: pts.map((q) => -q[2]), h: pts.map((q) => q[1]) };
         buildRibbon(line, 1.4, new THREE.Color(l.color), 0.15 + li * 0.02, groups.laps);
         pick.push({ D, pts });
-        // wall
-        const pos = new Float32Array(n * 6), col = new Float32Array(n * 6);
+        // wall: see-through body (faint at the foot, stronger near the top) so laps can be compared
+        // through each other, a solid band in the channel colour along the top, and a thin band in
+        // the lap colour above it. Heights are fractions of the wall size, which follows the camera
+        // distance (wallSize, applied on the graphics card: zooming rebuilds nothing).
+        const own = new THREE.Color(l.color), ownRGB = [own.r, own.g, own.b];
+        const body = new Float32Array(n * 6), bodyCol = new Float32Array(n * 8), bodyF = new Float32Array(n * 2);
+        const cap = new Float32Array(n * 6), capCol = new Float32Array(n * 6), capF = new Float32Array(n * 2);
+        const edge = new Float32Array(n * 6), edgeF = new Float32Array(n * 2);
         for (let i = 0; i < n; i++) {
           const d = D[i];
           const hv = l.h ? valueAt(l.h, d) : null;
-          const k = hv === null ? 0 : (hv - hRange[0]) / (hRange[1] - hRange[0]);
-          const top = 1 + Math.max(0, Math.min(1, k)) * size;
-          const c = props.wall.c === PEDALS
+          const f = wallTop(hv === null ? 0 : (hv - hRange[0]) / (hRange[1] - hRange[0]));
+          const c = props.wall.c === LAPCOL ? ownRGB : props.wall.c === PEDALS
             ? pedalColour(l.th ? valueAt(l.th, d) : null, l.br ? valueAt(l.br, d) : null)
             : l.c ? ramp((valueAt(l.c, d) - cRange[0]) / (cRange[1] - cRange[0])) : [0.6, 0.6, 0.6];
-          const [x, y, z] = pts[i];
-          pos.set([x, y + 0.3, z, x, y + 0.3 + top, z], i * 6);
-          col.set([...c, ...c], i * 6);
+          const [x, y, z] = pts[i], y0 = y + 0.3;
+          for (const a of [body, cap, edge]) a.set([x, y0, z, x, y0, z], i * 6);
+          bodyF.set([0, f - W_BAND], i * 2);
+          capF.set([f - W_BAND, f], i * 2);
+          edgeF.set([f, f + W_EDGE], i * 2);
+          bodyCol.set([...c, 0.12, ...c, 0.5], i * 8);
+          capCol.set([...c, ...c], i * 6);
         }
         const idx = [];
         for (let i = 0; i + 1 < n; i++) idx.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2);
-        const g = new THREE.BufferGeometry();
-        g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-        g.setAttribute("color", new THREE.BufferAttribute(col, 3));
-        g.setIndex(idx);
-        const wall = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: 0.82, depthWrite: li === 0 }));
-        groups.laps.add(wall);
-        // top edge in the lap colour
-        const top = new Float32Array(n * 3);
-        for (let i = 0; i < n; i++) top.set([pos[i * 6 + 3], pos[i * 6 + 4], pos[i * 6 + 5]], i * 3);
-        const tg = new THREE.BufferGeometry();
-        tg.setAttribute("position", new THREE.BufferAttribute(top, 3));
-        groups.laps.add(new THREE.Line(tg, new THREE.LineBasicMaterial({ color: new THREE.Color(l.color) })));
+        const strip = (pos, frac, col, size, mat) => {
+          const g = new THREE.BufferGeometry();
+          g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+          g.setAttribute("wallF", new THREE.BufferAttribute(frac, 1));
+          if (col) g.setAttribute("color", new THREE.BufferAttribute(col, size));
+          g.setIndex(idx);
+          mat.onBeforeCompile = liftByWallSize;
+          const m = new THREE.Mesh(g, mat);
+          m.frustumCulled = false; // the real height is only known on the graphics card
+          groups.laps.add(m);
+        };
+        strip(body, bodyF, bodyCol, 4, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, depthWrite: false }));
+        strip(cap, capF, capCol, 3, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+        strip(edge, edgeF, null, 3, new THREE.MeshBasicMaterial({ color: new THREE.Color(l.color), side: THREE.DoubleSide }));
       });
       buildMarkers();
       redraw();
@@ -376,7 +407,7 @@ export const Tele3D = {
           groups.markers.add(m);
         }
         const hv = l.h ? valueAt(l.h, d) : null;
-        const top = 1 + (hv === null ? 0 : Math.max(0, Math.min(1, (hv - hRange[0]) / (hRange[1] - hRange[0])))) * props.wall.size;
+        const top = wallTop(hv === null ? 0 : (hv - hRange[0]) / (hRange[1] - hRange[0])) * wallSize.value;
         const pg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(q[0], q[1] + 0.3, q[2]), new THREE.Vector3(q[0], q[1] + 0.3 + top + 3, q[2])]);
         const pin = new THREE.Line(pg, new THREE.LineBasicMaterial({ color, depthTest: false }));
         pin.renderOrder = 9;
@@ -511,15 +542,15 @@ export const Tele3D = {
       }
     });
     watch(() => props.laps.map((l) => l.key).join(), async () => { await loadPaths(); await followPlacement(); buildLaps(); });
-    watch(() => [props.laps.map((l) => (l.h ? 1 : 0) + (l.c ? 2 : 0) + (l.th ? 4 : 0) + (l.br ? 8 : 0) + l.color).join(), props.wall.h, props.wall.c, props.wall.size, props.view.total], () => buildLaps());
+    watch(() => [props.laps.map((l) => (l.h ? 1 : 0) + (l.c ? 2 : 0) + (l.th ? 4 : 0) + (l.br ? 8 : 0) + l.color).join(), props.wall.h, props.wall.c, props.view.total], () => buildLaps());
     watch(() => props.view.cursor, () => buildMarkers());
     watch(photo, () => { if (THREE && scene.value) buildGround(); });
 
     // the wheel over a turn label zooms the view (not the page)
     const toCanvas = (e) => renderer && renderer.domElement.dispatchEvent(new WheelEvent("wheel", e));
-    const channelLabel = (n) => (n === PEDALS ? "Throttle / brake" : props.channels.find((c) => c.name === n)?.label || n);
+    const channelLabel = (n) => (n === LAPCOL ? "Lap colour" : n === PEDALS ? "Throttle / brake" : props.channels.find((c) => c.name === n)?.label || n);
     return { box, canvasBox, scene, error, loading, photo, online, offline, offlineReady, credits, labels, exactness,
-      downloadPhotos, deletePhotos, channelLabel, toCanvas, bytes, PEDALS };
+      downloadPhotos, deletePhotos, channelLabel, toCanvas, bytes, PEDALS, LAPCOL };
   },
   template: `
     <div class="t3d" ref="box">
@@ -531,13 +562,10 @@ export const Tele3D = {
         </label>
         <label class="t3d-field">Wall colour
           <select v-model="wall.c" aria-label="Wall colour channel">
+            <option :value="LAPCOL">Lap colour</option>
             <option :value="PEDALS">Throttle / brake</option>
             <option v-for="c in channels" :key="c.name" :value="c.name">{{ c.label }}</option>
           </select>
-        </label>
-        <label class="t3d-field t3d-size">Wall size
-          <input type="range" min="5" max="120" step="5" v-model.number="wall.size" aria-label="Wall size in metres">
-          <span>{{ wall.size }} m</span>
         </label>
         <div v-if="scene" class="segmented t3d-photo" role="radiogroup" aria-label="Photo">
           <button type="button" role="radio" :aria-checked="photo === 'maptiler'" :class="{ on: photo === 'maptiler' }" :disabled="!scene.mapTilerKey || !online"

@@ -1150,7 +1150,15 @@ th.tt-num { text-align: right; }
 .tag-warn { background: var(--warn-bg); color: var(--warn); }
 /* 3D track view (D-190) */
 .seg-sm button { padding: 3px 10px; font-size: 13px; }
-.ta-bench.is-3d { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+/* 3D: full width above the graphs, kept in view while they scroll (wide and tall enough screens) */
+.ta-3d-card { margin-bottom: 14px; }
+.ta-bench.is-3d { grid-template-columns: minmax(0, 1fr); } /* 3D: graphs full width under the view */
+.ta-bench.is-3d .ta-side { position: static; order: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+@media (min-width: 1181px) and (min-height: 600px) {
+  .ta-3d-card { position: sticky; top: 64px; z-index: 6; box-shadow: 0 8px 18px -12px rgba(0,0,0,.35); }
+  .ta-3d-card .t3d-stage { height: 55vh; min-height: 300px; } /* 16:9 screens: a tall view, graphs still in view below */
+  .ta-3d-card .t3d-foot { margin-top: 4px; }
+}
 .ta-3d-card .ta-card-head { justify-content: flex-start; }
 .t3d-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 10px; }
 .t3d-field { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); font-weight: 500; }
@@ -1178,7 +1186,6 @@ th.tt-num { text-align: right; }
 .t3d-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 8px; font-size: 13px; color: var(--ink-2); }
 .t3d-help { flex: 1 1 320px; }
 .t3d-note { display: inline-flex; align-items: center; gap: 6px; }
-@media (max-width: 1180px) { .ta-bench.is-3d { grid-template-columns: 1fr; } .ta-bench.is-3d .ta-side { position: static; } .ta-bench.is-3d .ta-3d-card { grid-column: 1 / -1; } }
 @media (max-width: 640px) { .t3d-stage { height: 60vh; } .t3d-photo { margin-left: 0; } .t3d-field select { max-width: 160px; } }
 .ta-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; font-size: 12.5px; color: var(--ink-2); }
 .ta-legend i { width: 18px; height: 5px; border-radius: 3px; display: inline-block; }
@@ -1281,3 +1288,7 @@ th.tt-num { text-align: right; }
 .kept-photos li > span:first-child { flex: 1; }
 .kept-size { color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .setting-hint { color: var(--ink-2); font-size: 13px; }
+/* a lap time that opens the lap (telemetry tables) */
+.tl-open { border: 0; background: none; padding: 0; color: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
+.tl-open:hover, .tl-open:focus-visible { text-decoration-color: currentColor; }
+.ta-ref.on { color: var(--lap-0); font-weight: 600; }

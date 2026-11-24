@@ -49,10 +49,11 @@ export function series(cd, track, align) {
   const map = typeof align === "function" ? align : (v) => v * (align || 1);
   const n = cd.data.length;
   const xs = new Float32Array(n), ys = new Float32Array(n);
-  let k = 0;
+  let k = 0, last = -Infinity;
   for (let i = 0; i < n; i++) {
     const t = cd.t ? cd.t[i] : cd.t0 + i / cd.hz;
-    if (t < -0.05 || t > track.lapS + 0.05) continue;
+    if (t < -0.05 || t > track.lapS + 0.05 || t < last) continue; // times must go up (extra log)
+    last = t;
     xs[k] = map(track.distAt(t));
     ys[k] = cd.data[i];
     k++;

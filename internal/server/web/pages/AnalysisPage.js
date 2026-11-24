@@ -3,12 +3,12 @@
 // Only the channels on screen are loaded, and each only once.
 import { ref, reactive, computed, watch, watchEffect, markRaw, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { get, enc } from "../api.js";
+import { get, put, enc } from "../api.js";
 import { Loading, setCrumbs } from "../components/common.js";
 import { TeleChart } from "../components/TeleChart.js";
 import { TeleMap } from "../components/TeleMap.js";
 import { TeleCar } from "../components/TeleCar.js";
-import { Tele3D, PEDALS } from "../components/Tele3D.js";
+import { Tele3D, PEDALS, LAPCOL } from "../components/Tele3D.js";
 import { lapTime } from "../components/LapTimes.js";
 import { when, kindLabel } from "../telemetry.js";
 import { lapTrack, series, delta, valueAt, signed, lapColors, parseLaps, lapKey, aligner, sameLap, PRESETS, CAR_FAMILIES, WHEELS } from "../telemetry.js";
@@ -21,7 +21,14 @@ const readCustom = () => { try { return JSON.parse(localStorage.getItem(CUSTOM_K
 const saveCustom = (list) => { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(list)); } catch { /* private window */ } };
 // 3D view (D-190): 2D or 3D map and the wall's channels, remembered per browser
 const MAP3D_KEY = "setupman.telemetry.map3d";
-const readMap3D = () => { try { return { mode: "2d", h: "SPEED", c: PEDALS, size: 40, ...JSON.parse(localStorage.getItem(MAP3D_KEY)) }; } catch { return { mode: "2d", h: "SPEED", c: PEDALS, size: 40 }; } };
+const readMap3D = () => {
+  const def = { v: 2, mode: "2d", h: "SPEED", c: LAPCOL };
+  try {
+    const st = JSON.parse(localStorage.getItem(MAP3D_KEY)) || {};
+    if (st.v !== 2) { delete st.c; delete st.size; } // from before: the wall colour now starts as the lap colour
+    return { ...def, ...st, v: 2 };
+  } catch { return def; }
+};
 const saveMap3D = (v) => { try { localStorage.setItem(MAP3D_KEY, JSON.stringify(v)); } catch { /* private window */ } };
 
 // corners: speed minima that drop and rise by at least 12 km/h; each corner runs from the speed
@@ -224,7 +231,7 @@ export const AnalysisPage = {
     // 3D map (D-190): the wall's channels are loaded like the graphs'
     const map3d = reactive(readMap3D());
     watch(map3d, () => saveMap3D({ ...map3d }), { deep: true });
-    const wallChannels = computed(() => (map3d.mode === "3d" ? [map3d.h, map3d.c].filter((n) => n && n !== PEDALS) : []));
+    const wallChannels = computed(() => (map3d.mode === "3d" ? [map3d.h, map3d.c].filter((n) => n && n !== PEDALS && n !== LAPCOL) : []));
 
     // loading: only the channels that are missing, per lap
     let loading = false, failed = false; // failed: stop asking again until the laps or channels change
@@ -297,7 +304,7 @@ export const AnalysisPage = {
       return laps.value.map((l) => {
         const al = alignOf(l);
         return { key: l.key, fileId: l.fileId, n: l.n, color: l.color, label: l.label, fromRef: al ? al.fromRef : (v) => v,
-          h: seriesOf(l, map3d.h), c: map3d.c === PEDALS ? null : seriesOf(l, map3d.c), th: seriesOf(l, "THROTTLE"), br: seriesOf(l, "BRAKE") };
+          h: seriesOf(l, map3d.h), c: map3d.c === PEDALS || map3d.c === LAPCOL ? null : seriesOf(l, map3d.c), th: seriesOf(l, "THROTTLE"), br: seriesOf(l, "BRAKE") };
       });
     });
     const channels3d = computed(() => [...available.value.values()].map((c) => ({ name: c.name, label: c.label, unit: c.unit })));
@@ -351,6 +358,19 @@ export const AnalysisPage = {
       const [l] = list.splice(i, 1);
       list.unshift(l);
       setLaps(list);
+    }
+    // reference lap: one per car on a track; set or cleared straight from a lap card
+    async function toggleRef(l) {
+      const on = !l.meta.reference;
+      try {
+        await put(`/api/telemetry/files/${l.fileId}/laps/${l.n}/reference`, { on });
+        for (const f of Object.values(files)) {
+          if (f.file.car !== l.file.car || f.file.track.toLowerCase() !== l.file.track.toLowerCase()) continue;
+          for (const m of f.laps) if (m.reference && on) m.reference = false; // the car's earlier reference
+        }
+        l.meta.reference = on;
+        showToast(on ? `Reference lap for the ${l.file.carName} at ${l.file.trackName}` : "Reference lap cleared");
+      } catch (e) { showToast(e.message); }
     }
     const removeLap = (i) => setLaps(req.value.filter((_, j) => j !== i));
     function setLaps(list) {
@@ -409,7 +429,7 @@ export const AnalysisPage = {
 
     return { req, laps, ready, badLap, sameTrack, sameCar, error, colors, view, charts, deltas, carLaps, map, atCursor, corners, PRESETS, preset, setPreset,
       picker, pickQ, groups, shownChannels, toggleChannel, removeChart, zoomTo, wholeLap, makeFirst, removeLap, finalDelta, backTo,
-      facts, extremes, total, bar, mapCorners, officialTurns, pct, kmh, lapTime, signed, clock, kindLabel, map3d, laps3d, channels3d };
+      facts, extremes, total, bar, mapCorners, toggleRef, officialTurns, pct, kmh, lapTime, signed, clock, kindLabel, map3d, laps3d, channels3d };
   },
   template: `
     <main class="page page-wide ta-page">
@@ -440,6 +460,8 @@ export const AnalysisPage = {
             <span v-if="i" class="ta-lap-delta" :class="l.meta.lapMs > laps[0].meta.lapMs ? 'is-loss' : l.meta.lapMs < laps[0].meta.lapMs ? 'is-gain' : ''">{{ finalDelta(i) }}</span>
             <span class="ta-lap-tools">
               <button v-if="i" type="button" class="btn-link" @click="makeFirst(i)" title="Compare the other laps with this one">Compare against this</button>
+              <button v-if="l.meta.complete" type="button" class="btn-link ta-ref" :class="{ on: l.meta.reference }" @click="toggleRef(l)" :aria-pressed="!!l.meta.reference"
+                :title="l.meta.reference ? 'Reference lap for the ' + l.file.carName + ' on this track. Click to clear.' : 'Make this the reference lap for the ' + l.file.carName + ' on this track (one per car)'">{{ l.meta.reference ? '★ Reference lap' : '☆ Make reference' }}</button>
               <button v-if="laps.length > 1" type="button" class="btn-link" @click="removeLap(i)">Remove</button>
             </span>
           </li>
@@ -475,18 +497,19 @@ export const AnalysisPage = {
           </div>
         </section>
 
+        <section v-if="map3d.mode === '3d'" class="ta-card ta-3d-card">
+          <div class="ta-card-head">
+            <h2 class="ta-card-title">Track</h2>
+            <div class="segmented seg-sm" role="radiogroup" aria-label="Track view">
+              <button type="button" role="radio" aria-checked="false" @click="map3d.mode = '2d'">2D</button>
+              <button type="button" role="radio" aria-checked="true" class="on">3D</button>
+            </div>
+          </div>
+          <Tele3D :game="laps[0].file.game" :track="laps[0].file.track" :view="view" :laps="laps3d" :channels="channels3d" :wall="map3d" :corners="mapCorners" />
+        </section>
+
         <div class="ta-bench" :class="{ 'is-3d': map3d.mode === '3d' }">
           <aside class="ta-side">
-            <section v-if="map3d.mode === '3d'" class="ta-card ta-3d-card">
-              <div class="ta-card-head">
-                <h2 class="ta-card-title">Track</h2>
-                <div class="segmented seg-sm" role="radiogroup" aria-label="Track view">
-                  <button type="button" role="radio" aria-checked="false" @click="map3d.mode = '2d'">2D</button>
-                  <button type="button" role="radio" aria-checked="true" class="on">3D</button>
-                </div>
-              </div>
-              <Tele3D :game="laps[0].file.game" :track="laps[0].file.track" :view="view" :laps="laps3d" :channels="channels3d" :wall="map3d" :corners="mapCorners" />
-            </section>
             <section v-if="map3d.mode !== '3d'" class="ta-card ta-map-card">
               <div class="ta-card-head">
                 <h2 class="ta-card-title">Track</h2>

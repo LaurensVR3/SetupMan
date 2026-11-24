@@ -271,8 +271,14 @@ func (x *ExtraLog) Laps() []ExtraLap {
 	from := 0
 	for i := 1; i < len(x.T); i++ {
 		if x.Data[li][i] > x.Data[li][i-1] {
-			out = append(out, ExtraLap{From: from, To: i, LapMs: int(x.Data[lt][i])})
-			from = i
+			// the game restarts the lap clock a reading or two before it counts the lap: those
+			// readings belong to the new lap (else a lap ends with a time near 0)
+			end := i
+			for end-1 > from && x.Data[ti][end-1] < x.Data[ti][end-2] {
+				end--
+			}
+			out = append(out, ExtraLap{From: from, To: end, LapMs: int(x.Data[lt][i])})
+			from = end
 		} else if x.Data[li][i] < x.Data[li][i-1] {
 			from = i // the lap counter went back: a new session in the same file
 		}
