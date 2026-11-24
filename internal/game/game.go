@@ -55,6 +55,8 @@ type Telemetry struct {
 	// For pit stop advice (D-124). Each group is only meaningful when its …Known flag is set.
 	Pressures      [4]float64 // hot tyre pressures now, psi, FL FR RL RR
 	PressuresKnown bool
+	TyreTemps      [4]float64 // tyre (core) temperatures now, °C, FL FR RL RR, as the game's HUD shows them (D-189)
+	TyreTempsKnown bool
 	WetTyres       bool // rain tyres fitted
 	WetKnown       bool
 	TimeLeftMs     float64 // session time left (≤ 0 when the clock has run out)

@@ -316,6 +316,7 @@ func (l *Library) teleSync(id string) {
 	}
 	t.mu.Unlock()
 	linked := l.linkTelemetry(id)
+	l.backfillTyreTemps(id) // tyre temperatures of recorded laps from the files (D-189)
 	l.teleOutlines(id)
 	if added > 0 || linked > 0 {
 		log.Printf("telemetry %s: %d files indexed, %d linked to sessions (%s)", id, added, linked, folder)

@@ -39,6 +39,7 @@ const (
 	offFuel      = 12
 	offSpeedKmh  = 28
 	offPressures = 88
+	offTyreCore  = 152 // tyreCoreTemperature[4], °C (D-189)
 	offAirTemp   = 288
 	offRoadTemp  = 292
 	offBrakeBias = 564 // after tyreContactHeading[4][3] @516 (Kunos' physics page)
@@ -210,6 +211,17 @@ func (lay layout) pitAdvice(t *game.Telemetry, phys, graph []byte) {
 	}
 	if t.PressuresKnown = ok; !ok {
 		t.Pressures = [4]float64{}
+	}
+	ok = true
+	for i := 0; i < 4; i++ {
+		c := f32(phys, offTyreCore+4*i)
+		if math.IsNaN(c) || c < 1 || c > 200 {
+			ok = false
+		}
+		t.TyreTemps[i] = c
+	}
+	if t.TyreTempsKnown = ok; !ok {
+		t.TyreTemps = [4]float64{}
 	}
 	if lay.rainTyres > 0 {
 		if v := u32(graph, lay.rainTyres); v <= 1 {

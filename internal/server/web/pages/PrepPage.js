@@ -98,7 +98,8 @@ export const PrepPage = {
       const t = parseFloat(String(inp.temp).replace(",", "."));
       try {
         const [r, f, l] = await Promise.all([
-          post("/api/prep", { game: inp.game, car: inp.car, track: inp.track, session: inp.session, temp: isFinite(t) ? t : 0, hasTemp: isFinite(t), tempKind: inp.tempKind }),
+          post("/api/prep", { game: inp.game, car: inp.car, track: inp.track, session: inp.session, temp: isFinite(t) ? t : 0, hasTemp: isFinite(t), tempKind: inp.tempKind,
+            minutes: Number(String(inp.minutes).replace(",", ".")) || 0, stops: Number(inp.stops) || 0 }), // stint length: tyre aim (D-189)
           get(`/api/fuel/${enc(inp.game)}/${enc(inp.car)}/${enc(inp.track)}`).catch(() => ({})),
           get(`/api/laps/${enc(inp.game)}/${enc(inp.car)}/${enc(inp.track)}`).catch(() => ({})),
         ]);

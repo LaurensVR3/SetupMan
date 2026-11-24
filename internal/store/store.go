@@ -130,6 +130,9 @@ func migrate(db *sql.DB) error {
 			return err
 		}
 	}
+	if err := ensureLapTyreTemps(db); err != nil { // D-189
+		return err
+	}
 	added, err := ensureTelemetry(db) // at every start (see there)
 	if err != nil {
 		return err
@@ -144,6 +147,38 @@ func migrate(db *sql.DB) error {
 		return err
 	}
 	return nil
+}
+
+// ensureLapTyreTemps adds the laps' tyre temperatures (D-189) when they are missing.
+func ensureLapTyreTemps(db *sql.DB) error {
+	rows, err := db.Query(`PRAGMA table_info(laps)`)
+	if err != nil {
+		return err
+	}
+	have := false
+	for rows.Next() {
+		var cid, notnull, pk int
+		var name, typ string
+		var def sql.NullString
+		if err := rows.Scan(&cid, &name, &typ, &notnull, &def, &pk); err != nil {
+			rows.Close()
+			return err
+		}
+		have = have || name == "t_fl"
+	}
+	rows.Close()
+	if have {
+		return nil
+	}
+	_, err = db.Exec(`ALTER TABLE laps ADD COLUMN t_fl REAL; ALTER TABLE laps ADD COLUMN t_fr REAL;
+ALTER TABLE laps ADD COLUMN t_rl REAL; ALTER TABLE laps ADD COLUMN t_rr REAL;`)
+	return err
+}
+
+// SetLapTyreTemps fills in a lap's tyre temperatures (from the game's telemetry files, D-189).
+func (q Q) SetLapTyreTemps(lapID int64, t [4]float64) error {
+	_, err := q.ex.Exec(`UPDATE laps SET t_fl=?, t_fr=?, t_rl=?, t_rr=? WHERE id=? AND t_fl IS NULL`, t[0], t[1], t[2], t[3], lapID)
+	return err
 }
 
 // migrateTo7 brings a library of version v (below 7) to version 7.
@@ -767,6 +802,10 @@ type Lap struct {
 	Pressures    [4]float64 `json:"pressures"`
 	HasPressures bool       `json:"hasPressures"`
 	Wet          bool       `json:"wet"` // rain tyres fitted
+	// Average tyre (core) temperatures over the lap, °C, FL FR RL RR (D-189): recorded live, or
+	// filled in from the game's telemetry files; only with HasTyreTemps.
+	TyreTemps    [4]float64 `json:"tyreTemps"`
+	HasTyreTemps bool       `json:"hasTyreTemps"`
 }
 
 // InsertSession stores a new session and sets its ID.
@@ -869,8 +908,14 @@ func (q Q) InsertLap(l *Lap) error {
 			pr[i] = v
 		}
 	}
-	res, err := q.ex.Exec(`INSERT INTO laps (session_id, setup_id, version_id, at, lap_ms, valid, pit, fuel_used, air, road, p_fl, p_fr, p_rl, p_rr, wet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-		l.SessionID, nullID(l.SetupID), nullID(l.VersionID), ms(l.At), l.LapMs, l.Valid, l.Pit, l.FuelUsed, air, road, pr[0], pr[1], pr[2], pr[3], l.Wet)
+	var tt [4]any
+	if l.HasTyreTemps {
+		for i, v := range l.TyreTemps {
+			tt[i] = v
+		}
+	}
+	res, err := q.ex.Exec(`INSERT INTO laps (session_id, setup_id, version_id, at, lap_ms, valid, pit, fuel_used, air, road, p_fl, p_fr, p_rl, p_rr, wet, t_fl, t_fr, t_rl, t_rr) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		l.SessionID, nullID(l.SetupID), nullID(l.VersionID), ms(l.At), l.LapMs, l.Valid, l.Pit, l.FuelUsed, air, road, pr[0], pr[1], pr[2], pr[3], l.Wet, tt[0], tt[1], tt[2], tt[3])
 	if err != nil {
 		return err
 	}
@@ -880,7 +925,7 @@ func (q Q) InsertLap(l *Lap) error {
 
 func (q Q) laps(where string, args ...any) ([]Lap, error) {
 	rows, err := q.ex.Query(`SELECT l.id, l.session_id, COALESCE(l.setup_id,0), COALESCE(l.version_id,0), l.at, l.lap_ms, l.valid, l.pit, l.fuel_used,
-		l.air, l.road, l.p_fl, l.p_fr, l.p_rl, l.p_rr, l.wet FROM laps l JOIN sessions s ON s.id = l.session_id `+where+` ORDER BY l.at`, args...)
+		l.air, l.road, l.p_fl, l.p_fr, l.p_rl, l.p_rr, l.wet, l.t_fl, l.t_fr, l.t_rl, l.t_rr FROM laps l JOIN sessions s ON s.id = l.session_id `+where+` ORDER BY l.at`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -890,10 +935,16 @@ func (q Q) laps(where string, args ...any) ([]Lap, error) {
 		var l Lap
 		var at int64
 		var air, road sql.NullFloat64
-		var pr [4]sql.NullFloat64
+		var pr, tt [4]sql.NullFloat64
 		if err := rows.Scan(&l.ID, &l.SessionID, &l.SetupID, &l.VersionID, &at, &l.LapMs, &l.Valid, &l.Pit, &l.FuelUsed, &air, &road,
-			&pr[0], &pr[1], &pr[2], &pr[3], &l.Wet); err != nil {
+			&pr[0], &pr[1], &pr[2], &pr[3], &l.Wet, &tt[0], &tt[1], &tt[2], &tt[3]); err != nil {
 			return nil, err
+		}
+		if tt[0].Valid && tt[1].Valid && tt[2].Valid && tt[3].Valid {
+			l.HasTyreTemps = true
+			for i := range tt {
+				l.TyreTemps[i] = tt[i].Float64
+			}
 		}
 		if pr[0].Valid && pr[1].Valid && pr[2].Valid && pr[3].Valid {
 			l.HasPressures = true

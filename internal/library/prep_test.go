@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"setupman/internal/naming"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -115,5 +116,64 @@ func TestNameTempsSingle(t *testing.T) {
 	}
 	if got := nameTemps(naming.Meta{Track: 35}, "air"); got != "track 35 °C" {
 		t.Errorf("got %q", got)
+	}
+}
+
+// The rig case (D-189): 2727 was faster on a few low-fuel laps but its tyres ran 92 °C; 3040 was
+// slower (race laps) with tyres at 87 °C. Tyres in the window rank first; then outright lap time;
+// below 3 clean laps a setup isn't judged. Each setup gets the pressure change for the air temperature.
+func TestPrepTyreWindow(t *testing.T) {
+	base, err := os.ReadFile("../games/acc/testdata/base.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Join(t.TempDir(), "Setups")
+	imola := filepath.Join(dir, "ferrari_296_gt3", "Imola")
+	os.MkdirAll(imola, 0o755)
+	for i, name := range []string{"R 2727", "R 3040", "R 2828"} {
+		os.WriteFile(filepath.Join(imola, name+".json"), []byte(strings.Replace(string(base), `"tC1": 4`, `"tC1": `+strconv.Itoa(i+1), 1)), 0o644)
+	}
+	g := &fakeGame{installed: true, folder: dir, live: game.LiveUnknown}
+	l, _ := newLib(t, g)
+	l.Start()
+	waitFor(t, "first scan", func() bool { return l.Games()[0].Status == "ok" })
+	ids := map[string]int64{}
+	all, _ := l.db.SetupsForTrack("acc", "ferrari_296_gt3", "imola")
+	for _, s := range all {
+		ids[s.Name] = s.ID
+	}
+	sess := &store.Session{Game: "acc", Car: "ferrari_296_gt3", Track: "imola", Kind: "race", StartedAt: time.Now()}
+	l.db.InsertSession(sess)
+	add := func(name string, n, ms int, tyre float64) {
+		for i := 0; i < n; i++ {
+			l.db.InsertLap(&store.Lap{SessionID: sess.ID, SetupID: ids[name], LapMs: ms + i*10, Valid: true, Air: 29, Road: 34, HasTemps: true,
+				TyreTemps: [4]float64{tyre - 3, tyre + 2, tyre, tyre + 3}, HasTyreTemps: true})
+		}
+	}
+	add("R 2727", 4, 100800, 92)  // fast, too hot
+	add("R 3040", 20, 102200, 87) // slower, in the window
+	add("R 2828", 2, 100000, 88)  // fastest, but only 2 laps
+
+	got, err := l.Prep(PrepInput{Game: "acc", Car: "ferrari_296_gt3", Track: "imola", Session: "R", Temp: 29, HasTemp: true, TempKind: "air", Minutes: 75, Stops: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var order []string
+	byName := map[string]PrepSetup{}
+	for _, p := range got {
+		order = append(order, p.Name)
+		byName[p.Name] = p
+	}
+	if strings.Join(order, ",") != "R 3040,R 2828,R 2727" {
+		t.Errorf("order %v, want 3040 (tyres ok), 2828 (too few laps), 2727 (too hot)", order)
+	}
+	if p := byName["R 2727"]; p.TyreFit != "hot" || p.PressureShift != -0.2 || !p.ShiftKnown {
+		t.Errorf("2727: fit %q shift %v", p.TyreFit, p.PressureShift)
+	}
+	if p := byName["R 3040"]; p.TyreFit != "ok" || p.PressureShift != 0.1 {
+		t.Errorf("3040: fit %q shift %v", p.TyreFit, p.PressureShift)
+	}
+	if p := byName["R 2828"]; p.TyreFit != "" {
+		t.Errorf("2828 judged on 2 laps: %q", p.TyreFit)
 	}
 }

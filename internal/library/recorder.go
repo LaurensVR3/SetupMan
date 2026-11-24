@@ -37,6 +37,8 @@ type recorder struct {
 	tempN           int
 	pSum            [4]float64 // hot tyre pressures summed over the lap, outside the pits (D-124)
 	pN              int
+	ttSum           [4]float64 // tyre temperatures summed over the lap, outside the pits (D-189)
+	ttN             int
 	wet             bool // rain tyres fitted
 	maxStintMs      int  // the server's stint limit: the highest "stint time left" seen (D-125)
 	wasInPits       bool
@@ -350,6 +352,12 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 		}
 		r.pN++
 	}
+	if t.TyreTempsKnown && !inPits(t) {
+		for i, v := range t.TyreTemps {
+			r.ttSum[i] += v
+		}
+		r.ttN++
+	}
 	if t.WetKnown {
 		r.wet = t.WetTyres
 	}
@@ -373,6 +381,12 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 			lap.HasPressures = true
 			r.lastHot, r.hotKnown = lap.Pressures, true
 		}
+		if r.ttN > 0 {
+			for i := range r.ttSum {
+				lap.TyreTemps[i] = r.ttSum[i] / float64(r.ttN)
+			}
+			lap.HasTyreTemps = true
+		}
 		lap.Wet = r.wet
 		if err := l.db.InsertLap(lap); err != nil {
 			log.Printf("recording a lap: %v", err)
@@ -385,6 +399,7 @@ func (l *Library) feedTelemetry(g game.Game, t game.Telemetry, running bool) {
 		r.lapPit = inPits(t)
 		r.airSum, r.roadSum, r.tempN = 0, 0, 0
 		r.pSum, r.pN = [4]float64{}, 0
+		r.ttSum, r.ttN = [4]float64{}, 0
 	} else if t.CompletedLaps > r.lastLaps {
 		r.lastLaps = t.CompletedLaps
 	}

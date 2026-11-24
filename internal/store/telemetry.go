@@ -431,6 +431,34 @@ func (q Q) TelemetryUnlinked(game string) ([]TeleFile, error) {
 	return scanTele(rows)
 }
 
+// TeleLapNeed is a telemetry lap whose recorded lap has no tyre temperatures yet (D-189).
+type TeleLapNeed struct {
+	FileID int64
+	N      int
+	LapID  int64
+}
+
+// TeleLapsWithoutTyreTemps lists full telemetry laps linked to a recorded lap without tyre
+// temperatures, newest files first.
+func (q Q) TeleLapsWithoutTyreTemps(game string) ([]TeleLapNeed, error) {
+	rows, err := q.ex.Query(`SELECT t.file_id, t.n, t.lap_id FROM telemetry_laps t JOIN laps l ON l.id = t.lap_id
+		JOIN telemetry_files f ON f.id = t.file_id WHERE f.game = ? AND f.missing = 0 AND t.full = 1 AND l.t_fl IS NULL
+		ORDER BY f.started_at DESC, t.n`, game)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []TeleLapNeed
+	for rows.Next() {
+		var n TeleLapNeed
+		if err := rows.Scan(&n.FileID, &n.N, &n.LapID); err != nil {
+			return nil, err
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
+}
+
 // TelemetryLinked returns the files linked to a recorded session (to link the laps of other
 // sessions in the same file once, D-179).
 func (q Q) TelemetryLinked(game string) ([]TeleFile, error) {
