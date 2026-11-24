@@ -6,6 +6,7 @@ import { get, post, put, enc } from "../api.js";
 import { usePageData } from "./load.js";
 import { Loading, setCrumbs } from "../components/common.js";
 import { lapTime } from "../components/LapTimes.js";
+import { store } from "../store.js";
 
 // "1:45.0" or "1:45" or "105" → seconds; "" → 0
 export function parseLap(text) {
@@ -17,11 +18,23 @@ export function parseLap(text) {
   return isFinite(n) ? n : NaN;
 }
 
-// Where a measured pit stop time loss comes from (D-173), e.g. "measured from 2 stops with GT3 cars on this track".
-export function pitSource(pm) {
+// Planned standing still at a stop (Settings → Games, default 30 s): races are planned without
+// repairs (owner 2026-11-24, D-192).
+export function pitStill(gameId) {
+  const v = Number(store.settings?.games?.[gameId]?.pitStillSeconds);
+  return v > 0 ? v : 30;
+}
+// Time lost per stop for the plan: the measured drive through the pit lane plus the planned
+// standing time; without a measured standing time, the measured loss as a whole.
+export function pitPlanSeconds(pm, gameId) {
+  return pm.timed ? Math.round((pm.laneSeconds + pitStill(gameId)) * 10) / 10 : pm.seconds;
+}
+export const DAMAGE_NOTE = "Damage repair makes a stop longer: with damage, plan for about 1 lap less.";
+// Where a planned pit stop time loss comes from (D-173, D-187, D-192), e.g. "39.8 s in the pit lane + 30 s standing still …".
+export function pitSource(pm, gameId) {
   const n = pm.stops === 1 ? "1 stop" : `${pm.stops} stops`;
   const who = pm.class ? `with ${pm.class} cars` : pm.sameCar ? "with this car" : "with any car";
-  const parts = pm.timed ? `${pm.laneSeconds.toFixed(1)} s in the pit lane + ${pm.stillSeconds.toFixed(1)} s standing still; ` : "";
+  const parts = pm.timed ? `${pm.laneSeconds.toFixed(1)} s in the pit lane (measured) + ${pitStill(gameId)} s standing still (planned; measured ${pm.stillSeconds.toFixed(1)} s, repairs included); ` : "";
   return `${parts}measured from ${n} ${who} on this track`;
 }
 
@@ -88,7 +101,7 @@ export const FuelPage = {
         get(`/api/laps/${enc(g.id)}/${enc(c.id)}/${enc(trackId)}`).then((r) => {
           recorded.value = r.stats.laps ? r.stats : null;
           pitMeasured.value = r.pitLoss && r.pitLoss.seconds > 0 ? r.pitLoss : null;
-          if (pitMeasured.value && String(inputs.race.pitLoss).trim() === "") inputs.race.pitLoss = pitMeasured.value.seconds.toFixed(1);
+          if (pitMeasured.value && String(inputs.race.pitLoss).trim() === "") inputs.race.pitLoss = planned().toFixed(1);
         }).catch(() => {});
         get(`/api/fuel/${enc(g.id)}/${enc(c.id)}/${enc(trackId)}`).then((saved) => {
           if (saved.race) Object.assign(inputs.race, saved.race);
@@ -126,10 +139,13 @@ export const FuelPage = {
       if (r.avgMs) inputs.race.avgLap = lapTime(r.avgMs);
       if (r.fuelLaps) { inputs.race.fuelPerLap = r.fuelPerLap.toFixed(2); inputs.q.fuelPerLap = ""; }
       if (r.bestMs) inputs.q.bestLap = lapTime(r.bestMs);
-      if (pitMeasured.value) inputs.race.pitLoss = pitMeasured.value.seconds.toFixed(1);
+      if (pitMeasured.value) inputs.race.pitLoss = planned().toFixed(1);
     }
-    const useMeasuredPit = () => { inputs.race.pitLoss = pitMeasured.value.seconds.toFixed(1); };
-    return { data, error, trackName, inputs, race, qual, recorded, useRecorded, lapTime, pitMeasured, useMeasuredPit, pitSource };
+    const gameId = () => data.value?.game?.id || "acc";
+    const planned = () => pitPlanSeconds(pitMeasured.value, gameId());
+    const useMeasuredPit = () => { inputs.race.pitLoss = planned().toFixed(1); };
+    const pitText = () => pitSource(pitMeasured.value, gameId());
+    return { data, error, trackName, inputs, race, qual, recorded, useRecorded, lapTime, pitMeasured, useMeasuredPit, planned, pitText, DAMAGE_NOTE };
   },
   template: `
     <main class="page">
@@ -157,8 +173,8 @@ export const FuelPage = {
               <label>Fuel per lap<span class="unit-input"><input v-model="inputs.race.fuelPerLap" inputmode="decimal" placeholder="3.2"> L</span></label>
               <label>Mandatory pit stops<span class="unit-input"><input v-model="inputs.race.stops" inputmode="numeric" placeholder="0"></span></label>
               <label v-if="Number(inputs.race.stops) > 0">Time lost per pit stop<span class="unit-input"><input v-model="inputs.race.pitLoss" inputmode="decimal" placeholder="25"> s</span>
-                <small v-if="pitMeasured">{{ pitMeasured.seconds.toFixed(1) }} s: {{ pitSource(pitMeasured) }}.<template v-if="pitMeasured.timed"> A longer stop (brake change, repairs) stands still longer: add those seconds.</template>
-                  <button v-if="Number(String(inputs.race.pitLoss).replace(',', '.')) !== Number(pitMeasured.seconds.toFixed(1))" type="button" class="btn-link" @click.prevent="useMeasuredPit">Use this</button></small>
+                <small v-if="pitMeasured">{{ planned().toFixed(1) }} s: {{ pitText() }}. {{ DAMAGE_NOTE }}
+                  <button v-if="Number(String(inputs.race.pitLoss).replace(',', '.')) !== Number(planned().toFixed(1))" type="button" class="btn-link" @click.prevent="useMeasuredPit">Use this</button></small>
                 <small v-else>Measured automatically once you drive a full pit stop on this track with SetupMan running.</small></label>
               <label>Safety margin<span class="unit-input"><input v-model="inputs.race.safety" inputmode="decimal" placeholder="2"> L</span></label>
               <label>Tank size (optional)<span class="unit-input"><input v-model="inputs.race.tank" inputmode="decimal" placeholder="e.g. 120"> L</span></label>

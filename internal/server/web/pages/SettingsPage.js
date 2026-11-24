@@ -345,6 +345,7 @@ export const SettingsPage = {
     };
     const setEndurance = (id, v) => save((n) => { gameCfg(n, id).enduranceMinutes = Math.max(5, Math.min(1440, Number(v) || 45)); });
     // Pit stop advice targets (D-124); empty or invalid = the default.
+    const setPitStill = (id, v) => save((n) => { const x = Math.round(Number(v)); gameCfg(n, id).pitStillSeconds = x >= 5 && x <= 300 ? x : 0; });
     const setTarget = (id, key, v) => save((n) => { const x = Math.round(Number(v) * 10) / 10; if (x >= 15 && x <= 40) gameCfg(n, id)[key] = x; else delete gameCfg(n, id)[key]; });
     let thrTimer;
     function setThreshold(v) {
@@ -426,7 +427,7 @@ export const SettingsPage = {
     return { issueUrl, lfmId, saveLfm, mapTilerKey, showKey, saveMapTiler, keptPhotos, trackLabel, kb, deleteKept, teleGames, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
       hist, preview, applyHistory, countNodes, setEndurance, autostart, setAutostart,
       manage, setManaged, setTidy, setAutoRename, teleLapsDlg, teleLapsGame, openTeleLaps, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
-      teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
+      teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, setPitStill, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
   },
   template: `
     <main class="page page-narrow">
@@ -586,6 +587,15 @@ export const SettingsPage = {
                 <label>Dry <span class="unit-input"><input type="number" min="15" max="40" step="0.1" :value="Number(s.games[g.id]?.tyreTargetDry || 27).toFixed(1)" @change="setTarget(g.id, 'tyreTargetDry', $event.target.value)" aria-label="Dry tyre target pressure"> psi</span></label>
                 <label>Wet <span class="unit-input"><input type="number" min="15" max="40" step="0.1" :value="Number(s.games[g.id]?.tyreTargetWet || 30).toFixed(1)" @change="setTarget(g.id, 'tyreTargetWet', $event.target.value)" aria-label="Wet tyre target pressure"> psi</span></label>
               </div>
+            </div>
+            <div v-if="g.laps" class="setting">
+              <div class="setting-text">
+                <h3>Pit stop: standing still</h3>
+                <p>Race prep and the fuel calculator plan each pit stop as the measured drive through the pit lane plus this standing time (tyres and fuel, no repairs). The standing time you measured, repairs included, is shown next to it.</p>
+              </div>
+              <label class="minutes">
+                <input type="number" min="5" max="300" step="1" :value="s.games[g.id]?.pitStillSeconds || 30" @change="setPitStill(g.id, $event.target.value)" :aria-label="g.name + ' planned standing time at a pit stop'"> s
+              </label>
             </div>
             <div class="setting">
               <div class="setting-text">

@@ -30,6 +30,9 @@ type Game struct {
 	// Target hot tyre pressures for pit stop advice, psi (D-124). 0 = default (27.0 dry, 30.0 wet).
 	TyreTargetDry float64 `json:"tyreTargetDry,omitempty"`
 	TyreTargetWet float64 `json:"tyreTargetWet,omitempty"`
+	// PitStillSeconds: standing still planned per pit stop (tyres and fuel, no repairs) in Race prep
+	// and the fuel calculator (D-192); 0 = the default, 30 s.
+	PitStillSeconds float64 `json:"pitStillSeconds,omitempty"`
 	// Managed: SetupMan may write to this game's setups folder (staging, D-73). Only switched on
 	// through the "manage" action, which makes a backup first (D-74).
 	Managed bool `json:"managed"`
@@ -133,6 +136,9 @@ func (s Settings) Validate() error {
 			if v != 0 && (v < 15 || v > 40) {
 				return fmt.Errorf("game %s: target tyre pressures must be between 15 and 40 psi", id)
 			}
+		}
+		if g.PitStillSeconds != 0 && (g.PitStillSeconds < 5 || g.PitStillSeconds > 300) {
+			return fmt.Errorf("game %s: standing time at a pit stop must be between 5 and 300 seconds", id)
 		}
 	}
 	return nil
