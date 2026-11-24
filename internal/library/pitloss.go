@@ -1,12 +1,16 @@
 package library
 
 import (
+	"math"
+	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"setupman/internal/game"
 	"setupman/internal/store"
+	"setupman/internal/telemetry"
 )
 
 // PitLoss is the time a pit stop costs on a track, measured from the user's own recorded
@@ -17,11 +21,19 @@ type PitLoss struct {
 	Class   string    `json:"class"`   // the class it was measured with ("" = any car)
 	SameCar bool      `json:"sameCar"` // measured with this car only (game without classes)
 	Last    time.Time `json:"last"`    // the most recent of those stops
+	// The two parts (D-187), from the stops whose standing time the extra log shows: driving
+	// through the pit lane (the same at every stop) and standing still (tyres, fuel, repairs,
+	// brakes: it depends on the stop). 0 = not known.
+	LaneSeconds  float64 `json:"laneSeconds"`
+	StillSeconds float64 `json:"stillSeconds"`
+	Timed        int     `json:"timed"` // stops with a known standing time
 }
 
 type pitStop struct {
-	lossMs int
-	at     time.Time
+	lossMs  int
+	at      time.Time
+	from    time.Time // start of the in-lap
+	stillMs int       // standing still in the pit lane (from the extra log), 0 = unknown
 }
 
 // directGapMs: a lap follows the one before it without a break (no time in the garage)
@@ -62,7 +74,8 @@ func pitStops(laps []store.Lap) []pitStop {
 				sum += laps[k].LapMs
 			}
 			if loss := sum - n*ref; loss > 0 && loss < 300000 {
-				out = append(out, pitStop{lossMs: loss, at: laps[j].At})
+				from := laps[i].At.Add(-time.Duration(laps[i].LapMs) * time.Millisecond)
+				out = append(out, pitStop{lossMs: loss, at: laps[j].At, from: from})
 			}
 		}
 		i = j + 1
@@ -132,6 +145,9 @@ func (l *Library) TrackPitLoss(gameID, car, track string) (PitLoss, error) {
 	var mine, all []pitStop
 	for _, id := range order {
 		st := pitStops(bySession[id])
+		if len(st) > 0 {
+			l.addStillTimes(gameID, id, st)
+		}
 		all = append(all, st...)
 		c := cars[id]
 		if (myClass != "" && classOf(c) == myClass) || (myClass == "" && strings.EqualFold(c, car)) {
@@ -154,5 +170,94 @@ func (l *Library) TrackPitLoss(gameID, car, track string) (PitLoss, error) {
 	}
 	out.Seconds = float64(medianInt(ms)) / 1000
 	out.Stops = len(use)
+	var lane, still []int
+	for _, s := range use {
+		if s.stillMs > 0 && s.stillMs < s.lossMs {
+			lane, still = append(lane, s.lossMs-s.stillMs), append(still, s.stillMs)
+		}
+	}
+	if len(lane) > 0 {
+		out.LaneSeconds = float64(medianInt(lane)) / 1000
+		out.StillSeconds = float64(medianInt(still)) / 1000
+		out.Timed = len(lane)
+	}
 	return out, nil
+}
+
+// stillCache keeps the standing times found in each extra log (read once per file version).
+var stillCache = struct {
+	sync.Mutex
+	m map[string]stillEntry
+}{m: map[string]stillEntry{}}
+
+type stillEntry struct {
+	mod   time.Time
+	spans [][2]time.Time // standing still in the pit lane, from … to
+}
+
+// addStillTimes fills in how long the car stood still at each stop, from the session's extra log
+// (D-187): rows in the pit lane where the car moved less than 2 cm since the row before, in spans of
+// at least 2 s, between the start of the in-lap and the end of the out-lap. ACC's live data doesn't
+// say what the pit menu planned (repairs, brakes), so the standing time is measured.
+func (l *Library) addStillTimes(gameID string, sessionID int64, stops []pitStop) {
+	if l.TelemetryDir == "" {
+		return
+	}
+	spans := extraStillSpans(telemetry.ExtraPath(l.TelemetryDir, gameID, sessionID))
+	for k := range stops {
+		for _, sp := range spans {
+			if !sp[0].Before(stops[k].from) && !sp[1].After(stops[k].at) {
+				stops[k].stillMs += int(sp[1].Sub(sp[0]).Milliseconds())
+			}
+		}
+	}
+}
+
+func extraStillSpans(path string) [][2]time.Time {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil
+	}
+	stillCache.Lock()
+	defer stillCache.Unlock()
+	if e, ok := stillCache.m[path]; ok && e.mod.Equal(info.ModTime()) {
+		return e.spans
+	}
+	x, err := telemetry.ReadExtra(path)
+	if err != nil {
+		return nil
+	}
+	spans := stillSpans(x)
+	stillCache.m[path] = stillEntry{mod: info.ModTime(), spans: spans}
+	return spans
+}
+
+// stillSpans finds where the car stood still in the pit lane in an extra log.
+func stillSpans(x *telemetry.ExtraLog) [][2]time.Time {
+	pit, px, pz := x.Index("PIT_LANE"), x.Index("POS_X"), x.Index("POS_Z")
+	if pit < 0 || px < 0 || pz < 0 {
+		return nil
+	}
+	at := func(i int) time.Time {
+		return x.Header.Start.Add(time.Duration(float64(x.T[i]) * float64(time.Second)))
+	}
+	var out [][2]time.Time
+	from := -1
+	for i := 1; i <= len(x.T); i++ {
+		still := false
+		if i < len(x.T) {
+			d := math.Hypot(float64(x.Data[px][i]-x.Data[px][i-1]), float64(x.Data[pz][i]-x.Data[pz][i-1]))
+			still = x.Data[pit][i] == 1 && d < 0.02
+		}
+		switch {
+		case still && from < 0:
+			from = i
+		case !still && from >= 0:
+			if x.T[i-1]-x.T[from] >= 2 {
+				out = append(out, [2]time.Time{at(from), at(i - 1)})
+			}
+			from = -1
+		}
+	}
+	return out
 }

@@ -21,7 +21,8 @@ export function parseLap(text) {
 export function pitSource(pm) {
   const n = pm.stops === 1 ? "1 stop" : `${pm.stops} stops`;
   const who = pm.class ? `with ${pm.class} cars` : pm.sameCar ? "with this car" : "with any car";
-  return `measured from ${n} ${who} on this track`;
+  const parts = pm.timed ? `${pm.laneSeconds.toFixed(1)} s in the pit lane + ${pm.stillSeconds.toFixed(1)} s standing still; ` : "";
+  return `${parts}measured from ${n} ${who} on this track`;
 }
 
 export const PlanView = {
@@ -156,7 +157,7 @@ export const FuelPage = {
               <label>Fuel per lap<span class="unit-input"><input v-model="inputs.race.fuelPerLap" inputmode="decimal" placeholder="3.2"> L</span></label>
               <label>Mandatory pit stops<span class="unit-input"><input v-model="inputs.race.stops" inputmode="numeric" placeholder="0"></span></label>
               <label v-if="Number(inputs.race.stops) > 0">Time lost per pit stop<span class="unit-input"><input v-model="inputs.race.pitLoss" inputmode="decimal" placeholder="25"> s</span>
-                <small v-if="pitMeasured">{{ pitMeasured.seconds.toFixed(1) }} s, {{ pitSource(pitMeasured) }}.
+                <small v-if="pitMeasured">{{ pitMeasured.seconds.toFixed(1) }} s: {{ pitSource(pitMeasured) }}.<template v-if="pitMeasured.timed"> A longer stop (brake change, repairs) stands still longer: add those seconds.</template>
                   <button v-if="Number(String(inputs.race.pitLoss).replace(',', '.')) !== Number(pitMeasured.seconds.toFixed(1))" type="button" class="btn-link" @click.prevent="useMeasuredPit">Use this</button></small>
                 <small v-else>Measured automatically once you drive a full pit stop on this track with SetupMan running.</small></label>
               <label>Safety margin<span class="unit-input"><input v-model="inputs.race.safety" inputmode="decimal" placeholder="2"> L</span></label>
