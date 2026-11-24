@@ -439,6 +439,7 @@ telemetry metrics stay in Phase 4.
 ### Open questions (need the user's answer)
 - Q-G1. AC EVO setting names: please check against the game's setup screen – which are "Differential coast / power", "Bump stop gap / rate", "Fast bump / Fast rebound", "Alignment value 4.4" (front only), "Electronics value 5.4 / 5.5", "Aero value 6.4", "Spring value 2.4 / 2.5" (GT4 and GT2 only)? Wheel order is assumed FL, FR, RL, RR. (The user will answer when possible; no reminders, 2026-11-19.)
 - Q-TL7. AC writes no telemetry files: should SetupMan log AC telemetry itself? (Raise when T5 comes.)
+- Q-PR1. Use the temperature rule (D-181) in Race prep too: for the chosen setup, show the cold pressures adjusted for the expected air temperature (e.g. made for 27 °C, race 30 °C → every tyre −0.3 psi)?
 - Q-AU1. Audit 2026-11-23: which of A-1 … A-10 should be built, and in what order? (Proposed: A-9 first as a safety fix, then A-1, A-2, A-7, A-4, A-5; A-3, A-6, A-8 small.)
 
 
