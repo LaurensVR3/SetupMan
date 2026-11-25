@@ -62,7 +62,7 @@ The owner is not a programmer: explain changes in plain language and keep code s
 - `internal/fuel` – race / qualifying fuel plans
 - `internal/datapack` – data pack ZIP format (D-201); library glue `internal/library/datapack.go` (export, import, remove),
   `motec.Cut` cuts laps out of a MoTeC file. Imported rows carry `ext` (sender's initials) and `pack`: every query for the user's
-  own statistics must skip `ext <> ''`. Pack telemetry lives in `%APPDATA%\SetupMan	elemetry\packs\<pack>`. UI: `components/DataPack.js`
+  own statistics must skip `ext <> ''`. Pack telemetry lives in `%APPDATA%\SetupMan\telemetry\packs\<pack>`. UI: `components/DataPack.js`
 - `internal/folderbackup` – ACC setups folder backups (ZIP + manifest) and exact restore
 - `internal/fullbackup` – full SetupMan backups (library snapshot + settings + folder backups); restore is applied
   at startup by `main.go` before the library opens (the server restarts SetupMan via `Server.Restart`)
