@@ -89,7 +89,8 @@ type LapSummary struct {
 	FuelPerLap float64 `json:"fuelPerLap,omitempty"`
 }
 
-// Session is part of one driving session: its chosen laps and their telemetry.
+// Session is part of one driving session: a run of consecutive chosen laps with one cut
+// telemetry file, or laps without telemetry.
 type Session struct {
 	Key     string    `json:"key"`
 	Game    string    `json:"game"`
@@ -98,7 +99,7 @@ type Session struct {
 	Kind    string    `json:"kind,omitempty"` // practice, qualifying, race … as SetupMan recorded it
 	Started time.Time `json:"started"`
 	Laps    []Lap     `json:"laps"`
-	Logs    []Log     `json:"logs,omitempty"`
+	Log     *Log      `json:"log,omitempty"`
 }
 
 // Lap is one lap with SetupMan's data about it.
@@ -113,11 +114,10 @@ type Lap struct {
 	Setup  string  `json:"setup,omitempty"`  // Setup.Key of the setup driven (stints, D-177)
 	SetupV string  `json:"setupV,omitempty"` // Version.Key
 	Note   string  `json:"note,omitempty"`
-	Log    int     `json:"log,omitempty"`    // 1-based index into Session.Logs; 0 = no telemetry
-	LogLap int     `json:"logLap,omitempty"` // the lap's number inside that log (motec.Lap.N)
+	LogLap int     `json:"logLap,omitempty"` // the lap's number in the session's log (motec.Lap.N); 0 = no telemetry
 }
 
-// Log is one cut telemetry file of a session (one run of consecutive laps).
+// Log is the cut telemetry of a session.
 type Log struct {
 	LD    string `json:"ld"`              // path inside the pack
 	LDX   string `json:"ldx,omitempty"`   // MoTeC i2's lap markers
@@ -191,7 +191,7 @@ func (m Manifest) files() []string {
 		}
 	}
 	for _, s := range m.Sessions {
-		for _, l := range s.Logs {
+		if l := s.Log; l != nil {
 			for _, f := range []string{l.LD, l.LDX, l.Extra} {
 				if f != "" {
 					out = append(out, f)
@@ -267,8 +267,11 @@ func Open(r io.ReaderAt, size int64) (*Pack, error) {
 		}
 	}
 	for _, s := range p.Manifest.Sessions {
+		if s.Log != nil && s.Log.LD == "" {
+			return nil, ErrDamaged
+		}
 		for _, l := range s.Laps {
-			if l.Log < 0 || l.Log > len(s.Logs) {
+			if l.LogLap < 0 || (l.LogLap > 0 && s.Log == nil) {
 				return nil, ErrDamaged
 			}
 		}

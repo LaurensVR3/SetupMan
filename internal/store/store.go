@@ -44,6 +44,11 @@ type Setup struct {
 	DiskVersionID   int64       `json:"diskVersionId"` // version in the game folder file (0 = not in the folder)
 	DeletedAt       time.Time   `json:"deletedAt"`     // in the bin since (zero = not deleted, D-102)
 	CreatedAt       time.Time   `json:"createdAt"`
+	// Data packs (D-201): Ext = the sender's initials of an imported setup ("" = the user's own),
+	// Pack = the pack that brought it, PackKey = the sender's key of it.
+	Ext     string `json:"ext,omitempty"`
+	Pack    string `json:"-"`
+	PackKey string `json:"-"`
 }
 
 // Version is one saved state of a setup.
@@ -57,6 +62,7 @@ type Version struct {
 	ObservedAt   time.Time `json:"observedAt"`
 	Source       string    `json:"source"` // "import" or "change"
 	Note         string    `json:"note"`
+	Pack         string    `json:"-"` // the data pack that added it (D-201)
 }
 
 // Event is one changelog entry (spec D-18).
@@ -135,6 +141,9 @@ func migrate(db *sql.DB) error {
 	}
 	added, err := ensureTelemetry(db) // at every start (see there)
 	if err != nil {
+		return err
+	}
+	if err := ensurePacks(db); err != nil { // data packs (D-201)
 		return err
 	}
 	if v < 12 || added { // a table or column was missing: what was indexed without it is incomplete
@@ -398,14 +407,16 @@ func nullID(id int64) any {
 }
 
 const setupCols = `id, game, car, track, name, COALESCE(rel_path,''), COALESCE(parent_version_id,0), link_kind, link_score,
-	session, session_manual, meta, meta_manual, note, created_at, fresh, COALESCE(disk_version_id,0), COALESCE(deleted_at,0)`
+	session, session_manual, meta, meta_manual, note, created_at, fresh, COALESCE(disk_version_id,0), COALESCE(deleted_at,0),
+	ext, pack, pack_key`
 
 func scanSetup(row interface{ Scan(...any) error }) (*Setup, error) {
 	var s Setup
 	var meta string
 	var created, deleted int64
 	if err := row.Scan(&s.ID, &s.Game, &s.Car, &s.Track, &s.Name, &s.RelPath, &s.ParentVersionID, &s.LinkKind, &s.LinkScore,
-		&s.Session, &s.SessionManual, &meta, &s.MetaManual, &s.Note, &created, &s.Fresh, &s.DiskVersionID, &deleted); err != nil {
+		&s.Session, &s.SessionManual, &meta, &s.MetaManual, &s.Note, &created, &s.Fresh, &s.DiskVersionID, &deleted,
+		&s.Ext, &s.Pack, &s.PackKey); err != nil {
 		return nil, err
 	}
 	_ = json.Unmarshal([]byte(meta), &s.Meta)
@@ -523,9 +534,9 @@ func (q Q) InsertSetup(s *Setup) error {
 	}
 	meta, _ := json.Marshal(s.Meta)
 	res, err := q.ex.Exec(`INSERT INTO setups (game, car, track, name, rel_path, parent_version_id, link_kind, link_score,
-		session, session_manual, meta, meta_manual, note, created_at, fresh, disk_version_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		session, session_manual, meta, meta_manual, note, created_at, fresh, disk_version_id, ext, pack, pack_key) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		s.Game, s.Car, s.Track, s.Name, nullStr(s.RelPath), nullID(s.ParentVersionID), s.LinkKind, s.LinkScore,
-		s.Session, s.SessionManual, string(meta), s.MetaManual, s.Note, ms(s.CreatedAt), s.Fresh, nullID(s.DiskVersionID))
+		s.Session, s.SessionManual, string(meta), s.MetaManual, s.Note, ms(s.CreatedAt), s.Fresh, nullID(s.DiskVersionID), s.Ext, s.Pack, s.PackKey)
 	if err != nil {
 		return err
 	}
@@ -563,8 +574,8 @@ func (q Q) InsertVersion(v *Version) error {
 	if err := q.ex.QueryRow(`SELECT COALESCE(MAX(seq),0)+1 FROM versions WHERE setup_id = ?`, v.SetupID).Scan(&v.Seq); err != nil {
 		return err
 	}
-	res, err := q.ex.Exec(`INSERT INTO versions (setup_id, seq, fingerprint, content, file_modified, observed_at, source, note)
-		VALUES (?,?,?,?,?,?,?,?)`, v.SetupID, v.Seq, v.Fingerprint, v.Content, ms(v.FileModified), ms(v.ObservedAt), v.Source, v.Note)
+	res, err := q.ex.Exec(`INSERT INTO versions (setup_id, seq, fingerprint, content, file_modified, observed_at, source, note, pack)
+		VALUES (?,?,?,?,?,?,?,?,?)`, v.SetupID, v.Seq, v.Fingerprint, v.Content, ms(v.FileModified), ms(v.ObservedAt), v.Source, v.Note, v.Pack)
 	if err != nil {
 		return err
 	}
@@ -772,10 +783,12 @@ type Session struct {
 	Track     string    `json:"track"`
 	Kind      string    `json:"kind"` // "practice", "qualifying", "race", …
 	StartedAt time.Time `json:"startedAt"`
-	SetupID   int64     `json:"setupId"`   // 0 = not known
-	VersionID int64     `json:"versionId"` //
-	Match     string    `json:"match"`     // "auto" (guessed), "manual" (set by the user) or "none"
-	Laps      int       `json:"laps"`      // filled in by SessionsForSetup
+	SetupID   int64     `json:"setupId"`       // 0 = not known
+	VersionID int64     `json:"versionId"`     //
+	Match     string    `json:"match"`         // "auto" (guessed), "manual" (set by the user) or "none"
+	Laps      int       `json:"laps"`          // filled in by SessionsForSetup
+	Ext       string    `json:"ext,omitempty"` // sender's initials of an imported session (D-201)
+	Pack      string    `json:"-"`
 }
 
 // Lap is one completed lap.
@@ -810,8 +823,8 @@ func (q Q) InsertSession(s *Session) error {
 	if s.Match == "" {
 		s.Match = "none"
 	}
-	res, err := q.ex.Exec(`INSERT INTO sessions (game, car, track, kind, started_at, setup_id, version_id, match) VALUES (?,?,?,?,?,?,?,?)`,
-		s.Game, s.Car, s.Track, s.Kind, ms(s.StartedAt), nullID(s.SetupID), nullID(s.VersionID), s.Match)
+	res, err := q.ex.Exec(`INSERT INTO sessions (game, car, track, kind, started_at, setup_id, version_id, match, ext, pack) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+		s.Game, s.Car, s.Track, s.Kind, ms(s.StartedAt), nullID(s.SetupID), nullID(s.VersionID), s.Match, s.Ext, s.Pack)
 	if err != nil {
 		return err
 	}
@@ -835,7 +848,7 @@ func (q Q) SetSessionSetup(sessionID, setupID, versionID int64, match string, mo
 // LatestSession returns the newest recorded session of a game, or nil.
 func (q Q) LatestSession(game string) (*Session, error) {
 	var id int64
-	err := q.ex.QueryRow(`SELECT id FROM sessions WHERE game = ? ORDER BY started_at DESC LIMIT 1`, game).Scan(&id)
+	err := q.ex.QueryRow(`SELECT id FROM sessions WHERE game = ? AND ext = '' ORDER BY started_at DESC LIMIT 1`, game).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -850,7 +863,7 @@ func (q Q) LatestSession(game string) (*Session, error) {
 func (q Q) PreviousSessionSetup(game, car, track string, beforeID int64, since time.Time) (int64, error) {
 	var id int64
 	err := q.ex.QueryRow(`SELECT COALESCE(setup_id, 0) FROM sessions WHERE game = ? AND car = ? AND LOWER(track) = LOWER(?) AND id < ?
-		AND setup_id IS NOT NULL AND started_at >= ? ORDER BY started_at DESC LIMIT 1`, game, car, track, beforeID, ms(since)).Scan(&id)
+		AND setup_id IS NOT NULL AND started_at >= ? AND ext = '' ORDER BY started_at DESC LIMIT 1`, game, car, track, beforeID, ms(since)).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, nil
 	}
@@ -878,8 +891,8 @@ func (q Q) SetLapsSetupSince(sessionID int64, since time.Time, setupID, versionI
 func (q Q) Session(id int64) (*Session, error) {
 	var s Session
 	var at int64
-	err := q.ex.QueryRow(`SELECT id, game, car, track, kind, started_at, COALESCE(setup_id,0), COALESCE(version_id,0), match FROM sessions WHERE id=?`, id).
-		Scan(&s.ID, &s.Game, &s.Car, &s.Track, &s.Kind, &at, &s.SetupID, &s.VersionID, &s.Match)
+	err := q.ex.QueryRow(`SELECT id, game, car, track, kind, started_at, COALESCE(setup_id,0), COALESCE(version_id,0), match, ext, pack FROM sessions WHERE id=?`, id).
+		Scan(&s.ID, &s.Game, &s.Car, &s.Track, &s.Kind, &at, &s.SetupID, &s.VersionID, &s.Match, &s.Ext, &s.Pack)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -962,18 +975,18 @@ func (q Q) LapsForSession(sessionID int64) ([]Lap, error) {
 
 // LapsForSetup returns every lap driven with a setup (any version), oldest first.
 func (q Q) LapsForSetup(setupID int64) ([]Lap, error) {
-	return q.laps(`WHERE l.setup_id = ?`, setupID)
+	return q.laps(`WHERE l.setup_id = ? AND s.ext = ''`, setupID) // the user's own laps (D-201)
 }
 
 // LapsForTrack returns every lap on a car and track (for the fuel calculator).
 func (q Q) LapsForTrack(game, car, track string) ([]Lap, error) {
-	return q.laps(`WHERE s.game = ? AND s.car = ? AND s.track = ?`, game, car, track)
+	return q.laps(`WHERE s.game = ? AND s.car = ? AND s.track = ? AND s.ext = ''`, game, car, track)
 }
 
 // LapsOnTrack returns every lap on a track with any car, oldest first, and the car of each
 // session (pit stop time loss, D-173).
 func (q Q) LapsOnTrack(game, track string) ([]Lap, map[int64]string, error) {
-	laps, err := q.laps(`WHERE s.game = ? AND LOWER(s.track) = LOWER(?)`, game, track)
+	laps, err := q.laps(`WHERE s.game = ? AND LOWER(s.track) = LOWER(?) AND s.ext = ''`, game, track)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -999,7 +1012,7 @@ func (q Q) SessionsForSetup(setupID int64) ([]Session, error) {
 	rows, err := q.ex.Query(`SELECT s.id, s.game, s.car, s.track, s.kind, s.started_at, COALESCE(s.setup_id,0), COALESCE(s.version_id,0), s.match,
 		(SELECT COUNT(*) FROM laps l WHERE l.session_id = s.id)
 		FROM sessions s WHERE (s.id IN (SELECT session_id FROM laps WHERE setup_id = ?) OR s.setup_id = ?)
-		AND EXISTS (SELECT 1 FROM laps l WHERE l.session_id = s.id) ORDER BY s.started_at DESC`, setupID, setupID) // sessions without a lap are left out (A-4)
+		AND s.ext = '' AND EXISTS (SELECT 1 FROM laps l WHERE l.session_id = s.id) ORDER BY s.started_at DESC`, setupID, setupID) // sessions without a lap are left out (A-4)
 	if err != nil {
 		return nil, err
 	}
@@ -1021,7 +1034,7 @@ func (q Q) SessionsForSetup(setupID int64) ([]Session, error) {
 func (q Q) UnassignedSessions(game, car, track string) ([]Session, error) {
 	rows, err := q.ex.Query(`SELECT s.id, s.game, s.car, s.track, s.kind, s.started_at, s.match,
 		(SELECT COUNT(*) FROM laps l WHERE l.session_id = s.id) AS n
-		FROM sessions s WHERE s.game = ? AND s.car = ? AND s.track = ? AND s.setup_id IS NULL
+		FROM sessions s WHERE s.game = ? AND s.car = ? AND s.track = ? AND s.setup_id IS NULL AND s.ext = ''
 		AND EXISTS (SELECT 1 FROM laps l WHERE l.session_id = s.id) ORDER BY s.started_at DESC`, game, car, track)
 	if err != nil {
 		return nil, err

@@ -16,12 +16,13 @@ import { SimilarityGrid } from "../components/SimilarityGrid.js";
 import { CompareTable } from "../components/CompareTable.js";
 import { SessionBadge, FamilyNode } from "../components/FamilyTree.js";
 import { DuplicatesDialog } from "../components/Duplicates.js";
+import { ExtBadge, addSetupsToPack, openPackFile } from "../components/DataPack.js";
 
 const TABS = [["setups", "Setups"], ["compare", "Compare"], ["map", "Similarity map"], ["families", "Families"]];
 const SESSION_RANK = { Q: 1, R: 2, Endurance: 3 };
 
 export const TrackPage = {
-  components: { Loading, SimilarityGrid, CompareTable, SessionBadge, FamilyNode, DuplicatesDialog },
+  components: { Loading, SimilarityGrid, CompareTable, SessionBadge, FamilyNode, DuplicatesDialog, ExtBadge },
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -40,9 +41,10 @@ export const TrackPage = {
       const d = data.value;
       if (!d) return [];
       const pos = new Map(d.clusters.order.map((s, i) => [s, i + 1]));
-      const shown = d.setups.map((s, i) => ({ key: "s" + i, i, id: d.setupIds[i], name: s.name, date: s.modified, session: d.sessions[i],
+      const ext = d.external || {};
+      const shown = d.setups.map((s, i) => ({ key: "s" + i, i, id: d.setupIds[i], ext: ext[d.setupIds[i]] || "", name: s.name, date: s.modified, session: d.sessions[i],
         version: d.versions?.[i] || "", guessed: !!d.versionGuessed?.[i], inAcc: true, group: d.clusters.cluster[i], pos: pos.get(i) }));
-      const hidden = d.removed.map((r) => ({ key: "r" + r.id, i: -1, id: r.id, name: r.name, date: r.date, session: r.session, version: r.version || "", guessed: !!r.versionGuessed, inAcc: false, group: 0, pos: 999 }));
+      const hidden = d.removed.map((r) => ({ key: "r" + r.id, i: -1, id: r.id, ext: ext[r.id] || "", name: r.name, date: r.date, session: r.session, version: r.version || "", guessed: !!r.versionGuessed, inAcc: false, group: 0, pos: 999 }));
       return [...shown, ...hidden];
     });
 
@@ -200,6 +202,12 @@ export const TrackPage = {
       if (!list.length || busy.value || !data.value) return;
       busy.value = true;
       try {
+        // a data pack (D-201) opens its own window; other ZIP files are setup files
+        const zips = list.filter((f) => f.name.toLowerCase().endsWith(".zip"));
+        const packs = [];
+        for (const z of zips) if (await openPackFile(z)) packs.push(z);
+        list = list.filter((f) => !packs.includes(f));
+        if (!list.length) return;
         const d = data.value;
         const files = await readFiles(list);
         imported.value = await post(`/api/games/${enc(d.game.id)}/cars/${enc(d.car.id)}/tracks/${enc(d.track.id)}/import`, { files });
@@ -210,7 +218,9 @@ export const TrackPage = {
     // Clicking anywhere on a row selects it, except on its links and buttons.
     function rowClick(e, r) { if (!e.target.closest("a, button, input, select, label")) toggle(r); }
     const G = computed(() => data.value?.game?.short || "the game"); // short game name, e.g. "AC EVO"
-    return { G, autoPicked, selCount, chosenLaps, rowClick, delBlocked, delIds, data, error, TABS, tab, setTab, tabCount, sorted, sortBy, sortMark, selected, isSel, toggle, allSelected, toggleAll, dupDlg,
+    function addToPack() { addSetupsToPack(rows.value.filter((r) => r.id && isSel(r) && !r.ext)); }
+    const selOwn = computed(() => rows.value.some((r) => r.id && isSel(r) && !r.ext));
+    return { addToPack, selOwn, G, autoPicked, selCount, chosenLaps, rowClick, delBlocked, delIds, data, error, TABS, tab, setTab, tabCount, sorted, sortBy, sortMark, selected, isSel, toggle, allSelected, toggleAll, dupDlg,
       selShown, selHidden, chosen, pair, pickPair, groupCount, unassigned, assign, rows, families, bigFamilies, loners,
       busy, freshSetups, stage, unstage, keep, hideSelected, showSelected, showOnlySelected, tidyNames, downloadIds, delDlg, askDelete, doDelete,
       importFiles, imported, dateTime, pct, plural, kindLabel };
@@ -291,6 +301,7 @@ export const TrackPage = {
               <button type="button" class="btn btn-sm" :disabled="busy || !selHidden.length" @click="showSelected">Show in {{ G }}</button>
             </template>
             <button v-if="!data.game.readOnly" type="button" class="btn btn-sm" :disabled="busy || !selected.length" @click="tidyNames" title="Initials, session, temperature, game version, your codes, then the rest of the old name">Apply naming standard</button>
+            <button type="button" class="btn btn-sm" :disabled="!selOwn" @click="addToPack" title="Send setups with your laps and telemetry to other SetupMan users (one .zip file)">Add to data pack</button>
             <a class="btn btn-sm btn-quiet" :href="'/api/export?ids=' + downloadIds" download :title="data.game.readOnly ? 'The settings of each setup, as SetupMan read them, in a .zip' : 'Plain ' + G + ' setup files (' + data.game.ext + ') in a .zip, without SetupMan notes'">Download {{ selected.length ? 'selected' : 'all' }}</a>
             <template v-if="!data.game.readOnly">
               <button type="button" class="btn btn-sm btn-danger" :disabled="busy || !selected.length" @click="askDelete">Delete…</button>
@@ -315,7 +326,7 @@ export const TrackPage = {
               <tr v-for="r in sorted" :key="r.key" :class="{ chosen: isSel(r), 'st-hidden': !r.inAcc }" @click="rowClick($event, r)">
                 <td class="st-check"><input type="checkbox" :checked="isSel(r)" @change="toggle(r)" :aria-label="'Select ' + r.name"></td>
                 <td class="st-num"><span class="sl-num" :class="r.group ? 'grp grp-' + ((r.group - 1) % 6) : ''" :title="r.group ? 'Same colour = duplicate set ' + r.group : ''">{{ r.inAcc ? r.pos : '–' }}</span></td>
-                <td class="st-name"><router-link v-if="r.id" :to="'/setup/' + r.id">{{ r.name }}</router-link><template v-else>{{ r.name }}</template> <span class="st-ses-inline"><SessionBadge :session="r.session" small /></span></td>
+                <td class="st-name"><router-link v-if="r.id" :to="'/setup/' + r.id">{{ r.name }}</router-link><template v-else>{{ r.name }}</template> <ExtBadge :by="r.ext" /> <span class="st-ses-inline"><SessionBadge :session="r.session" small /></span></td>
                 <td class="st-ses"><SessionBadge :session="r.session" small /></td>
                 <td class="st-ver"><span v-if="r.version" :class="{ 'ver-est': r.guessed }" :title="r.guessed ? 'Estimated from the date the setup was last saved' : 'From the setup name'">{{ r.version }}</span></td>
                 <td class="st-date">{{ r.date ? dateTime(r.date) : '' }}</td>

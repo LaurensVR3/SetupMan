@@ -29,6 +29,7 @@ const (
 	ReasonManual         = "Created by you"
 	ReasonFullBackup     = "Part of a full SetupMan backup"
 	ReasonTelemetryLaps  = "Before setting telemetry laps to 99"
+	ReasonDataPack       = "Before putting setups from a data pack in the folder"
 	reasonBeforeRestore  = "Automatic, before restoring the backup of %s"
 )
 

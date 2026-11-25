@@ -5,6 +5,7 @@ import { post, needPin } from "./api.js";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { store, loadSettings, listen } from "./store.js";
 import { TopBar } from "./components/common.js";
+import { DataPackDialog, PackImportDialog, PackChip } from "./components/DataPack.js";
 import { OverviewPage } from "./pages/OverviewPage.js";
 import { GamePage } from "./pages/GamePage.js";
 import { CarPage } from "./pages/CarPage.js";
@@ -66,7 +67,7 @@ const PinScreen = {
 };
 
 const App = {
-  components: { TopBar, PinScreen },
+  components: { TopBar, PinScreen, DataPackDialog, PackImportDialog, PackChip },
   setup: () => ({ store, needPin }),
   template: `
     <PinScreen v-if="needPin" />
@@ -74,6 +75,9 @@ const App = {
     <TopBar />
     <!-- Pages are keyed by path, not fullPath: switching tabs (?tab=) keeps the page and its selection. -->
     <router-view v-if="store.settings" v-slot="{ Component, route }"><component :is="Component" :key="route.path" /></router-view>
+    <DataPackDialog v-if="store.settings" />
+    <PackImportDialog v-if="store.settings" />
+    <PackChip />
     <div v-if="store.toast" class="toast" role="status">{{ store.toast }}</div>
     <div v-if="store.dropHint" class="drop-overlay" aria-hidden="true"><div class="drop-box">{{ store.dropHint }}</div></div>
     </template>`,

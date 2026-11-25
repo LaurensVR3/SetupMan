@@ -13,6 +13,7 @@ import { lapTime } from "../components/LapTimes.js";
 import { when, kindLabel } from "../telemetry.js";
 import { lapTrack, series, delta, valueAt, signed, lapColors, parseLaps, lapKey, aligner, sameLap, PRESETS, CAR_FAMILIES, WHEELS } from "../telemetry.js";
 import { showToast } from "../store.js";
+import { ExtBadge, addLapsToPack } from "../components/DataPack.js";
 
 const ALWAYS = ["SPEED", "THROTTLE", "BRAKE"]; // corner table
 const CAR = CAR_FAMILIES.flatMap((f) => WHEELS.map(([, ld]) => f.base + "_" + ld));
@@ -111,7 +112,7 @@ function brakePoint(s, a, apex) {
 }
 
 export const AnalysisPage = {
-  components: { Loading, TeleChart, TeleMap, TeleCar, Tele3D },
+  components: { Loading, TeleChart, TeleMap, TeleCar, Tele3D, ExtBadge },
   setup() {
     const route = useRoute(), router = useRouter();
     const req = ref(parseLaps(route.query.laps));
@@ -427,8 +428,10 @@ export const AnalysisPage = {
     const clock = (t) => { const m = Math.floor(t / 60); return m > 0 ? `${m}:${(t - m * 60).toFixed(2).padStart(5, "0")}` : t.toFixed(2) + " s"; };
     const pct = (v) => (v === null ? "–" : v.toFixed(0) + "%");
     const kmh = (v) => (v === null ? "–" : v.toFixed(0));
+    // data packs (D-201): this lap with its telemetry
+    const addToPack = (l) => addLapsToPack([{ fileId: l.fileId, n: l.n, label: lapTime(l.meta.lapMs) + " · " + [l.file.carName, l.setup || l.when, "lap " + l.meta.lap].filter(Boolean).join(", ") }]);
 
-    return { req, laps, ready, badLap, sameTrack, sameCar, error, colors, view, charts, deltas, carLaps, map, atCursor, corners, PRESETS, preset, setPreset,
+    return { addToPack, req, laps, ready, badLap, sameTrack, sameCar, error, colors, view, charts, deltas, carLaps, map, atCursor, corners, PRESETS, preset, setPreset,
       picker, pickQ, groups, shownChannels, toggleChannel, removeChart, zoomTo, wholeLap, makeFirst, removeLap, finalDelta, backTo,
       facts, extremes, total, bar, mapCorners, toggleRef, officialTurns, pct, kmh, lapTime, signed, clock, kindLabel, map3d, laps3d, channels3d };
   },
@@ -453,6 +456,7 @@ export const AnalysisPage = {
           <li v-for="(l, i) in laps" :key="l.key" class="ta-lap" :style="{ '--c': l.color }">
             <span class="ta-lap-top">
               <span class="ta-lap-name">{{ l.label }}</span>
+              <ExtBadge :by="l.file.ext" />
               <span v-if="i === 0 && laps.length > 1" class="ta-lap-role">compared against</span>
             </span>
             <span class="ta-lap-time">{{ lapTime(l.meta.lapMs) }}</span>
@@ -463,6 +467,7 @@ export const AnalysisPage = {
               <button v-if="i" type="button" class="btn-link" @click="makeFirst(i)" title="Compare the other laps with this one">Compare against this</button>
               <button v-if="l.meta.complete" type="button" class="btn-link ta-ref" :class="{ on: l.meta.reference }" @click="toggleRef(l)" :aria-pressed="!!l.meta.reference"
                 :title="l.meta.reference ? 'Reference lap for the ' + l.file.carName + ' on this track. Click to clear.' : 'Make this the reference lap for the ' + l.file.carName + ' on this track (one per car)'">{{ l.meta.reference ? '★ Reference lap' : '☆ Make reference' }}</button>
+              <button v-if="!l.file.ext" type="button" class="btn-link" @click="addToPack(l)" title="Send this lap with its telemetry to other SetupMan users">Add to data pack</button>
               <button v-if="laps.length > 1" type="button" class="btn-link" @click="removeLap(i)">Remove</button>
             </span>
           </li>

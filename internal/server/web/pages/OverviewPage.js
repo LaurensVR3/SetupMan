@@ -8,6 +8,7 @@ import { ago, eventText, sentence } from "../format.js";
 import { usePageData } from "./load.js";
 import { Stat, EmptyState, Loading, setCrumbs } from "../components/common.js";
 import { LastOpenedNotice } from "../components/LastOpenedNotice.js";
+import { openPackFile } from "../components/DataPack.js";
 
 export const OverviewPage = {
   components: { Stat, EmptyState, Loading, LastOpenedNotice },
@@ -46,7 +47,7 @@ export const OverviewPage = {
     function hideGuide() {
       try { localStorage.setItem("setupman.guideHidden", "1"); } catch {}
     }
-    // Open setups someone shared with you (.setupman files, D-94).
+    // Open what someone sent you: data packs (.zip, D-201) and shared setups (.setupman, D-94).
     const router = useRouter();
     const opening = ref(false);
     const shared = ref(null);
@@ -55,11 +56,20 @@ export const OverviewPage = {
       ev.target.value = "";
       await openList(list);
     }
-    useDrop("Drop shared setups (.setupman) to add them to your library", openList);
+    useDrop("Drop a data pack (.zip) or shared setups (.setupman) to add them to your library", openList);
     async function openList(all) {
+      if (opening.value) return;
+      const zips = all.filter((f) => f.name.toLowerCase().endsWith(".zip"));
       const list = all.filter((f) => f.name.toLowerCase().endsWith(".setupman"));
-      if (list.length < all.length) showToast("Setup files (.json or .zip) don't say which track they are for: open the car's track page and drop them there.", 9000);
-      if (!list.length || opening.value) return;
+      if (zips.length) {
+        opening.value = true;
+        try {
+          if (!(await openPackFile(zips[0]))) showToast("This ZIP file is not a data pack. ZIP files of setups don't say which track they are for: open the car's track page and drop them there.", 9000);
+        } finally { opening.value = false; }
+        return;
+      }
+      if (list.length < all.length) showToast("Setup files don't say which track they are for: open the car's track page and drop them there.", 9000);
+      if (!list.length) return;
       opening.value = true;
       try {
         const files = await readFiles(list);
@@ -77,7 +87,7 @@ export const OverviewPage = {
     <main class="page">
       <div class="page-head-row">
         <h1 class="page-title">Games</h1>
-        <label class="btn btn-file">{{ opening ? 'Opening…' : 'Open a shared setup…' }}<input type="file" accept=".setupman" multiple :disabled="opening" @change="openShared"></label>
+        <label class="btn btn-file" title="A data pack (.zip) or shared setups (.setupman) someone sent you">{{ opening ? 'Opening…' : 'Open data pack…' }}<input type="file" accept=".zip,.setupman" multiple :disabled="opening" @change="openShared"></label>
       </div>
       <div v-if="shared" class="import-result" role="status">
         <p><b>{{ shared.imported }} shared setup{{ shared.imported === 1 ? '' : 's' }} added to your library</b><template v-if="shared.skipped">, {{ shared.skipped }} skipped</template>.</p>

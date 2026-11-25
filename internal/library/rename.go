@@ -31,7 +31,7 @@ func (l *Library) SuggestedName(setupID int64) string {
 		return ""
 	}
 	s, err := l.db.Setup(setupID)
-	if err != nil || s == nil {
+	if err != nil || s == nil || s.Ext != "" { // a setup from a data pack keeps the sender's name (D-201)
 		return ""
 	}
 	wet := false

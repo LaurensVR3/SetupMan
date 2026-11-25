@@ -119,6 +119,12 @@ func (s *Store) Create(reason string, db Snapshotter, folderZips map[FolderRef]s
 			files[TelemetryDir+"/"+filepath.Base(p)] = p
 		}
 	}
+	// telemetry from imported data packs (D-201): SetupMan's own copies, in telemetry/packs/<pack>/
+	if packs, _ := filepath.Glob(filepath.Join(s.DataDir, TelemetryDir, "packs", "*", "*.ld*")); len(packs) > 0 {
+		for _, p := range packs {
+			files[TelemetryDir+"/packs/"+filepath.Base(filepath.Dir(p))+"/"+filepath.Base(p)] = p
+		}
+	}
 	m := Manifest{Kind: "setupman-full-backup", Version: 1, CreatedAt: time.Now(), Reason: reason, Files: map[string]string{}}
 	for ref, p := range folderZips {
 		files[folderEntry(ref)] = p
@@ -387,6 +393,20 @@ func (s *Store) extractAll(pending, folderDir string) error {
 			dst = filepath.Join(folderDir, parts[1], path.Base(f.Name))
 			if fileExists(dst) {
 				continue // already there
+			}
+		case strings.HasPrefix(f.Name, TelemetryDir+"/packs/"):
+			parts := strings.Split(f.Name, "/")
+			name := ""
+			if len(parts) == 4 {
+				name = parts[3]
+			}
+			ext := path.Ext(name)
+			if len(parts) != 4 || !validID(parts[2]) || (ext != ".ld" && ext != ".ldx") || !validID(strings.ReplaceAll(strings.TrimSuffix(name, ext), ".", "_")) {
+				continue
+			}
+			dst = filepath.Join(s.DataDir, TelemetryDir, "packs", parts[2], name)
+			if fileExists(dst) {
+				continue
 			}
 		case strings.HasPrefix(f.Name, TelemetryDir+"/") && strings.HasSuffix(f.Name, ".smx.gz"):
 			base := strings.TrimSuffix(path.Base(f.Name), ".smx.gz")

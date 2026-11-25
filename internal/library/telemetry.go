@@ -725,7 +725,7 @@ func (l *Library) TelemetryOverview(gameID string) (TeleOverview, error) {
 		}
 		c.Files++
 		c.Laps += f.Laps
-		if f.BestMs > 0 && (c.BestMs == 0 || f.BestMs < c.BestMs) {
+		if f.BestMs > 0 && f.Ext == "" && (c.BestMs == 0 || f.BestMs < c.BestMs) {
 			c.BestMs = f.BestMs
 		}
 		if f.StartedAt.After(c.Last) {
@@ -734,7 +734,7 @@ func (l *Library) TelemetryOverview(gameID string) (TeleOverview, error) {
 		tt.Files++
 		tt.Laps += f.Laps
 		tt.Bytes += f.Size
-		if f.BestMs > 0 && (tt.BestMs == 0 || f.BestMs < tt.BestMs) {
+		if f.BestMs > 0 && f.Ext == "" && (tt.BestMs == 0 || f.BestMs < tt.BestMs) {
 			tt.BestMs, tt.BestCar = f.BestMs, c.CarName
 		}
 		if f.StartedAt.After(tt.Last) {
@@ -780,7 +780,7 @@ func (l *Library) TelemetryOverview(gameID string) (TeleOverview, error) {
 		if len(ov.Recent) == 6 {
 			break
 		}
-		if f.Laps > 0 {
+		if f.Laps > 0 && f.Ext == "" { // your own latest sessions
 			v := l.teleView(f)
 			v.Outline = l.outline(gameID, f.Track)
 			ov.Recent = append(ov.Recent, v)
@@ -884,10 +884,14 @@ func (l *Library) teleOpen(f *store.TeleFile) (*motec.File, error) {
 		return nil, history.ErrNotFound
 	}
 	folder := l.teleFolder(g)
-	if folder == "" || f.Missing {
+	if (folder == "" && f.Pack == "") || f.Missing {
 		return nil, ErrTeleGone
 	}
-	lf, err := motec.Open(filepath.Join(folder, f.Name))
+	path := filepath.Join(folder, f.Name)
+	if f.Pack != "" { // from a data pack: in SetupMan's own folder (D-201)
+		path = filepath.Join(l.PacksDir(), filepath.FromSlash(f.Name))
+	}
+	lf, err := motec.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrTeleGone
 	}
@@ -1179,7 +1183,7 @@ func (l *Library) TelemetryTrack(gameID, track string) (*TeleTrackView, error) {
 		if f.Laps > 0 {
 			c.Files++
 			c.Laps += f.Laps
-			if f.BestMs > 0 && (c.BestMs == 0 || f.BestMs < c.BestMs) {
+			if f.BestMs > 0 && f.Ext == "" && (c.BestMs == 0 || f.BestMs < c.BestMs) {
 				c.BestMs = f.BestMs
 			}
 		}

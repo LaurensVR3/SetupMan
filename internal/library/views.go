@@ -114,6 +114,8 @@ type TrackDetail struct {
 	Fresh          []int64  `json:"fresh"` // setup ids of new in-game saves (D-80)
 	Managed        bool     `json:"managed"`
 	Queued         int      `json:"queued"`
+	// External: setups from someone else's data pack, setup id → the sender's initials (D-201)
+	External map[int64]string `json:"external"`
 }
 
 // RemovedSetup is a setup that only exists in the library now.
@@ -213,7 +215,7 @@ func (l *Library) Track(id, carID, trackID string) (TrackDetail, bool) {
 			Setups: t.Setups, Pairs: summarizePairs(t.Pairs), Clusters: l.cluster(t), Threshold: l.settings.Threshold,
 			SetupIDs: make([]int64, len(t.Setups)), Sessions: make([]string, len(t.Setups)), Removed: []RemovedSetup{},
 			Versions: make([]string, len(t.Setups)), VersionGuessed: make([]bool, len(t.Setups)),
-			Fresh: []int64{}, Managed: l.managedLocked(g), Queued: l.QueuedCount(),
+			Fresh: []int64{}, Managed: l.managedLocked(g), Queued: l.QueuedCount(), External: map[int64]string{},
 		}
 		if l.db != nil {
 			if lib, err := l.db.SetupsForTrack(id, c.ID, t.ID); err == nil {
@@ -222,6 +224,9 @@ func (l *Library) Track(id, carID, trackID string) (TrackDetail, bool) {
 					byPath[strings.ToLower(s.RelPath)] = i
 				}
 				for _, ls := range lib {
+					if ls.Ext != "" {
+						d.External[ls.ID] = ls.Ext
+					}
 					if ls.RelPath == "" {
 						saved := ls.CreatedAt
 						if v, _ := l.db.LatestVersion(ls.ID); v != nil && !v.FileModified.IsZero() {

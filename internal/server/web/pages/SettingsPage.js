@@ -10,8 +10,9 @@ import { FolderPicker } from "../components/FolderPicker.js";
 import { FamilyTree } from "../components/FamilyTree.js";
 import { LastOpenedNotice } from "../components/LastOpenedNotice.js";
 import { TeleLapsDialog } from "../components/TeleLaps.js";
+import { ExtBadge, openPackFile } from "../components/DataPack.js";
 
-const TABS = [["general", "General"], ["games", "Games"], ["telemetry", "Telemetry"], ["compare", "Comparing & history"], ["backups", "Backups & bin"], ["network", "Network"], ["about", "About"]];
+const TABS = [["general", "General"], ["games", "Games"], ["telemetry", "Telemetry"], ["compare", "Comparing & history"], ["backups", "Backups & bin"], ["packs", "Data packs"], ["network", "Network"], ["about", "About"]];
 
 // About → Features per game: true = yes, false = no, text = yes with a remark.
 const FEATURE_GAMES = ["ACC", "AC", "AC EVO", "AC Rally"];
@@ -25,12 +26,12 @@ const FEATURES = [
   ["Pit stop advice", true, true, false, false],
   ["Adjust for temperature", true, true, false, false],
   ["Race prep and fuel calculator", true, true, true, false],
-  ["Share and import", true, true, true, false],
+  ["Data packs: share and import setups and laps", true, true, true, false],
   ["Download and backups", true, true, true, true],
 ];
 
 export const SettingsPage = {
-  components: { FolderPicker, FamilyTree, LastOpenedNotice, TeleLapsDialog },
+  components: { FolderPicker, FamilyTree, LastOpenedNotice, TeleLapsDialog, ExtBadge },
   setup() {
     setCrumbs([{ label: "Settings", to: "/settings" }]);
     const games = ref([]);
@@ -249,8 +250,28 @@ export const SettingsPage = {
       catch (e) { showToast(e.message, 7000); }
     }
 
-    onMounted(async () => { await loadGames(); loadAutostart(); loadBackups(); loadFull(); loadBin(); loadNetwork(); loadTempAuthors(); });
-    watch(() => store.version, loadAutostart); // changed from the tray menu
+    // Imported data packs (D-201): what each brought, and Remove.
+    const packs = reactive({ list: [], asking: null, busy: false });
+    const packDlg = ref(null);
+    const loadPacks = async () => { packs.list = await get("/api/datapacks").catch(() => []); };
+    function askRemovePack(p) { packs.asking = p; packDlg.value.showModal(); }
+    async function removePack() {
+      packs.busy = true;
+      try {
+        const r = await api("DELETE", "/api/datapacks/" + packs.asking.id, {});
+        showToast(`Removed ${packs.asking.by}'s data pack: ${r.setups} setup${r.setups === 1 ? "" : "s"} and ${r.laps} lap${r.laps === 1 ? "" : "s"}.` + (r.kept ? ` ${r.kept} setup${r.kept === 1 ? " is" : "s are"} in the game folder and stay${r.kept === 1 ? "s" : ""}.` : ""), 9000);
+        packDlg.value.close();
+        loadPacks();
+      } catch (e) { showToast(e.message, 7000); } finally { packs.busy = false; }
+    }
+    async function openPack(ev) {
+      const f = ev.target.files[0];
+      ev.target.value = "";
+      if (f && !(await openPackFile(f))) showToast("This ZIP file is not a data pack. To add setup files, drop them on the car's track page.", 9000);
+    }
+
+    onMounted(async () => { await loadGames(); loadAutostart(); loadBackups(); loadFull(); loadBin(); loadNetwork(); loadTempAuthors(); loadPacks(); });
+    watch(() => store.version, () => { loadAutostart(); loadPacks(); }); // changed from the tray menu, or a pack imported
 
     function flashSaved() {
       saved.value = "Saved";
@@ -289,7 +310,7 @@ export const SettingsPage = {
     const trackLabel = (id) => id.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
     const kb = (n) => (n >= 1 << 20 ? (n / (1 << 20)).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
     async function deleteKept(track) { // photos belong to the track, whichever game drove it
-      try { await api("DELETE", `/api/telemetry/3d/acc/${enc(track)}/photos`); await loadKeptPhotos(); }
+      try { await api("DELETE", `/api/telemetry/3d/acc/${enc(track)}/photos`, {}); await loadKeptPhotos(); }
       catch (e) { showToast(e.message); }
     }
     const initials = ref(store.settings?.initials || "");
@@ -434,7 +455,7 @@ export const SettingsPage = {
     return { issueUrl, lfmId, saveLfm, mapTilerKey, showKey, saveMapTiler, keptPhotos, trackLabel, kb, deleteKept, teleGames, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
       hist, preview, applyHistory, countNodes, setEndurance, autostart, setAutostart,
       manage, setManaged, setTidy, setAutoRename, teleLapsDlg, teleLapsGame, openTeleLaps, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
-      teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, setPitStill, TABS, FEATURE_GAMES, FEATURES, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
+      teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, setPitStill, TABS, FEATURE_GAMES, FEATURES, packs, packDlg, askRemovePack, removePack, openPack, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
   },
   template: `
     <main class="page page-narrow">
@@ -792,6 +813,36 @@ export const SettingsPage = {
             <p v-else class="panel-hint">The bin is empty.</p>
           </div>
         </section>
+
+        <section v-if="tab === 'packs'" class="settings-section">
+          <h2>Data packs</h2>
+          <div class="setting setting-stack">
+            <div class="setting-text">
+              <p>Data packs other SetupMan users sent you. Their setups and laps carry the External badge with the sender's initials; their laps can be compared with yours but never count as your own. Remove takes out everything a pack brought (setups you put in the game folder stay).</p>
+              <p class="muted-small">To send your own: <b>Add to data pack</b> on a setup page, the setup list of a track page, a Telemetry session or Lap analysis.</p>
+            </div>
+            <ul v-if="packs.list.length" class="backup-list">
+              <li v-for="p in packs.list" :key="p.id">
+                <span class="bk-when"><ExtBadge :by="p.by" /> {{ p.summary || 'Empty' }}</span>
+                <span class="bk-why">Made {{ dateTime(p.created) }}, imported {{ dateTime(p.imported) }}. Now {{ p.setups }} setup{{ p.setups === 1 ? '' : 's' }}, {{ p.laps }} lap{{ p.laps === 1 ? '' : 's' }} in SetupMan.</span>
+                <span class="bk-actions"><button type="button" class="btn btn-sm btn-danger" @click="askRemovePack(p)">Remove…</button></span>
+              </li>
+            </ul>
+            <p v-else class="panel-hint">No data packs imported yet.</p>
+            <label class="btn btn-file">Open data pack…<input type="file" accept=".zip" @change="openPack"></label>
+          </div>
+        </section>
+
+        <dialog ref="packDlg" class="confirm" @close="packs.asking = null">
+          <template v-if="packs.asking">
+            <h2>Remove {{ packs.asking.by }}'s data pack?</h2>
+            <p>{{ packs.asking.summary }}. Its setups, laps and telemetry are removed from SetupMan. Setups from it that you put in the game folder stay, as do laps you drove yourself with its setups (without a setup).</p>
+            <div class="picker-actions">
+              <button type="button" class="btn" @click="packDlg.close()">Cancel</button>
+              <button type="button" class="btn btn-danger-solid" :disabled="packs.busy" @click="removePack">{{ packs.busy ? 'Removing…' : 'Remove' }}</button>
+            </div>
+          </template>
+        </dialog>
 
         <dialog ref="confirmDlg" class="confirm" @close="restore.open = false">
           <template v-if="restore.backup">

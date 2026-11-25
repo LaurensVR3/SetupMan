@@ -150,6 +150,8 @@ type TeleFile struct {
 	Laps       int       `json:"laps"`              // full laps of the session
 	BestMs     int       `json:"bestMs"`            // best full lap that was not invalid (0 = none)
 	KeptBy     int64     `json:"keptBy,omitempty"`  // the save of the same session that is shown
+	Ext        string    `json:"ext,omitempty"`     // sender's initials of a file from a data pack (D-201)
+	Pack       string    `json:"-"`                 // that pack (its files are in SetupMan's own folder)
 }
 
 // TeleLap is one lap of a telemetry file, with what SetupMan recorded about it when linked.
@@ -182,6 +184,8 @@ type TeleLap struct {
 	// LapSetupName is filled in by the library where it shows a session's laps.
 	LapSetupID   int64  `json:"lapSetupId,omitempty"`
 	LapSetupName string `json:"lapSetupName,omitempty"`
+	// Ext: the sender's initials of a lap from a data pack (D-201); never counted as the user's own
+	Ext string `json:"ext,omitempty"`
 }
 
 // TeleKnown is what the indexer needs to know about a file it indexed before.
@@ -194,7 +198,7 @@ type TeleKnown struct {
 
 // TelemetryKnown returns the files indexed for a game, by lower-case name.
 func (q Q) TelemetryKnown(game string) (map[string]TeleKnown, error) {
-	rows, err := q.ex.Query(`SELECT id, name, size, mtime, missing FROM telemetry_files WHERE game = ?`, game)
+	rows, err := q.ex.Query(`SELECT id, name, size, mtime, missing FROM telemetry_files WHERE game = ? AND ext = ''`, game) // not data-pack files (D-201)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +293,7 @@ const teleSelect = `SELECT f.id, f.game, f.name, f.size, f.mtime, f.car, f.track
 	(SELECT COUNT(*) FROM telemetry_laps t WHERE t.sess_file = k.id AND t.dup = 0 AND t.full = 1),
 	COALESCE((SELECT MIN(t.lap_ms) FROM telemetry_laps t LEFT JOIN laps l ON l.id = t.lap_id
 		WHERE t.sess_file = k.id AND t.dup = 0 AND t.full = 1 AND COALESCE(l.valid, 1) = 1), 0),
-	f.kept_by
+	f.kept_by, f.ext, f.pack
 	FROM telemetry_files f JOIN telemetry_files k ON k.id = CASE WHEN f.kept_by > 0 THEN f.kept_by ELSE f.id END
 	LEFT JOIN sessions s ON s.id = k.session_id `
 
@@ -300,7 +304,7 @@ func scanTele(rows *sql.Rows) ([]TeleFile, error) {
 		var f TeleFile
 		var mt, st int64
 		if err := rows.Scan(&f.ID, &f.Game, &f.Name, &f.Size, &mt, &f.Car, &f.Track, &st, &f.DurationMs, &f.Channels,
-			&f.SessionID, &f.Kind, &f.SetupID, &f.VersionID, &f.Match, &f.Note, &f.Missing, &f.Laps, &f.BestMs, &f.KeptBy); err != nil {
+			&f.SessionID, &f.Kind, &f.SetupID, &f.VersionID, &f.Match, &f.Note, &f.Missing, &f.Laps, &f.BestMs, &f.KeptBy, &f.Ext, &f.Pack); err != nil {
 			return nil, err
 		}
 		f.Modified, f.StartedAt = fromMS(mt), fromMS(st)
@@ -365,7 +369,8 @@ func (q Q) TelemetryFile(id int64) (*TeleFile, error) {
 // earlier save, from the same lap of the save the session is shown as (kt).
 const lapSelect = `SELECT t.file_id, t.n, t.sess_n, t.start_ms, t.lap_ms, t.full, t.complete, t.dist_m, t.turns, t.profile,
 	COALESCE(t.lap_id, kt.lap_id, 0), t.reference, t.note,
-	l.valid, COALESCE(l.pit, 0), COALESCE(l.fuel_used, 0), l.air, l.road, COALESCE(l.session_id, 0), COALESCE(l.setup_id, 0)`
+	l.valid, COALESCE(l.pit, 0), COALESCE(l.fuel_used, 0), l.air, l.road, COALESCE(l.session_id, 0), COALESCE(l.setup_id, 0),
+	(SELECT ext FROM telemetry_files WHERE id = t.file_id)`
 
 const lapFrom = ` FROM telemetry_laps t
 	LEFT JOIN telemetry_laps kt ON kt.file_id = t.sess_file AND kt.sess_n = t.sess_n AND kt.file_id <> t.file_id
@@ -375,7 +380,7 @@ func scanLap(rows *sql.Rows, l *TeleLap, more ...any) error {
 	var valid sql.NullBool
 	var air, road sql.NullFloat64
 	dst := append([]any{&l.FileID, &l.N, &l.Lap, &l.StartMs, &l.LapMs, &l.Complete, &l.Timed, &l.DistM, &l.Turns, &l.Profile,
-		&l.LapID, &l.Reference, &l.Note, &valid, &l.Pit, &l.FuelUsed, &air, &road, &l.SessionID, &l.LapSetupID}, more...)
+		&l.LapID, &l.Reference, &l.Note, &valid, &l.Pit, &l.FuelUsed, &air, &road, &l.SessionID, &l.LapSetupID, &l.Ext}, more...)
 	if err := rows.Scan(dst...); err != nil {
 		return err
 	}
@@ -428,7 +433,7 @@ func (q Q) TelemetrySessionLaps(fileID int64) ([]TeleLap, error) {
 func (q Q) TelemetryUnlinked(game string) ([]TeleFile, error) {
 	// with the file's own start: recorded laps are matched by their times in this file
 	own := strings.Replace(teleSelect, "f.track, k.started_at,", "f.track, f.started_at,", 1)
-	rows, err := q.ex.Query(own+`WHERE f.game = ? AND f.match = 'none' AND f.missing = 0`, game)
+	rows, err := q.ex.Query(own+`WHERE f.game = ? AND f.match = 'none' AND f.missing = 0 AND f.ext = ''`, game)
 	if err != nil {
 		return nil, err
 	}
@@ -467,7 +472,7 @@ func (q Q) TeleLapsWithoutTyreTemps(game string) ([]TeleLapNeed, error) {
 // sessions in the same file once, D-179).
 func (q Q) TelemetryLinked(game string) ([]TeleFile, error) {
 	own := strings.Replace(teleSelect, "f.track, k.started_at,", "f.track, f.started_at,", 1)
-	rows, err := q.ex.Query(own+`WHERE f.game = ? AND f.match = 'session' AND f.missing = 0`, game)
+	rows, err := q.ex.Query(own+`WHERE f.game = ? AND f.match = 'session' AND f.missing = 0 AND f.ext = ''`, game)
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +482,7 @@ func (q Q) TelemetryLinked(game string) ([]TeleFile, error) {
 // SessionsBetween returns the recorded sessions on a car and track that started between from and to.
 func (q Q) SessionsBetween(game, car, track string, from, to time.Time) ([]Session, error) {
 	rows, err := q.ex.Query(`SELECT id, game, car, track, kind, started_at, COALESCE(setup_id,0), COALESCE(version_id,0), match
-		FROM sessions WHERE game = ? AND car = ? AND track = ? AND started_at BETWEEN ? AND ? ORDER BY started_at`,
+		FROM sessions WHERE game = ? AND car = ? AND track = ? AND started_at BETWEEN ? AND ? AND ext = '' ORDER BY started_at`,
 		game, car, track, ms(from), ms(to))
 	if err != nil {
 		return nil, err
@@ -722,7 +727,7 @@ func (s *Store) RefreshTelemetrySaves(game string) error {
 		times          map[int]int // lap number → lap time of the laps the clock timed
 	}
 	rows, err := s.ex.Query(`SELECT f.id, lower(f.car) || '|' || lower(f.track), f.started_at, f.duration_ms
-		FROM telemetry_files f WHERE f.game = ? AND f.missing = 0 ORDER BY 2, f.started_at, f.id`, game)
+		FROM telemetry_files f WHERE f.game = ? AND f.missing = 0 AND f.ext = '' ORDER BY 2, f.started_at, f.id`, game) // a data pack's file is a session of its own
 	if err != nil {
 		return err
 	}
@@ -742,7 +747,7 @@ func (s *Store) RefreshTelemetrySaves(game string) error {
 		return err
 	}
 	lr, err := s.ex.Query(`SELECT t.file_id, t.n, t.lap_ms, t.complete, t.dist_m >= ?, t.reference = 1 OR t.note <> ''
-		FROM telemetry_laps t JOIN telemetry_files f ON f.id = t.file_id WHERE f.game = ? AND f.missing = 0 ORDER BY t.file_id, t.n`, lapDataMinM, game)
+		FROM telemetry_laps t JOIN telemetry_files f ON f.id = t.file_id WHERE f.game = ? AND f.missing = 0 AND f.ext = '' ORDER BY t.file_id, t.n`, lapDataMinM, game)
 	if err != nil {
 		return err
 	}
@@ -887,7 +892,7 @@ func (s *Store) RefreshTelemetrySaves(game string) error {
 			return err
 		}
 		if _, err := q.ex.Exec(`UPDATE telemetry_laps SET sess_file = file_id, sess_n = n, dup = 0
-			WHERE (sess_file <> file_id OR sess_n <> n OR dup <> 0) AND file_id IN (SELECT id FROM telemetry_files WHERE game = ?)`, game); err != nil {
+			WHERE (sess_file <> file_id OR sess_n <> n OR dup <> 0) AND file_id IN (SELECT id FROM telemetry_files WHERE game = ? AND ext = '')`, game); err != nil { // a data pack's laps keep the sender's lap numbers
 			return err
 		}
 		for _, g := range groups {
@@ -957,7 +962,7 @@ const lapDataMinM = 100
 // TelemetryDisk returns the number of telemetry files of a game in the folder and their size on
 // disk, earlier saves included.
 func (q Q) TelemetryDisk(game string) (files int, bytes int64, err error) {
-	err = q.ex.QueryRow(`SELECT COUNT(*), COALESCE(SUM(size), 0) FROM telemetry_files WHERE game = ? AND missing = 0`, game).Scan(&files, &bytes)
+	err = q.ex.QueryRow(`SELECT COUNT(*), COALESCE(SUM(size), 0) FROM telemetry_files WHERE game = ? AND missing = 0 AND ext = ''`, game).Scan(&files, &bytes)
 	return
 }
 
@@ -1037,7 +1042,7 @@ func (q Q) TelemetryBestPerTrack(game string, per int) ([]TeleBest, error) {
 // left out), by lower-case track id.
 func (q Q) TelemetryBestPerCar(game, car string) (map[string]int, error) {
 	rows, err := q.ex.Query(`SELECT lower(f.track), MIN(t.lap_ms)`+lapFrom+`JOIN telemetry_files f ON f.id = t.file_id
-		WHERE f.game = ? AND f.car = ? AND f.missing = 0 AND t.dup = 0 AND t.full = 1 AND COALESCE(l.valid, 1) = 1
+		WHERE f.game = ? AND f.car = ? AND f.missing = 0 AND t.dup = 0 AND t.full = 1 AND COALESCE(l.valid, 1) = 1 AND f.ext = ''
 		GROUP BY lower(f.track)`, game, car)
 	if err != nil {
 		return nil, err

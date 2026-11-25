@@ -15,6 +15,7 @@ import { lapTime } from "../components/LapTimes.js";
 import { plural } from "../format.js";
 import { bytes, duration, lapColors, MAX_LAPS, parseLaps, lapKey, when, dayLabel, dateLabel, kindLabel, classCls } from "../telemetry.js";
 import { showToast } from "../store.js";
+import { ExtBadge, addLapsToPack } from "../components/DataPack.js";
 
 const TABS = [["laps", "Best laps"], ["setups", "Setups"], ["sessions", "Sessions"]];
 const PERIODS = [["all", "All time"], ["365", "Last 12 months"], ["90", "Last 3 months"], ["30", "Last 30 days"], ["7", "Last 7 days"]];
@@ -22,7 +23,7 @@ const PAGE = 50;
 const NO_DATA = 100; // metres: a lap shorter than this has no data (ACC kept only its lap time, D-167)
 
 export const TelemetryTrackPage = {
-  components: { Loading, TrackOutline, TeleStint },
+  components: { Loading, TrackOutline, TeleStint, ExtBadge },
   setup() {
     const route = useRoute(), router = useRouter();
     const game = route.params.game;
@@ -51,8 +52,9 @@ export const TelemetryTrackPage = {
 
     const laps = computed(() => (data.value?.laps || []).filter((l) => inCars(l.car)));
     const files = computed(() => (data.value?.files || []).filter((f) => inCars(f.car)));
-    const best = computed(() => laps.value[0] || null);
-    const overallBest = computed(() => data.value?.laps?.[0]?.lapMs || 0); // every car (the car cards)
+    // the fastest of the user's own laps: a lap from someone's data pack is never the purple one (D-201)
+    const best = computed(() => laps.value.find((l) => !l.ext) || null);
+    const overallBest = computed(() => (data.value?.laps || []).find((l) => !l.ext)?.lapMs || 0); // every car (the car cards)
     const shownBest = computed(() => best.value?.lapMs || 0);             // the cars in view (everything else)
     const refLapNo = (r) => (data.value?.laps || []).find((l) => l.fileId === r.fileId && l.n === r.n)?.lap;
     const recentLaps = computed(() => laps.value.some((l) => Date.now() - new Date(l.startedAt).getTime() < 365 * 86400000));
@@ -253,14 +255,24 @@ export const TelemetryTrackPage = {
       } catch (e) { showToast(e.message); }
     }
     const gap = (ms, to) => (!to || ms === to ? "" : "+" + ((ms - to) / 1000).toFixed(3));
-    const isBest = (l) => shownBest.value && l.lapMs === shownBest.value;
+    const isBest = (l) => shownBest.value && !l.ext && l.lapMs === shownBest.value;
+    // data packs (D-201): the picked laps, or every lap with data of an opened session
+    function packSel() { addLapsToPack(sel.value.map((l) => ({ fileId: l.fileId, n: l.n, label: selInfo(l).time + " · " + selInfo(l).label }))); }
+    function packSession(f) {
+      const d = details[fk(f)];
+      if (!d) return;
+      const list = d.laps.filter((l) => l.complete && !noData(l)).map((l) => ({ fileId: l.fileId, n: l.n,
+        label: lapTime(l.lapMs) + " · " + [many.value ? f.carName : "", l.lapSetupName || f.setupName || when(f.startedAt), "lap " + l.lap].filter(Boolean).join(", ") }));
+      if (!list.length) { showToast("This session has no laps with telemetry."); return; }
+      addLapsToPack(list);
+    }
     const carBest = (l) => carOf(l.car)?.bestMs === l.lapMs;
 
     return { stints, stintSession, sessionBest, data, error, tab, setTab, TABS, PERIODS, colors, allCars, carsWithLaps, chosen, carOn, toggleCar, allCarsOn, shownCars, many, carOf,
       laps, files, best, overallBest, shownBest, refLapNo, recentLaps, fSetup, fKind, fPeriod, fValid, fPit, shown, kinds, anyInvalid, anyPit, anyTemps, setupsWithLaps, knownSetups,
       filtered, filtersOn, resetFilters, sel, selIndex, pick, clearSel, selInfo, lapLabel, analyse, ref0, bestVsRef, compareCars, setupSel, toggleSetup,
       setupBy, compareSetups, setupGroups, showEmpty, days, months, jumpTo, firstOfMonth, emptyCount, sessionsWithLaps, open, details, toggle, fk, flags,
-      noData, anySessionFuel, anySessionTemps, timedLaps, setSetup, setRef, editing, draft, editNote, saveNote, gap, isBest, carBest,
+      noData, anySessionFuel, anySessionTemps, timedLaps, setSetup, setRef, editing, draft, editNote, saveNote, gap, isBest, carBest, packSel, packSession,
       lapTime, plural, bytes, duration, when, dateLabel, kindLabel, classCls, PAGE, MAX_LAPS };
   },
   template: `
@@ -348,7 +360,7 @@ export const TelemetryTrackPage = {
                   <td><button type="button" class="tl-time tl-open" :class="{ 'is-best': isBest(l) }" @click="analyse([l])" :title="(isBest(l) ? 'Fastest lap on this track. ' : carBest(l) && many ? 'Fastest lap of this car here. ' : '') + 'Open this lap in Lap analysis'">{{ lapTime(l.lapMs) }}</button></td>
                   <td class="tt-num tt-gap">{{ gap(l.lapMs, best && best.lapMs) }}</td>
                   <td v-if="many" class="tt-carcell"><span v-if="l.class" class="class-chip" :class="classCls(l.class)">{{ l.class }}</span>{{ l.carName }}</td>
-                  <td class="tt-setup"><router-link v-if="l.setupId && l.setupName" :to="'/setup/' + l.setupId">{{ l.setupName }}</router-link><span v-else class="tt-muted">Setup not known</span></td>
+                  <td class="tt-setup"><router-link v-if="l.setupId && l.setupName" :to="'/setup/' + l.setupId">{{ l.setupName }}</router-link><span v-else class="tt-muted">Setup not known</span> <ExtBadge :by="l.ext" /></td>
                   <td class="tt-when">{{ when(l.startedAt) }}<span class="tt-lapno">lap {{ l.lap }}</span><span v-if="l.kind" class="tt-kind">{{ kindLabel(l.kind) }}</span></td>
                   <td v-if="anyTemps" class="tt-num">{{ l.hasTemps ? l.road.toFixed(0) + ' °C' : '' }}</td>
                   <td v-if="anyInvalid || anyPit"><span v-if="l.valid === false" class="lap-flag bad">Invalid</span><span v-if="l.pit" class="lap-flag">Pit lane</span></td>
@@ -431,14 +443,16 @@ export const TelemetryTrackPage = {
                     <router-link v-if="f.setupId" :to="'/setup/' + f.setupId" class="ts-setup-open" title="Open this setup">Open</router-link>
                   </span>
                   <span class="ts-tags">
+                    <ExtBadge :by="f.ext" />
                     <span v-if="f.hasExtra" class="tag tag-ok" title="Extra telemetry log: car position, fuel, lap validity and more">Extra log</span>
-                    <span v-if="f.match === 'session'" class="tag" title="Linked to the session SetupMan recorded">Recorded</span>
+                    <span v-if="f.match === 'session' && !f.ext" class="tag" title="Linked to the session SetupMan recorded">Recorded</span>
                   </span>
                 </div>
                 <div v-if="open[fk(f)]" class="ts-laps">
                   <div class="ts-note">
                     <input v-if="editing === 'f' + f.id" v-model="draft" class="tt-note-input" maxlength="2000" placeholder="Note for this session" @keyup.enter="$event.target.blur()" @keyup.esc="editing = null" @blur="editing && saveNote(f.id)" aria-label="Session note" v-focus>
                     <button v-else type="button" class="tt-note-btn" @click="editNote('f' + f.id, f.note)">{{ f.note || 'Add a note for this session' }}</button>
+                    <button v-if="!f.ext && details[fk(f)]" type="button" class="btn btn-sm" @click="packSession(f)" title="Send this session's laps with telemetry to other SetupMan users">Add laps to data pack</button>
                     <span class="tt-muted">{{ bytes(f.size) }}, {{ f.channels }} channels<template v-if="details[fk(f)] && timedLaps(details[fk(f)]) > f.laps">, {{ plural(timedLaps(details[fk(f)]), 'timed lap') }} ({{ f.laps }} with data)</template></span>
                   </div>
                   <p v-if="!details[fk(f)]" class="loading">Loading laps…</p>
@@ -492,6 +506,7 @@ export const TelemetryTrackPage = {
             <span v-for="(l, i) in sel" :key="l.fileId + ':' + l.n" class="sel-lap" :style="{ '--c': colors[i] }" :title="selInfo(l).time + ' ' + selInfo(l).label"><b>{{ selInfo(l).time }}</b><span class="sel-text">{{ selInfo(l).label }}</span></span>
             <span class="selbar-gap"></span>
             <button type="button" class="btn btn-quiet" @click="clearSel">Clear</button>
+            <button type="button" class="btn" @click="packSel" title="Send these laps with their telemetry to other SetupMan users">Add to data pack</button>
             <button type="button" class="btn btn-primary" @click="analyse(sel)">{{ sel.length === 1 ? 'Analyse lap' : 'Compare laps' }}</button>
           </template>
         </div>

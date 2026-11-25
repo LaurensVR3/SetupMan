@@ -35,6 +35,8 @@ type Server struct {
 	// Port SetupMan listens on, and whether it listens on the network now (set by main).
 	Port      int
 	Listening bool
+
+	packs *packTemps // data packs being made or opened (D-201)
 }
 
 // New creates the server.
@@ -68,6 +70,7 @@ func New(lib *library.Library, store *settings.Store, logoStore *logos.Store) *S
 	s.registerFuel()
 	s.registerLaps()
 	s.registerTransfer()
+	s.registerDataPacks()
 	s.registerFullBackup()
 	s.registerNetwork()
 	s.registerPrep()
@@ -112,7 +115,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if !s.checkRemote(w, r, host) { // another computer (D-100)
 		return
 	}
-	if r.Method != http.MethodGet && r.Method != http.MethodHead &&
+	// A data pack upload is the ZIP itself; its own header can't be sent by another web site
+	// without the browser asking SetupMan first (which it refuses), like the JSON rule.
+	packUpload := r.Method == http.MethodPost && r.URL.Path == "/api/datapacks/inspect" && r.Header.Get("X-SetupMan-Upload") == "1"
+	if r.Method != http.MethodGet && r.Method != http.MethodHead && !packUpload &&
 		!strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		http.Error(w, "content type must be application/json", http.StatusUnsupportedMediaType)
 		return

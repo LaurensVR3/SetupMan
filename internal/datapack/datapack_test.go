@@ -29,8 +29,8 @@ func samplePack(t *testing.T) []byte {
 		Setups: []Setup{{Key: "s1", Game: "acc", Car: "ferrari_296_gt3", Track: "imola", Name: "ABC R 3040",
 			Versions: []Version{{Key: "v1", File: "setups/1/1.json"}, {Key: "v2", File: "setups/1/2.json"}}}},
 		Sessions: []Session{{Key: "x1", Game: "acc", Car: "ferrari_296_gt3", Track: "imola",
-			Laps: []Lap{{N: 12, TimeMs: 100308, Valid: true, Full: true, Setup: "s1", SetupV: "v2", Log: 1, LogLap: 1}},
-			Logs: []Log{{LD: "telemetry/1.ld", LDX: "telemetry/1.ldx", Extra: "extra/1.smx.gz"}}}}}
+			Laps: []Lap{{N: 12, TimeMs: 100308, Valid: true, Full: true, Setup: "s1", SetupV: "v2", LogLap: 1}},
+			Log:  &Log{LD: "telemetry/1.ld", LDX: "telemetry/1.ldx", Extra: "extra/1.smx.gz"}}}}
 	if err := w.Close(m); err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func TestOpenRefuses(t *testing.T) {
 		{"newer", rawZip(map[string]string{"pack.json": `{"kind":"setupman-data-pack","format":99}`}), ErrNewer},
 		{"path outside", rawZip(map[string]string{"pack.json": `{"kind":"setupman-data-pack","format":1}`, "../../evil.exe": "x"}), ErrDamaged},
 		{"missing file", rawZip(map[string]string{"pack.json": `{"kind":"setupman-data-pack","format":1,"setups":[{"versions":[{"file":"setups/1/1.json"}]}]}`}), ErrDamaged},
-		{"bad log index", rawZip(map[string]string{"pack.json": `{"kind":"setupman-data-pack","format":1,"sessions":[{"laps":[{"log":3}]}]}`}), ErrDamaged},
+		{"lap in a log that isn't there", rawZip(map[string]string{"pack.json": `{"kind":"setupman-data-pack","format":1,"sessions":[{"laps":[{"logLap":3}]}]}`}), ErrDamaged},
 	}
 	for _, c := range cases {
 		if _, err := Open(bytes.NewReader(c.data), int64(len(c.data))); !errors.Is(err, c.want) {

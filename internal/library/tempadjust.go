@@ -76,7 +76,7 @@ func (l *Library) learnTempRules(gameID, car string) ([]TempRule, int, error) {
 	var samples []tempSample
 	for _, s := range all {
 		tt, ok := trackTemp(s.Meta)
-		if !strings.EqualFold(s.Car, car) || !ok {
+		if !strings.EqualFold(s.Car, car) || !ok || s.Ext != "" { // only the user's own setups (D-90, D-201)
 			continue
 		}
 		v, _ := l.db.LatestVersion(s.ID)

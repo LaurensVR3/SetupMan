@@ -15,11 +15,12 @@ import { CompareTable } from "../components/CompareTable.js";
 import { SetupSheet } from "../components/SetupSheet.js";
 import { LapTimes } from "../components/LapTimes.js";
 import { TeleLinks } from "../components/TeleLinks.js";
+import { ExtBadge, addSetupsToPack } from "../components/DataPack.js";
 
 const TABS = [["setup", "Setup"], ["history", "History"], ["laps", "Lap times"], ["notes", "Notes & details"]];
 
 export const SetupPage = {
-  components: { Loading, FamilyTree, SessionBadge, CompareTable, SetupSheet, LapTimes, TeleLinks },
+  components: { Loading, FamilyTree, SessionBadge, CompareTable, SetupSheet, LapTimes, TeleLinks, ExtBadge },
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -196,8 +197,8 @@ export const SetupPage = {
       }
     }
 
-    // The "More" menu: rename, adjust for temperature, share, download.
-    const panel = ref(""); // "", "rename", "temp", "share"
+    // The "More" menu: rename, adjust for temperature, data pack (D-201), download.
+    const panel = ref(""); // "", "rename", "temp"
     const menu = ref(null);
     const newName = ref("");
     function openPanel(p) {
@@ -214,7 +215,10 @@ export const SetupPage = {
         showToast(`Renamed to ${r.name}.`);
       } catch (e) { showToast(e.message, 7000); } finally { busy.value = false; }
     }
-    const share = reactive({ note: false, laps: true });
+    function addToPack() {
+      if (menu.value) menu.value.open = false;
+      addSetupsToPack([{ id: data.value.setup.id, name: data.value.setup.name }]);
+    }
     const temp = reactive({ air: "", track: "", plan: null, error: "" });
     async function proposeTemp() {
       temp.plan = null; temp.error = "";
@@ -275,7 +279,7 @@ export const SetupPage = {
       open, diffs, toggleDiff, cmp, parentCols, compareWithParent, versionText,
       busy, stage, unstage, inAcc, sheet, viewVersion, saving, saveEdits, diskSeq, diskBehind, laps, assignSession,
       delDlg, doDelete, undelete,
-      panel, menu, openPanel, newName, rename, temp, proposeTemp, saveTemp, share };
+      panel, menu, openPanel, newName, rename, temp, proposeTemp, saveTemp, addToPack };
   },
   template: `
     <main class="page">
@@ -286,6 +290,7 @@ export const SetupPage = {
             <h1 class="page-title">{{ data.setup.name }}</h1>
             <p class="page-sub">
               <SessionBadge :session="data.setup.session" />
+              <ExtBadge :by="data.setup.ext" />
               <span>{{ data.carName }}, {{ data.trackName }}</span>
               <span v-if="data.managed" class="where" :class="{ 'where-in': inAcc }">{{ inAcc ? 'Shown in ' + G : 'Hidden from ' + G }}</span>
               <span v-else-if="!inAcc" class="where">No longer in {{ G }}'s folder</span>
@@ -305,7 +310,7 @@ export const SetupPage = {
               <div class="menu-list" role="menu">
                 <button v-if="!data.readOnly" type="button" role="menuitem" @click="openPanel('rename')">Rename</button>
                 <button v-if="data.canEdit" type="button" role="menuitem" @click="openPanel('temp')">Adjust for another temperature</button>
-                <button v-if="!data.readOnly" type="button" role="menuitem" @click="openPanel('share')">Share…</button>
+                <button v-if="!data.readOnly && !data.setup.ext" type="button" role="menuitem" @click="addToPack">Add to data pack…</button>
                 <a role="menuitem" :href="'/api/export?ids=' + data.setup.id" download @click="menu.open = false">{{ data.readOnly ? 'Download the settings (.zip)' : 'Download the ' + G + ' file (.zip)' }}</a>
                 <button v-if="!data.readOnly" type="button" role="menuitem" class="menu-danger" @click="menu.open = false; delDlg.showModal()">Delete…</button>
               </div>
@@ -319,16 +324,6 @@ export const SetupPage = {
           <div class="row-actions">
             <input v-model="newName" class="edit-name" aria-label="New name" @keyup.enter="rename(newName)">
             <button type="button" class="btn btn-primary" :disabled="busy || !newName.trim()" @click="rename(newName)">Rename</button>
-            <button type="button" class="btn btn-quiet" @click="panel = ''">Cancel</button>
-          </div>
-        </section>
-        <section v-if="panel === 'share'" class="panel tool-panel">
-          <h2 class="panel-title">Share</h2>
-          <p class="panel-hint">Makes one file with this setup to send (Discord, mail). The other person opens it in SetupMan with <b>Open a shared setup</b> on the start page, or drops it on the page.</p>
-          <label class="share-opt"><input type="checkbox" v-model="share.note"> Include my notes</label>
-          <label class="share-opt"><input type="checkbox" v-model="share.laps"> Include my lap times (best, average, fuel per lap)</label>
-          <div class="row-actions">
-            <a class="btn btn-primary" :href="'/api/setups/' + data.setup.id + '/share?note=' + (share.note ? 1 : 0) + '&laps=' + (share.laps ? 1 : 0)" download @click="panel = ''">Download the file</a>
             <button type="button" class="btn btn-quiet" @click="panel = ''">Cancel</button>
           </div>
         </section>

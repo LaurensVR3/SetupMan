@@ -24,7 +24,8 @@ type CutResult struct {
 	Offset float64
 	// Crossings are the line crossings in the new log, in seconds (for the .ldx file).
 	Crossings []float64
-	Channels  int // channels written (a channel without data for these laps is left out)
+	Channels  int     // channels written (a channel without data for these laps is left out)
+	Duration  float64 // length of the new log, seconds
 }
 
 // Cut writes a new .ld file holding only the laps from first to last (lap numbers as Laps gives
@@ -141,7 +142,7 @@ func (lf *File) Cut(w io.Writer, first, last int) (CutResult, error) {
 			return CutResult{}, err
 		}
 	}
-	res.Channels = len(parts)
+	res.Channels, res.Duration = len(parts), full
 	res.Crossings = append(res.Crossings, startS-res.Offset)
 	for _, l := range laps[first : last+1] {
 		res.Crossings = append(res.Crossings, l.Start+l.Time-res.Offset)
