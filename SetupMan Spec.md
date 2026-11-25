@@ -466,7 +466,7 @@ telemetry metrics stay in Phase 4.
 - Q-FU1 (answered, D-198): the rig's broadcasting.json has the default port 9000 and password set; SetupMan follows the race leader through ACC's broadcasting connection.
 - Q-PR5 (answered 2026-11-25): pull request #1 closed with a thank-you comment naming the two ideas taken over (D-164).
 - Q-MK1 … Q-MK4 (answered, D-200): launch pushed, telemetry demo pack instead of demo setups, owner makes the videos, no security policy.
-- Q-AU1. Audit 2026-11-23: which of A-1 … A-10 should be built, and in what order? (Proposed: A-9 first as a safety fix, then A-1, A-2, A-7, A-4, A-5; A-3, A-6, A-8 small.)
+- Q-AU1 (answered 2026-11-24): every audit item A-1 … A-10 handled (see the audit list and D-185 … D-188).
 
 
 ### Audit 2026-11-23 (first race; rig data: log, full backup with library and extra logs)
