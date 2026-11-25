@@ -67,7 +67,7 @@ setups folder until you allow more, and backs it up first.
 
 Upgrading, uninstalling and using a tablet: [installation guide](docs/INSTALL.md).
 
-**Reference laps for ACC.** Download the [ACC reference laps data pack](https://github.com/LaurensVR3/SetupMan/releases/download/v0.25.0/SetupMan-ACC-reference-laps.zip) (26 laps, 22 tracks, mostly Ferrari 296 GT3) and add it with **Settings → Data packs → Import data pack**. Compare your own laps with them in Lap analysis, or make one your reference lap.
+**Reference laps for ACC.** The [Shareables](Shareables) folder has data packs to import with **Settings → Data packs → Import data pack**, such as the [fastest laps of 22 tracks](https://github.com/LaurensVR3/SetupMan/raw/main/Shareables/LVR%2022%20tracks%20SetupMan%20pack%202026-11-25.zip) (26 laps, mostly Ferrari 296 GT3). Compare your own laps with them in Lap analysis, or make one your reference lap.
 The Manual inside SetupMan (top bar → Manual) explains every feature.
 
 > **Early version, looking for testers.** Assetto Corsa Competizione is tested on a sim rig and in online
