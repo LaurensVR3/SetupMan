@@ -1,7 +1,6 @@
 package library
 
 import (
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -18,6 +17,7 @@ type extraGame struct {
 	mu     sync.Mutex
 	opened int
 	closed int
+	reads  int
 }
 
 func (g *extraGame) ExtraChannels() []game.ExtraChannel {
@@ -38,6 +38,9 @@ type extraFake struct {
 
 func (r *extraFake) Read(dst []float32) (bool, bool) {
 	r.n++
+	r.g.mu.Lock()
+	r.g.reads++
+	r.g.mu.Unlock()
 	dst[0], dst[1], dst[2], dst[3] = float32(r.n/5), float32(r.n%5)*100, 90000, 50-float32(r.n)*0.01
 	return r.n%7 != 0, true // now and then a reading in the pause menu (not written)
 }
@@ -55,15 +58,17 @@ func TestExtraLog(t *testing.T) {
 	l.TelemetryDir = t.TempDir()
 	l.startExtra(g, 42)
 	p := telemetry.ExtraPath(l.TelemetryDir, "acc", 42)
-	waitFor(t, "the extra log", func() bool { _, err := os.Stat(p); return err == nil })
-	time.Sleep(450 * time.Millisecond)
+	// wait for readings rather than a fixed time: GitHub's machines can be slow (the test once
+	// stopped the log before a single row was written)
+	waitFor(t, "readings", func() bool { g.mu.Lock(); defer g.mu.Unlock(); return g.reads >= 6 })
 	l.stopExtra("acc")
 	waitFor(t, "the reader to close", func() bool { g.mu.Lock(); defer g.mu.Unlock(); return g.closed == 1 })
-	time.Sleep(50 * time.Millisecond) // the writer closes right after the reader
-	x, err := telemetry.ReadExtra(p)
-	if err != nil {
-		t.Fatal(err)
-	}
+	var x *telemetry.ExtraLog
+	waitFor(t, "the closed log", func() bool { // the writer closes right after the reader
+		var err error
+		x, err = telemetry.ReadExtra(p)
+		return err == nil && x.Complete && len(x.T) >= 3
+	})
 	if len(x.T) < 3 || x.Header.Session != 42 || x.Index("FUEL") != 3 {
 		t.Fatalf("%d rows, header %+v", len(x.T), x.Header)
 	}
