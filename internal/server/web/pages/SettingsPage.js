@@ -24,7 +24,7 @@ const FEATURES = [
   ["Record laps and recognise the setup driven", true, "No valid-lap flag", false, false],
   ["Pit stop advice", true, true, false, false],
   ["Adjust for temperature", true, true, false, false],
-  ["Race prep and fuel calculator", true, true, true, true],
+  ["Race prep and fuel calculator", true, true, true, false],
   ["Share and import", true, true, true, false],
   ["Download and backups", true, true, true, true],
 ];

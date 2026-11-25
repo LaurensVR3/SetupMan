@@ -1,0 +1,49 @@
+# When a GitHub release is published, GitHub builds SetupMan.exe from that release's tag and
+# attaches it with SHA256SUMS.txt, so every download is built from the public source and can be
+# checked. An exe attached by hand is replaced by this build.
+name: Release build
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build again (e.g. v0.24.1)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      CGO_ENABLED: "0"
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Check the version number matches the tag
+        shell: bash
+        run: |
+          want="${TAG#v}"
+          have=$(sed -n 's/^const Number = "\(.*\)"/\1/p' internal/version/version.go)
+          if [ "$want" != "$have" ]; then
+            echo "Tag $TAG but internal/version/version.go says $have"; exit 1
+          fi
+      - name: Test
+        run: go test ./...
+      - name: Build
+        run: go build -trimpath -ldflags "-H=windowsgui" -o SetupMan.exe ./cmd/setupman
+      - name: Checksums
+        shell: bash
+        run: sha256sum SetupMan.exe > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Attach to the release
+        shell: bash
+        run: gh release upload "$TAG" SetupMan.exe SHA256SUMS.txt --clobber

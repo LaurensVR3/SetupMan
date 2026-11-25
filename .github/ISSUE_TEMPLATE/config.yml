@@ -3,3 +3,9 @@ contact_links:
   - name: How SetupMan works
     url: https://github.com/LaurensVR3/SetupMan#readme
     about: The README, and the Manual inside SetupMan (top bar → Manual), explain every feature.
+  - name: Installing, upgrading and Windows warnings
+    url: https://github.com/LaurensVR3/SetupMan/blob/main/docs/INSTALL.md
+    about: Fresh installation, upgrades, the SmartScreen warning and uninstalling.
+  - name: Questions and discussion
+    url: https://github.com/LaurensVR3/SetupMan/discussions
+    about: Ask a question, share how you use SetupMan, or talk about an idea before it becomes a request.

@@ -1,14 +1,79 @@
-# SetupMan
+<p align="center"><img src="docs/images/logo.svg" width="88" height="88" alt="SetupMan logo"></p>
 
-Manage sim racing setups. Free and open source (MIT).
+<h1 align="center">SetupMan</h1>
 
-**Status: early version, Windows only.** Assetto Corsa Competizione has been tested on a real sim rig; Assetto Corsa, Assetto Corsa EVO and Assetto Corsa Rally are built from public documentation and still need testing by players. Your feedback helps: see [Feedback](#feedback).
+<p align="center"><b>Every version of every setup, the laps you drove with it,<br>and the fuel and tyre pressures for your next stint.</b></p>
+
+<p align="center">Free setup manager and telemetry tool for Assetto Corsa Competizione, Assetto Corsa, AC EVO and AC Rally.</p>
+
+<p align="center">
+  <a href="https://github.com/LaurensVR3/SetupMan/releases/latest/download/SetupMan.exe"><img alt="Download SetupMan for Windows" src="https://img.shields.io/badge/Download%20for%20Windows-SetupMan.exe-2ea44f?style=for-the-badge&logo=windows&logoColor=white" height="40"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/LaurensVR3/SetupMan/releases/latest"><img alt="Latest version" src="https://img.shields.io/github/v/release/LaurensVR3/SetupMan?label=latest&color=2ea44f"></a>
+  <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6">
+  <img alt="No installer, no account" src="https://img.shields.io/badge/no%20installer-no%20account-555">
+  <a href="https://github.com/LaurensVR3/SetupMan/actions/workflows/ci.yml"><img alt="Tests" src="https://github.com/LaurensVR3/SetupMan/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-blue"></a>
+</p>
+
+<p align="center">
+  <a href="docs/INSTALL.md"><b>Install guide</b></a> ·
+  <a href="docs/COMPATIBILITY.md"><b>Supported games</b></a> ·
+  <a href="docs/PRIVACY.md"><b>Privacy</b></a> ·
+  <a href="docs/ROADMAP.md"><b>Roadmap</b></a> ·
+  <a href="https://github.com/LaurensVR3/SetupMan/discussions"><b>Discussions</b></a>
+</p>
 
 ![Lap analysis in 3D: two laps on the real track at Imola, with the graphs below](docs/images/lap-analysis-3d.jpg)
 
-Supported: Assetto Corsa Competizione (everything), Assetto Corsa (setups, changing values, lap recording, pit stop advice), Assetto Corsa EVO (read, compare, history, choosing what the game shows), Assetto Corsa Rally (read, compare, history; read-only because all its setups share one save file). Settings → About in the app has a table of the features per game.
+## What it does
 
-## Features
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/images/compare.jpg" alt="Compare two setups: only the differences"><br>
+<b>Never lose a setup again.</b> Every change you save in the game is kept as a version, with a family tree
+of where each setup came from. Compare any two setups and see only what differs.
+</td>
+<td width="50%" valign="top">
+<img src="docs/images/race-prep.jpg" alt="Race prep: your setups ranked for the session, with the fuel plan"><br>
+<b>Race prep in one click.</b> Pick car, track and session: your setups are ranked by tyre temperature and
+lap time, with the pressure change for today's temperature and a complete fuel and pit stop plan.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/images/telemetry-sessions.jpg" alt="Telemetry sessions with stints and setups per lap"><br>
+<b>Telemetry linked to your setups.</b> ACC's own MoTeC files, matched to the session and the setup you
+drove. Compare up to four laps, turn by turn, and see where the time went.
+</td>
+<td width="50%" valign="top">
+<b>On your second screen while you race.</b> Pit stop advice on a tablet or phone: fuel to add and tyre
+pressures for the next stop, worked out from your last laps.<br><br>
+<b>Your PC, your data.</b> Everything stays on your PC: no account, no tracking. SetupMan only reads your
+setups folder until you allow more, and backs it up first.
+</td>
+</tr>
+</table>
+
+## Get started
+
+1. **[Download `SetupMan.exe`](https://github.com/LaurensVR3/SetupMan/releases/latest/download/SetupMan.exe)**,
+   put it in a folder of its own and double-click it.
+2. Windows may warn that it doesn't know the program yet: **More info → Run anyway**
+   ([why, and how to check the file](docs/INSTALL.md#the-windows-warnings)).
+3. SetupMan opens in your browser and finds your installed games.
+
+Upgrading, uninstalling and using a tablet: [installation guide](docs/INSTALL.md).
+The Manual inside SetupMan (top bar → Manual) explains every feature.
+
+> **Early version, looking for testers.** Assetto Corsa Competizione is tested on a sim rig and in online
+> races. Assetto Corsa, AC EVO and AC Rally are built from real setup files and need players to try them:
+> [your feedback](#feedback) moves them forward fastest. What works per game: [supported games](docs/COMPATIBILITY.md).
+
+## All features
 
 - Shows your setups per game, car and track, with readable names and brand logos.
 - Finds identical and near-identical setups and compares them side by side.
@@ -43,10 +108,6 @@ Supported: Assetto Corsa Competizione (everything), Assetto Corsa (setups, chang
   channel (e.g. speed) and the graph cursor as a marker. Sharp satellite photos with your own free MapTiler
   key, or government aerial photos you can keep for offline use at 13 tracks.
 
-| | |
-|---|---|
-| ![Compare two setups: only the differences](docs/images/compare.jpg) | ![Race prep: your setups ranked for the session, with the fuel plan](docs/images/race-prep.jpg) |
-| ![Telemetry sessions with stints and setups per lap](docs/images/telemetry-sessions.jpg) | |
 
 ## Folder management
 
@@ -62,20 +123,12 @@ By default SetupMan only *reads* your setups folder. When you enable **Settings 
 was at that moment (every file, name and date); SetupMan creates a backup of the current state first, so a
 restore can be undone too. These backups contain only the game folder, not SetupMan's own history and notes.
 
-See `SetupMan Spec.md` for the full plan and all agreed decisions.
+Every design decision is recorded in [`SetupMan Spec.md`](SetupMan%20Spec.md).
 
-## Run
+## Running SetupMan
 
-1. Double-click `SetupMan.exe`. The app opens in your browser at http://setupman.localhost (with the port
-   number, e.g. :8765, when port 80 is in use), and SetupMan's icon appears among the hidden icons next to the
-   clock (click the `^` arrow if you don't see it).
-2. Installed games are found automatically. If yours isn't, open **Settings**, set the game to
-   "Always" and choose its setups folder.
-3. The tray icon: left-click opens SetupMan; right-click has **Start with Windows** and **Stop SetupMan**.
-   Closing the browser does not stop SetupMan.
-4. To use SetupMan from another PC, laptop or tablet: **Settings → Network**, enable **Network access**,
-   open the address shown there on the other device and type the PIN once. To use a name such as
-   http://setupman.lan with Nginx Proxy Manager, see the Manual in the app (Other devices and setupman.lan).
+The tray icon next to the clock: left-click opens SetupMan; right-click has **Start with Windows** and
+**Stop SetupMan**. Closing the browser does not stop SetupMan.
 
 Options (from a terminal):
 
@@ -85,20 +138,9 @@ SetupMan.exe --no-browser     don't open the browser (used by Start with Windows
 SetupMan.exe --no-tray        no tray icon; stop with Ctrl+C (for development)
 ```
 
-If something goes wrong, see `%APPDATA%\SetupMan\setupman.log`.
-
-SetupMan's own files live in `%APPDATA%\SetupMan`:
-- `settings.json`: your settings;
-- `library.db`: every setup version, notes and history (back this up if you care about it);
-- `backups\`: setups folder backups, per game (ZIP files);
-- `full-backups\`: full SetupMan backups;
-- `telemetry\`: SetupMan's extra telemetry logs (in full backups);
-- `maps\`: terrain and offline aerial photos for the 3D track view (downloaded again when needed);
-- `logos\`: cached brand and game logos.
-
+All of SetupMan's data is in `%APPDATA%\SetupMan` (settings, the library with every setup version, backups,
+the log `setupman.log`). What is stored and when SetupMan goes online: [Privacy and security](docs/PRIVACY.md).
 ACC's own MoTeC files are only read, never changed, moved or deleted.
-
-The manual (top bar → Manual) explains every feature.
 
 ## How "similar" is calculated
 
@@ -112,15 +154,9 @@ Unused pit-strategy slots are ignored.
 
 ## Build from source
 
-Requires Go 1.27+ (`winget install GoLang.Go`). No other tools: the web UI uses Vue 3 from
-`internal/server/web/vendor` without a build step.
-
-```
-go test ./...
-go build -ldflags "-H=windowsgui" -o SetupMan.exe ./cmd/setupman
-```
-
-(`-H=windowsgui` builds without a console window; leave it out to see log output in a console.)
+Requires Go (`winget install GoLang.Go`), nothing else. See [CONTRIBUTING.md](CONTRIBUTING.md) for building,
+testing, the code layout and pull requests. Every release is built by GitHub from this source, with a SHA256
+checksum next to the download.
 
 ## Feedback
 
@@ -136,6 +172,8 @@ Feedback**. Each button opens a short form with your version filled in:
 Or [open an issue](https://github.com/LaurensVR3/SetupMan/issues/new/choose) here directly. The log file helps
 most: Settings → About → **Open log folder**, then drag `setupman.log` into the form. It lists what SetupMan
 saw of your games and your setup names, nothing else personal.
+
+Questions, or want to share how you use SetupMan? Join the [Discussions](https://github.com/LaurensVR3/SetupMan/discussions).
 
 ## Credits
 

@@ -1,0 +1,28 @@
+# Checks every push and pull request: the code must pass go vet and the tests, and build as a
+# pure Go Windows program (no C compiler, CGO_ENABLED=0). See CONTRIBUTING.md.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test ./...
+      - name: Build
+        run: go build -ldflags "-H=windowsgui" -o SetupMan.exe ./cmd/setupman
