@@ -28,6 +28,9 @@ Nothing is sent anywhere automatically. The log only leaves your PC if you attac
 - **ACC's broadcasting settings** (`broadcasting.json`): only read, to follow the race leader in timed
   races. SetupMan never sends commands to the game.
 - **The game's shared memory** (ACC, AC): only read, while you drive, to record laps.
+- **Data packs**: made only when you export one, as a file in your Downloads folder. A pack contains the setups
+  and laps you selected and your initials, nothing else about you or your PC. Nothing is sent anywhere; you
+  decide who gets the file.
 - **Windows registry**: only the **Start with Windows** entry, when you enable it.
 
 ## When SetupMan goes online

@@ -66,6 +66,8 @@ setups folder until you allow more, and backs it up first.
 3. SetupMan opens in your browser and finds your installed games.
 
 Upgrading, uninstalling and using a tablet: [installation guide](docs/INSTALL.md).
+
+**Reference laps for ACC.** Download the [ACC reference laps data pack](https://github.com/LaurensVR3/SetupMan/releases/download/v0.25.0/SetupMan-ACC-reference-laps.zip) (26 laps, 22 tracks, mostly Ferrari 296 GT3) and add it with **Settings → Data packs → Import data pack**. Compare your own laps with them in Lap analysis, or make one your reference lap.
 The Manual inside SetupMan (top bar → Manual) explains every feature.
 
 > **Early version, looking for testers.** Assetto Corsa Competizione is tested on a sim rig and in online
@@ -92,7 +94,9 @@ The Manual inside SetupMan (top bar → Manual) explains every feature.
 - **Naming standard**: suggested names per setup or for a whole game at once (with a preview), rename by
   hand, or apply it to new in-game saves automatically (opt-in). The track page shows each setup's game version.
 - **Adjust for temperature**: proposes tyre pressure and brake duct changes, learned from your own setups.
-- **Share** a setup as one file that a friend opens in their SetupMan (setup page → Share…).
+- **Data packs**: export setups, laps and telemetry (with the extra log) as one ZIP file for other SetupMan
+  users, or your fastest lap of every car on every track (Settings → Data packs). Imported setups and laps
+  carry an External badge with the sender's initials: comparable with your own laps, never counted as yours.
 - **Export and import** setups as ZIP files (track page), and **full SetupMan backups** of everything
   (Settings → Backups & bin), which you can download and restore, also on another PC.
 - Optionally manages the game's setups folder so ACC only shows the setups you pick (see below).

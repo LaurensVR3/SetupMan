@@ -13,7 +13,6 @@ Have an idea? [Suggest it](https://github.com/LaurensVR3/SetupMan/issues/new?tem
 
 ## Planned
 
-- **Telemetry demo pack**: real laps to explore lap analysis and the 3D track view before your first session.
 - **Changing values in AC EVO**, once its setting names are confirmed by players.
 - **Cloud backup** of the SetupMan library (OneDrive, Google Drive or Dropbox).
 - **Live data for AC EVO** (lap recording, pit stop advice) **and AC Rally** (stage times per setup), once the
