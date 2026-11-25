@@ -7,13 +7,12 @@
 <p align="center">Free setup manager and telemetry tool for Assetto Corsa Competizione, Assetto Corsa, AC EVO and AC Rally.</p>
 
 <p align="center">
-  <a href="https://github.com/LaurensVR3/SetupMan/releases/latest/download/SetupMan.exe"><img alt="Download SetupMan for Windows" src="https://img.shields.io/badge/Download%20for%20Windows-SetupMan.exe-2ea44f?style=for-the-badge&logo=windows&logoColor=white" height="40"></a>
+  <a href="https://github.com/LaurensVR3/SetupMan/releases/latest/download/SetupMan.exe"><img alt="Download SetupMan for Windows" src="docs/images/download.svg" width="300" height="60"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/LaurensVR3/SetupMan/releases/latest"><img alt="Latest version" src="https://img.shields.io/github/v/release/LaurensVR3/SetupMan?label=latest&color=2ea44f"></a>
   <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6">
-  <img alt="No installer, no account" src="https://img.shields.io/badge/no%20installer-no%20account-555">
   <a href="https://github.com/LaurensVR3/SetupMan/actions/workflows/ci.yml"><img alt="Tests" src="https://github.com/LaurensVR3/SetupMan/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-blue"></a>
 </p>
