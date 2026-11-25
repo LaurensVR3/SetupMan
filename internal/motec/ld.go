@@ -1,5 +1,6 @@
 // Package motec reads MoTeC i2 log files (.ld) as Assetto Corsa Competizione writes them (spec D-160).
-// Files are only ever opened for reading; nothing here writes, moves or deletes a file.
+// Files are only ever opened for reading; nothing here writes, moves or deletes a file. Cut (cut.go)
+// writes a new, smaller log to a writer for a data pack (D-201).
 //
 // Layout (worked out by the community, checked on ACC's files 2026-11-22): a header with pointers
 // to a linked list of channel descriptions; each channel's samples are one block of numbers.
@@ -34,6 +35,7 @@ type Channel struct {
 	Start float64 `json:"start,omitempty"`
 
 	data              int64
+	meta              int64 // where the channel's description is in the file (for Cut)
 	group, size       uint16
 	shift, mul, scale int16
 	dec               int16
@@ -101,7 +103,7 @@ func parse(f *os.File) (*File, error) {
 		c := Channel{
 			Name: cstr(buf[32:64]), Short: cstr(buf[64:72]), Unit: cstr(buf[72:84]),
 			Hz: int(le.Uint16(buf[22:])), Count: int(le.Uint32(buf[12:])),
-			data: int64(le.Uint32(buf[8:])), group: le.Uint16(buf[18:]), size: le.Uint16(buf[20:]),
+			data: int64(le.Uint32(buf[8:])), meta: int64(p), group: le.Uint16(buf[18:]), size: le.Uint16(buf[20:]),
 			shift: int16(le.Uint16(buf[24:])), mul: int16(le.Uint16(buf[26:])),
 			scale: int16(le.Uint16(buf[28:])), dec: int16(le.Uint16(buf[30:])),
 		}

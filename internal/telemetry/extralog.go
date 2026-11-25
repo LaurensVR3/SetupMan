@@ -312,3 +312,55 @@ func (x *ExtraLog) FindLap(lapMs int) (ExtraLap, bool) {
 	}
 	return ExtraLap{}, false
 }
+
+// Cut returns rows from … to (one or more laps, as Laps gives them) with two seconds to spare at
+// each end, so the laps are found again in the cut log (data packs, D-201). Times start at 0 again
+// and Start moves with them; the session number is cleared (it belongs to this PC's library).
+func (x *ExtraLog) Cut(from, to int) *ExtraLog {
+	pad := 2 * max(1, x.Header.Hz)
+	from, to = max(0, from-pad), min(len(x.T), to+pad)
+	c := &ExtraLog{Header: x.Header, Complete: true}
+	c.Header.Session = 0
+	if to <= from {
+		return c
+	}
+	t0 := x.T[from]
+	c.Header.Start = x.Header.Start.Add(time.Duration(float64(t0) * float64(time.Second)))
+	c.T = make([]float32, to-from)
+	for i := range c.T {
+		c.T[i] = x.T[from+i] - t0
+	}
+	c.Data = make([][]float32, len(x.Data))
+	for i, d := range x.Data {
+		c.Data[i] = append([]float32(nil), d[from:to]...)
+	}
+	return c
+}
+
+// WriteExtra writes a whole extra log in the same format as the live writer.
+func WriteExtra(w io.Writer, x *ExtraLog) error {
+	gz, _ := gzip.NewWriterLevel(w, gzip.BestCompression)
+	bw := bufio.NewWriterSize(gz, 64<<10)
+	hj, err := json.Marshal(x.Header)
+	if err != nil {
+		return err
+	}
+	bw.WriteString(extraMagic + "\n")
+	bw.Write(hj)
+	bw.WriteByte('\n')
+	le := binary.LittleEndian
+	row := make([]byte, 4*(1+len(x.Data)))
+	for r, t := range x.T {
+		le.PutUint32(row, math.Float32bits(t))
+		for i := range x.Data {
+			le.PutUint32(row[4+4*i:], math.Float32bits(x.Data[i][r]))
+		}
+		if _, err := bw.Write(row); err != nil {
+			return err
+		}
+	}
+	if err := bw.Flush(); err != nil {
+		return err
+	}
+	return gz.Close()
+}
