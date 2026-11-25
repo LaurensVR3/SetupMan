@@ -37,6 +37,7 @@ const (
 	PackTeleBest    = "best"    // the setup's fastest lap
 	PackTeleSession = "session" // its fastest lap of each session
 	PackTeleAll     = "all"     // every full lap with telemetry
+	PackTeleChosen  = "chosen"  // every lap of the sessions picked in the window (PackSetupReq.Sessions)
 )
 
 // PackRequest is what the user ticked in the Create data pack window.
@@ -48,11 +49,12 @@ type PackRequest struct {
 
 // PackSetupReq is one setup in the pack.
 type PackSetupReq struct {
-	ID        int64  `json:"id"`
-	History   bool   `json:"history"`   // every version, not just the newest (Q-DP2)
-	Note      bool   `json:"note"`      // the user's notes (off by default, as D-94)
-	LapTimes  bool   `json:"lapTimes"`  // lap time summary
-	Telemetry string `json:"telemetry"` // PackTele…
+	ID        int64    `json:"id"`
+	History   bool     `json:"history"`   // every version, not just the newest (Q-DP2)
+	Note      bool     `json:"note"`      // the user's notes (off by default, as D-94)
+	LapTimes  bool     `json:"lapTimes"`  // lap time summary
+	Telemetry string   `json:"telemetry"` // PackTele…
+	Sessions  []string `json:"sessions"`  // with PackTeleChosen: PackSession.Key of each session
 }
 
 // PackLapReq is one telemetry lap: the file that holds it and its lap number there.
@@ -72,18 +74,28 @@ type PackPreview struct {
 
 // PackPreviewSetup is one setup as the window lists it.
 type PackPreviewSetup struct {
-	ID        int64  `json:"id"`
-	Game      string `json:"game"`
-	Short     string `json:"short"`
-	Name      string `json:"name"`
-	CarName   string `json:"carName"`
-	TrackName string `json:"trackName"`
-	Versions  int    `json:"versions"`
-	Laps      int    `json:"laps"`     // laps with telemetry the choice gives
-	LapsBest  int    `json:"lapsBest"` // and each other choice, so the window can show them
-	LapsSess  int    `json:"lapsSession"`
-	LapsAll   int    `json:"lapsAll"`
-	External  string `json:"external,omitempty"` // a setup from someone else's pack: can't be sent on
+	ID        int64         `json:"id"`
+	Game      string        `json:"game"`
+	Short     string        `json:"short"`
+	Name      string        `json:"name"`
+	CarName   string        `json:"carName"`
+	TrackName string        `json:"trackName"`
+	Versions  int           `json:"versions"`
+	Laps      int           `json:"laps"`     // laps with telemetry the choice gives
+	LapsBest  int           `json:"lapsBest"` // and each other choice, so the window can show them
+	LapsSess  int           `json:"lapsSession"`
+	LapsAll   int           `json:"lapsAll"`
+	Sessions  []PackSession `json:"sessionList"`        // the setup's sessions with telemetry, newest first
+	External  string        `json:"external,omitempty"` // a setup from someone else's pack: can't be sent on
+}
+
+// PackSession is one session driven with a setup, to pick for the pack.
+type PackSession struct {
+	Key     string    `json:"key"`
+	Started time.Time `json:"started"`
+	Kind    string    `json:"kind"`
+	Laps    int       `json:"laps"` // full laps with telemetry (invalid ones too)
+	BestMs  int       `json:"bestMs"`
 }
 
 // ErrNoInitials: a pack names its sender by initials, so they must be set first.
@@ -102,13 +114,14 @@ type packChoice struct {
 	laps     map[[2]int64]packLap // (file, n) → lap
 	warnings []string
 	counts   map[int64][4]int // setup → laps for best, session, all, and the chosen one
+	sessions map[int64][]PackSession
 }
 
 func (l *Library) choosePack(req PackRequest) (*packChoice, error) {
 	if l.db == nil {
 		return nil, ErrNoHistory
 	}
-	c := &packChoice{reqs: map[int64]PackSetupReq{}, laps: map[[2]int64]packLap{}, counts: map[int64][4]int{}}
+	c := &packChoice{reqs: map[int64]PackSetupReq{}, laps: map[[2]int64]packLap{}, counts: map[int64][4]int{}, sessions: map[int64][]PackSession{}}
 	files := map[int64]*store.TeleFile{}
 	fileOf := func(id int64) *store.TeleFile {
 		if f, ok := files[id]; ok {
@@ -139,11 +152,36 @@ func (l *Library) choosePack(req PackRequest) (*packChoice, error) {
 		if err != nil {
 			return nil, err
 		}
-		var mine []store.TeleLapRow
+		var mine []store.TeleLapRow // valid laps, fastest first
+		bySession := map[string][]store.TeleLapRow{}
+		var order []PackSession
 		for _, row := range rows { // fastest first
-			if row.SetupID == s.ID && row.Ext == "" && row.Timed && row.DistM >= 100 && (row.Valid == nil || *row.Valid) {
+			if row.SetupID != s.ID || row.Ext != "" || !row.Timed || row.DistM < 100 {
+				continue
+			}
+			key := fmt.Sprintf("%d-%d", row.SessionFile, row.SessionID)
+			if _, ok := bySession[key]; !ok {
+				order = append(order, PackSession{Key: key, Started: row.StartedAt, Kind: row.Kind})
+			}
+			bySession[key] = append(bySession[key], row) // a whole session: invalid laps too
+			if row.Valid == nil || *row.Valid {
 				mine = append(mine, row)
 			}
+		}
+		for i := range order {
+			list := bySession[order[i].Key]
+			order[i].Laps = len(list)
+			for _, row := range list {
+				if (row.Valid == nil || *row.Valid) && (order[i].BestMs == 0 || row.LapMs < order[i].BestMs) {
+					order[i].BestMs = row.LapMs
+				}
+			}
+		}
+		sort.Slice(order, func(i, j int) bool { return order[i].Started.After(order[j].Started) })
+		c.sessions[s.ID] = order
+		var picked []store.TeleLapRow
+		for _, k := range r.Sessions {
+			picked = append(picked, bySession[k]...)
 		}
 		best := mine[:min(1, len(mine))]
 		var perSession []store.TeleLapRow
@@ -155,7 +193,7 @@ func (l *Library) choosePack(req PackRequest) (*packChoice, error) {
 				perSession = append(perSession, row)
 			}
 		}
-		chosen := map[string][]store.TeleLapRow{PackTeleBest: best, PackTeleSession: perSession, PackTeleAll: mine}[r.Telemetry]
+		chosen := map[string][]store.TeleLapRow{PackTeleBest: best, PackTeleSession: perSession, PackTeleAll: mine, PackTeleChosen: picked}[r.Telemetry]
 		c.counts[s.ID] = [4]int{len(best), len(perSession), len(mine), len(chosen)}
 		for _, row := range chosen {
 			if f := fileOf(row.FileID); f != nil && !f.Missing {
@@ -215,6 +253,10 @@ func (l *Library) PreviewPack(req PackRequest) (*PackPreview, error) {
 		}
 		n := c.counts[s.ID]
 		ps.LapsBest, ps.LapsSess, ps.LapsAll, ps.Laps = n[0], n[1], n[2], n[3]
+		ps.Sessions = c.sessions[s.ID]
+		if ps.Sessions == nil {
+			ps.Sessions = []PackSession{}
+		}
 		p.Setups = append(p.Setups, ps)
 		p.Bytes += 4 << 10 * int64(ps.Versions)
 	}

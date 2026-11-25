@@ -22,11 +22,20 @@ watch(() => [packState.setups, packState.laps], () => {
   try { localStorage.setItem(KEEP, JSON.stringify({ setups: packState.setups, laps: packState.laps })); } catch {}
 }, { deep: true });
 
-// addSetupsToPack([{ id, name }]): adds setups (the fastest lap with telemetry and the lap time summary by default).
+// addSetupsToPack([{ id, name, telemetry?, sessions? }]): adds setups (by default with their fastest lap
+// and the lap time summary). With sessions (keys from the preview), those whole sessions go along.
 export function addSetupsToPack(list, open = true) {
   for (const s of list) {
-    if (!s.id || packState.setups.some((x) => x.id === s.id)) continue;
-    packState.setups.push({ id: s.id, name: s.name || "Setup", telemetry: "best", lapTimes: true, note: false, history: false });
+    if (!s.id) continue;
+    const have = packState.setups.find((x) => x.id === s.id);
+    if (have) {
+      if (s.sessions?.length) {
+        if (have.telemetry !== "chosen") { have.telemetry = "chosen"; have.sessions = []; }
+        for (const k of s.sessions) if (!have.sessions.includes(k)) have.sessions.push(k);
+      }
+      continue;
+    }
+    packState.setups.push({ id: s.id, name: s.name || "Setup", telemetry: s.telemetry || "best", sessions: s.sessions || [], lapTimes: true, note: false, history: false });
   }
   if (open) packState.open = true;
 }
@@ -73,7 +82,7 @@ export const PackChip = {
   template: `<button v-if="count && !packState.open" type="button" class="pack-chip" @click="packState.open = true">Data pack · {{ count }}</button>`,
 };
 
-const TELE = [["none", "No telemetry"], ["best", "Fastest lap"], ["session", "Fastest lap per session"], ["all", "All laps"]];
+const TELE = [["none", "No telemetry"], ["best", "Fastest lap"], ["session", "Fastest lap per session"], ["all", "All valid laps"], ["chosen", "Whole sessions I pick"]];
 
 export const DataPackDialog = {
   setup() {
@@ -81,7 +90,7 @@ export const DataPackDialog = {
     const st = reactive({ preview: null, error: "", busy: false });
     let timer = 0, seq = 0;
     const request = () => ({
-      setups: packState.setups.map((s) => ({ id: s.id, telemetry: s.telemetry, lapTimes: s.lapTimes, note: s.note, history: s.history })),
+      setups: packState.setups.map((s) => ({ id: s.id, telemetry: s.telemetry, sessions: s.sessions || [], lapTimes: s.lapTimes, note: s.note, history: s.history })),
       laps: packState.laps.map((l) => ({ fileId: l.fileId, n: l.n })),
     });
     async function refresh() {
@@ -100,7 +109,12 @@ export const DataPackDialog = {
     watch(() => store.version, () => packState.open && refresh());
     const info = (id) => st.preview?.setups.find((s) => s.id === id);
     const lapsFor = (id, t) => { const p = info(id); return !p ? null : { best: p.lapsBest, session: p.lapsSession, all: p.lapsAll }[t]; };
-    const teleLabel = (id, t) => { const n = lapsFor(id, t); return TELE.find((x) => x[0] === t)[1] + (n == null || t === "none" ? "" : ` (${plural(n, "lap")})`); };
+    const teleLabel = (id, t) => { const n = lapsFor(id, t); return TELE.find((x) => x[0] === t)[1] + (n == null || t === "none" || t === "chosen" ? "" : ` (${plural(n, "lap")})`); };
+    function toggleSession(s, key) {
+      if (!s.sessions) s.sessions = [];
+      const i = s.sessions.indexOf(key);
+      if (i >= 0) s.sessions.splice(i, 1); else s.sessions.push(key);
+    }
     const removeSetup = (i) => packState.setups.splice(i, 1);
     const removeLap = (i) => packState.laps.splice(i, 1);
     function clearAll() { packState.setups.splice(0); packState.laps.splice(0); }
@@ -120,7 +134,7 @@ export const DataPackDialog = {
         packState.open = false;
       } catch (e) { st.error = e.message; } finally { st.busy = false; }
     }
-    return { dlg, st, packState, TELE, info, teleLabel, removeSetup, removeLap, clearAll, create, noInitials, bytes, plural };
+    return { dlg, st, packState, TELE, info, teleLabel, toggleSession, dateTime, lapTime, kindLabel, removeSetup, removeLap, clearAll, create, noInitials, bytes, plural };
   },
   template: `
     <dialog ref="dlg" class="confirm pack-dialog" @close="packState.open = false" aria-labelledby="pack-title">
@@ -149,6 +163,14 @@ export const DataPackDialog = {
             <label><input type="checkbox" v-model="s.lapTimes"> Lap time summary</label>
             <label><input type="checkbox" v-model="s.history"> Full history<template v-if="s.history && info(s.id)"> ({{ plural(info(s.id).versions, 'version') }})</template></label>
             <label><input type="checkbox" v-model="s.note"> My notes</label>
+          </div>
+          <div v-if="s.telemetry === 'chosen'" class="pack-sessions">
+            <p v-if="info(s.id) && !info(s.id).sessionList.length" class="pack-where">No sessions with telemetry for this setup.</p>
+            <label v-for="x in (info(s.id)?.sessionList || [])" :key="x.key" class="pack-session">
+              <input type="checkbox" :checked="(s.sessions || []).includes(x.key)" @change="toggleSession(s, x.key)">
+              <span>{{ dateTime(x.started) }}<template v-if="x.kind"> · {{ kindLabel(x.kind) }}</template></span>
+              <span class="pack-where">{{ plural(x.laps, 'lap') }}<template v-if="x.bestMs">, fastest {{ lapTime(x.bestMs) }}</template></span>
+            </label>
           </div>
         </div>
       </section>

@@ -172,6 +172,14 @@ func TestDataPackRoundTrip(t *testing.T) {
 	if err != nil || pv.Laps != 2 || len(pv.Setups) != 1 || pv.Setups[0].LapsAll != 2 || pv.Setups[0].LapsBest != 1 {
 		t.Fatalf("preview (the invalid lap is left out): %+v %v", pv, err)
 	}
+	// a whole session, invalid lap included
+	if len(pv.Setups[0].Sessions) != 1 || pv.Setups[0].Sessions[0].Laps != 3 {
+		t.Fatalf("sessions to pick: %+v", pv.Setups[0].Sessions)
+	}
+	whole, err := l.PreviewPack(PackRequest{Setups: []PackSetupReq{{ID: id, Telemetry: PackTeleChosen, Sessions: []string{pv.Setups[0].Sessions[0].Key}}}})
+	if err != nil || whole.Laps != 3 {
+		t.Fatalf("whole session: %+v %v", whole, err)
+	}
 	var buf bytes.Buffer
 	name, err := l.WritePack(req, &buf)
 	if err != nil {

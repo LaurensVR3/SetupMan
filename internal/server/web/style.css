@@ -1271,3 +1271,6 @@ th.tt-num { text-align: right; }
 .res-skip { color: var(--bad); }
 .res-present { color: var(--ink-2); }
 .pack-stage { display: flex; gap: 8px; align-items: center; margin-top: 12px; font-size: 14px; }
+.pack-sessions { margin-top: 8px; display: grid; gap: 2px; max-height: 220px; overflow: auto; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.pack-session { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 14px; padding: 3px 0; }
+.pack-session .pack-where { display: inline; }
