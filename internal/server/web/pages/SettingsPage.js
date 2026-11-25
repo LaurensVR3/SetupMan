@@ -10,7 +10,8 @@ import { FolderPicker } from "../components/FolderPicker.js";
 import { FamilyTree } from "../components/FamilyTree.js";
 import { LastOpenedNotice } from "../components/LastOpenedNotice.js";
 import { TeleLapsDialog } from "../components/TeleLaps.js";
-import { ExtBadge, openPackFile } from "../components/DataPack.js";
+import { ExtBadge, openPackFile, addLapsToPack } from "../components/DataPack.js";
+import { lapTime } from "../components/LapTimes.js";
 
 const TABS = [["general", "General"], ["games", "Games"], ["telemetry", "Telemetry"], ["compare", "Comparing & history"], ["backups", "Backups & bin"], ["packs", "Data packs"], ["network", "Network"], ["about", "About"]];
 
@@ -251,7 +252,7 @@ export const SettingsPage = {
     }
 
     // Imported data packs (D-201): what each brought, and Remove.
-    const packs = reactive({ list: [], asking: null, busy: false });
+    const packs = reactive({ list: [], asking: null, busy: false, exporting: "" });
     const packDlg = ref(null);
     const loadPacks = async () => { packs.list = await get("/api/datapacks").catch(() => []); };
     function askRemovePack(p) { packs.asking = p; packDlg.value.showModal(); }
@@ -263,6 +264,17 @@ export const SettingsPage = {
         packDlg.value.close();
         loadPacks();
       } catch (e) { showToast(e.message, 7000); } finally { packs.busy = false; }
+    }
+    // Export my fastest laps (D-201): the fastest lap of every car on every track, with the extra log
+    // where available, as reference laps for other users.
+    async function exportFastest(g) {
+      packs.exporting = g.id;
+      try {
+        const list = await get(`/api/datapacks/best-laps/${g.id}`);
+        if (!list.length) { showToast(`There are no ${g.short} laps with telemetry yet.`); return; }
+        addLapsToPack(list.map((b) => ({ fileId: b.fileId, n: b.n,
+          label: `${lapTime(b.lapMs)} · ${b.trackName} · ${b.carName}` + (b.extra ? " · extra log" : "") })));
+      } catch (e) { showToast(e.message, 7000); } finally { packs.exporting = ""; }
     }
     async function openPack(ev) {
       const f = ev.target.files[0];
@@ -455,7 +467,7 @@ export const SettingsPage = {
     return { issueUrl, lfmId, saveLfm, mapTilerKey, showKey, saveMapTiler, keptPhotos, trackLabel, kb, deleteKept, teleGames, initials, saveInitials, FOUR, SINGLE, label, tempAuthors, tempWords, newWord, addWordRule, removeRule, defaultRule, ownRule, setTempRule, fitText, s, games, draft, checks, saved, error, picker, setTheme, setVisibility, setLogos, setThreshold, useFolder, browse, picked, visLabel,
       hist, preview, applyHistory, countNodes, setEndurance, autostart, setAutostart,
       manage, setManaged, setTidy, setAutoRename, teleLapsDlg, teleLapsGame, openTeleLaps, backups, backupBusy, createBackup, confirmDlg, restore, askRestore, closeRestore, doRestore, dateTime,
-      teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, setPitStill, TABS, FEATURE_GAMES, FEATURES, packs, packDlg, askRemovePack, removePack, openPack, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
+      teleValue, useTeleFolder, browseTele, setExtraLog, full, fullDlg, size, createFull, uploadFull, askFull, doFull, bin, undelete, backupDirs, openFolder, network, setNetwork, setPort, setHostName, pinDlg, askRequirePin, setRequirePin, setTarget, setPitStill, TABS, FEATURE_GAMES, FEATURES, packs, packDlg, askRemovePack, removePack, openPack, exportFastest, tab, setTab, gameTab, setGameTab, app: computed(() => store.app) };
   },
   template: `
     <main class="page page-narrow">
@@ -815,11 +827,22 @@ export const SettingsPage = {
         </section>
 
         <section v-if="tab === 'packs'" class="settings-section">
-          <h2>Data packs</h2>
+          <h2>Export</h2>
           <div class="setting setting-stack">
             <div class="setting-text">
-              <p>Data packs other SetupMan users sent you. Their setups and laps carry the External badge with the sender's initials; their laps can be compared with yours but never count as your own. Remove takes out everything a pack brought (setups you put in the game folder stay).</p>
-              <p class="muted-small">To send your own: <b>Add to data pack</b> on a setup page, the setup list of a track page, a Telemetry session or Lap analysis.</p>
+              <p>Exports your fastest valid lap of every car on every track as one data pack: telemetry and, where recorded, SetupMan's extra log. Setups are not included. Other users can compare their laps with these laps or use them as reference laps.</p>
+              <p class="muted-small">Individual setups, sessions and laps: use <b>Add to data pack</b> on a setup page, the setup list of a track page, a Telemetry session or Lap analysis.</p>
+            </div>
+            <div class="row-actions">
+              <button v-for="g in teleGames" :key="g.id" type="button" class="btn btn-primary" :disabled="!!packs.exporting" @click="exportFastest(g)">Export my fastest laps as data pack<template v-if="teleGames.length > 1"> ({{ g.short }})</template></button>
+            </div>
+          </div>
+        </section>
+        <section v-if="tab === 'packs'" class="settings-section">
+          <h2>Imported data packs</h2>
+          <div class="setting setting-stack">
+            <div class="setting-text">
+              <p>Data packs imported from other SetupMan users. Their setups and laps carry the External badge with the sender's initials; their laps can be compared with yours but are never counted as your own. Remove deletes everything a data pack added (setups already placed in the game folder are kept).</p>
             </div>
             <ul v-if="packs.list.length" class="backup-list">
               <li v-for="p in packs.list" :key="p.id">
@@ -829,7 +852,7 @@ export const SettingsPage = {
               </li>
             </ul>
             <p v-else class="panel-hint">No data packs imported yet.</p>
-            <label class="btn btn-file">Open data pack…<input type="file" accept=".zip" @change="openPack"></label>
+            <div class="row-actions"><label class="btn btn-file">Import data pack<input type="file" accept=".zip" @change="openPack"></label></div>
           </div>
         </section>
 

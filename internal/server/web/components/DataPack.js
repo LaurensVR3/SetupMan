@@ -79,10 +79,10 @@ export const PackChip = {
     const count = computed(() => packState.setups.length + packState.laps.length);
     return { packState, count };
   },
-  template: `<button v-if="count && !packState.open" type="button" class="pack-chip" @click="packState.open = true">Data pack · {{ count }}</button>`,
+  template: `<button v-if="count && !packState.open" type="button" class="pack-chip" @click="packState.open = true">Data pack: {{ count }} item{{ count === 1 ? '' : 's' }}</button>`,
 };
 
-const TELE = [["none", "No telemetry"], ["best", "Fastest lap"], ["session", "Fastest lap per session"], ["all", "All valid laps"], ["chosen", "Whole sessions I pick"]];
+const TELE = [["none", "No telemetry"], ["best", "Fastest lap"], ["session", "Fastest lap per session"], ["all", "All valid laps"], ["chosen", "Selected sessions"]];
 
 export const DataPackDialog = {
   setup() {
@@ -129,7 +129,7 @@ export const DataPackDialog = {
         document.body.appendChild(a);
         a.click();
         a.remove();
-        showToast(`Data pack saved to your downloads: ${r.name} (${bytes(r.bytes)}). Send it to anyone with SetupMan; they open it with Open data pack.`, 10000);
+        showToast(`Data pack exported to your Downloads folder: ${r.name} (${bytes(r.bytes)}). Recipients add it with Import data pack (Settings → Data packs).`, 10000);
         clearAll();
         packState.open = false;
       } catch (e) { st.error = e.message; } finally { st.busy = false; }
@@ -139,10 +139,10 @@ export const DataPackDialog = {
   template: `
     <dialog ref="dlg" class="confirm pack-dialog" @close="packState.open = false" aria-labelledby="pack-title">
       <h2 id="pack-title">Create data pack</h2>
-      <p class="panel-hint">One ZIP file with setups, laps and telemetry for other SetupMan users. They open it with <b>Open data pack</b> on the start page. It names you only by your initials; nothing leaves this PC unless you send the file.</p>
-      <p v-if="noInitials" class="notice notice-tight">Your initials name you as the sender. Set them in <router-link to="/settings?tab=general" @click="packState.open = false">Settings → General</router-link> (Naming standard) first.</p>
+      <p class="panel-hint">Exports setups, laps and telemetry as one ZIP file for other SetupMan users, who add it with <b>Import data pack</b>. The sender is identified by initials only. Nothing leaves this PC unless you send the file.</p>
+      <p v-if="noInitials" class="notice notice-tight">A data pack identifies its sender by initials. Set your initials in <router-link to="/settings?tab=general" @click="packState.open = false">Settings → General</router-link> (Naming standard) first.</p>
 
-      <p v-if="!packState.setups.length && !packState.laps.length" class="pack-empty">Nothing in the pack yet. Add setups with <b>Add to data pack</b> on a setup page or the setup list of a track page, and laps from a Telemetry session or Lap analysis.</p>
+      <p v-if="!packState.setups.length && !packState.laps.length" class="pack-empty">The data pack is empty. Use <b>Add to data pack</b> on a setup page, the setup list of a track page, a Telemetry session or Lap analysis, or <b>Export my fastest laps as data pack</b> in Settings → Data packs.</p>
 
       <section v-if="packState.setups.length" class="pack-section">
         <h3>Setups</h3>
@@ -160,9 +160,9 @@ export const DataPackDialog = {
                 <option v-for="t in TELE" :key="t[0]" :value="t[0]">{{ teleLabel(s.id, t[0]) }}</option>
               </select>
             </label>
-            <label><input type="checkbox" v-model="s.lapTimes"> Lap time summary</label>
-            <label><input type="checkbox" v-model="s.history"> Full history<template v-if="s.history && info(s.id)"> ({{ plural(info(s.id).versions, 'version') }})</template></label>
-            <label><input type="checkbox" v-model="s.note"> My notes</label>
+            <label><input type="checkbox" v-model="s.lapTimes"> Include lap time summary</label>
+            <label><input type="checkbox" v-model="s.history"> Include version history<template v-if="s.history && info(s.id)"> ({{ plural(info(s.id).versions, 'version') }})</template></label>
+            <label><input type="checkbox" v-model="s.note"> Include notes</label>
           </div>
           <div v-if="s.telemetry === 'chosen'" class="pack-sessions">
             <p v-if="info(s.id) && !info(s.id).sessionList.length" class="pack-where">No sessions with telemetry for this setup.</p>
@@ -190,7 +190,7 @@ export const DataPackDialog = {
         <span v-if="st.preview" class="pack-size">{{ plural(st.preview.setups.length, 'setup') }} · {{ plural(st.preview.laps, 'lap') }} with telemetry · about {{ bytes(st.preview.bytes) }}</span>
         <span v-else></span>
         <div class="picker-actions">
-          <button v-if="packState.setups.length || packState.laps.length" type="button" class="btn btn-quiet" @click="clearAll">Empty the pack</button>
+          <button v-if="packState.setups.length || packState.laps.length" type="button" class="btn btn-quiet" @click="clearAll">Clear</button>
           <button type="button" class="btn" @click="packState.open = false">Close</button>
           <button type="button" class="btn btn-primary" :disabled="st.busy || !st.preview || noInitials || (!st.preview.setups.length && !st.preview.laps)" @click="create">{{ st.busy ? 'Creating…' : 'Create data pack' }}</button>
         </div>
@@ -227,7 +227,7 @@ export const PackImportDialog = {
         <template v-if="!packState.imp.result">
           <h2 id="imp-title">Data pack from {{ packState.imp.pack.by }} <ExtBadge :by="packState.imp.pack.by" /></h2>
           <p class="panel-hint">Made {{ dateTime(packState.imp.pack.created) }}<template v-if="packState.imp.pack.app"> with SetupMan {{ packState.imp.pack.app }}</template>. Everything is added to SetupMan with the External badge. Their laps can be compared with yours and used as a reference lap, but never count as your own (best laps, averages, Race prep, fuel).</p>
-          <p v-if="packState.imp.pack.known" class="notice notice-tight">This data pack is already in your library (Settings → Data packs).</p>
+          <p v-if="packState.imp.pack.known" class="notice notice-tight">This data pack has already been imported (Settings → Data packs).</p>
           <section v-if="packState.imp.pack.setups.length" class="pack-section">
             <h3>Setups</h3>
             <table class="pack-table">
@@ -261,7 +261,7 @@ export const PackImportDialog = {
           </ul>
           <ul v-if="packState.imp.result.messages.length" class="pack-warn"><li v-for="(m, i) in packState.imp.result.messages" :key="i">{{ m }}</li></ul>
           <div class="picker-actions">
-            <button v-if="packState.imp.result.track" type="button" class="btn" @click="go('/telemetry/' + packState.imp.result.track.game + '/' + encodeURIComponent(packState.imp.result.track.track))">Open the laps</button>
+            <button v-if="packState.imp.result.track" type="button" class="btn" @click="go('/telemetry/' + packState.imp.result.track.game + '/' + encodeURIComponent(packState.imp.result.track.track))">View laps</button>
             <button type="button" class="btn btn-primary" @click="close">Done</button>
           </div>
         </template>

@@ -147,12 +147,12 @@ func (s *Server) handlePackDownload(w http.ResponseWriter, r *http.Request) {
 	tok := r.PathValue("token")
 	t, ok := s.packs.take(tok)
 	if !ok {
-		writeError(w, http.StatusNotFound, "This data pack is no longer available. Create it again.")
+		writeError(w, http.StatusNotFound, "This data pack has expired. Export it again.")
 		return
 	}
 	f, err := os.Open(t.path)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "This data pack is no longer available. Create it again.")
+		writeError(w, http.StatusNotFound, "This data pack has expired. Export it again.")
 		return
 	}
 	defer f.Close()
@@ -203,12 +203,12 @@ func (s *Server) handlePackImport(w http.ResponseWriter, r *http.Request) {
 	}
 	t, ok := s.packs.take(in.Token)
 	if !ok {
-		writeError(w, http.StatusNotFound, "Open the data pack again: it waited too long.")
+		writeError(w, http.StatusNotFound, "This data pack has expired. Import it again.")
 		return
 	}
 	f, err := os.Open(t.path)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "Open the data pack again: it waited too long.")
+		writeError(w, http.StatusNotFound, "This data pack has expired. Import it again.")
 		return
 	}
 	st, _ := f.Stat()

@@ -87,7 +87,7 @@ export const OverviewPage = {
     <main class="page">
       <div class="page-head-row">
         <h1 class="page-title">Games</h1>
-        <label class="btn btn-file" title="A data pack (.zip) or shared setups (.setupman) someone sent you">{{ opening ? 'Opening…' : 'Open data pack…' }}<input type="file" accept=".zip,.setupman" multiple :disabled="opening" @change="openShared"></label>
+        <label class="btn btn-file" title="A data pack (.zip) or shared setups (.setupman) someone sent you">{{ opening ? 'Importing…' : 'Import data pack' }}<input type="file" accept=".zip,.setupman" multiple :disabled="opening" @change="openShared"></label>
       </div>
       <div v-if="shared" class="import-result" role="status">
         <p><b>{{ shared.imported }} shared setup{{ shared.imported === 1 ? '' : 's' }} added to your library</b><template v-if="shared.skipped">, {{ shared.skipped }} skipped</template>.</p>

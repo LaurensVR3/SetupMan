@@ -99,7 +99,7 @@ type PackSession struct {
 }
 
 // ErrNoInitials: a pack names its sender by initials, so they must be set first.
-var ErrNoInitials = errors.New("set your initials first (Settings → General → Naming standard): a data pack names its sender by initials")
+var ErrNoInitials = errors.New("set your initials first (Settings → General → Naming standard): a data pack identifies its sender by initials")
 
 // packLap is one lap chosen for the pack, with what the library knows about it.
 type packLap struct {
@@ -143,7 +143,7 @@ func (l *Library) choosePack(req PackRequest) (*packChoice, error) {
 			return nil, history.ErrNotFound
 		}
 		if s.Ext != "" {
-			c.warnings = append(c.warnings, fmt.Sprintf("%s is %s's setup (from a data pack) and isn't sent on.", s.Name, s.Ext))
+			c.warnings = append(c.warnings, fmt.Sprintf("%s is from %s's data pack and can't be exported.", s.Name, s.Ext))
 			continue
 		}
 		c.setups = append(c.setups, s)
@@ -207,7 +207,7 @@ func (l *Library) choosePack(req PackRequest) (*packChoice, error) {
 			continue
 		}
 		if f.Ext != "" {
-			c.warnings = append(c.warnings, fmt.Sprintf("Laps from %s's data pack aren't sent on.", f.Ext))
+			c.warnings = append(c.warnings, fmt.Sprintf("Laps from %s's data pack can't be exported.", f.Ext))
 			continue
 		}
 		laps, err := l.db.TelemetryLaps(f.ID)
@@ -225,7 +225,7 @@ func (l *Library) choosePack(req PackRequest) (*packChoice, error) {
 		}
 	}
 	if len(c.setups) == 0 && len(c.laps) == 0 {
-		return nil, errors.New("choose at least one setup or lap for the data pack")
+		return nil, errors.New("select at least one setup or lap for the data pack")
 	}
 	return c, nil
 }
@@ -585,7 +585,7 @@ func (l *Library) planPack(p *datapack.Pack) ([]packPlan, error) {
 		case game.ReadOnlyReason(g) != "":
 			skip("SetupMan can't add setups for " + game.Short(g))
 		case s.Car == "" || s.Track == "" || strings.ContainsAny(s.Car+s.Track, `\/:*?"<>|`) || len(s.Versions) == 0:
-			skip("the pack doesn't say which car and track it is for")
+			skip("the data pack does not specify the car and track")
 		}
 		if pl.skip {
 			out = append(out, pl)
@@ -738,7 +738,7 @@ func (l *Library) ImportPack(r io.ReaderAt, size int64, stage bool) (*PackImport
 		return nil, datapack.ErrDamaged
 	}
 	if known, _ := l.db.PackKnown(m.ID); known {
-		return nil, errors.New("this data pack is already in your library (Settings → Data packs)")
+		return nil, errors.New("this data pack has already been imported (Settings → Data packs)")
 	}
 	by := strings.ToUpper(strings.TrimSpace(m.By))
 	if by == "" || len([]rune(by)) > 8 {
@@ -916,7 +916,7 @@ func (l *Library) stagePack(ids []int64) (int, string) {
 func (l *Library) importPackSession(p *datapack.Pack, packID, by, dir string, s datapack.Session, setupID, versionID map[string]int64) (int, error) {
 	car, track := strings.ToLower(s.Car), strings.ToLower(s.Track)
 	if car == "" || track == "" || strings.ContainsAny(car+track, `\/:*?"<>|`) {
-		return 0, errors.New("the pack doesn't say which car and track")
+		return 0, errors.New("the data pack does not specify the car and track")
 	}
 	sess := &store.Session{Game: s.Game, Car: car, Track: track, Kind: s.Kind, StartedAt: s.Started, Match: "auto", Ext: by, Pack: packID}
 	for _, lp := range s.Laps {
