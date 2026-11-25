@@ -49,7 +49,7 @@ The owner is not a programmer: explain changes in plain language and keep code s
 - `internal/games/ac` (INI), `internal/games/ace` (protobuf, setting names in `labels.go`), `internal/games/acr`
   (one save file, read-only via `game.ReadOnly`)
 - `internal/games/acc` – ACC: parse/flatten setups, scoring exclusions (`labels.go`), car/track names
-  (`names.go`), folder layout scan, install detection, shared-memory driving detection
+  (`names.go`), folder layout scan, install detection, shared-memory driving detection, `broadcast.go` = ACC's broadcasting connection (race leader, timed race end, D-198; only during a timed race)
 - `internal/setup` – game-neutral `Field` / `Setup` (with `Raw` file bytes for the library)
 - `internal/naming` – reads initials / session / version / temperature / lap time / codes from names
 - `internal/store` – SQLite library (`%APPDATA%\SetupMan\library.db`): setups, versions, changelog

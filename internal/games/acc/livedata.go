@@ -304,9 +304,26 @@ type liveReader struct {
 	once  sync.Once
 	state atomic.Value // game.LiveState
 	tele  atomic.Value // *game.Telemetry (nil pointer = game not running)
+	bc    *broadcast   // ACC's broadcasting connection for the race leader (D-198); nil for AC
 }
 
-func newLiveReader() *liveReader { return newLiveReaderFor(accLayout, accProcess) }
+func newLiveReader() *liveReader {
+	r := newLiveReaderFor(accLayout, accProcess)
+	r.bc = newBroadcast()
+	return r
+}
+
+// leader connects to ACC's broadcasting only during a timed race and adds the race leader.
+func (r *liveReader) leader(t *game.Telemetry) {
+	if r.bc == nil {
+		return
+	}
+	race := t != nil && !t.Off && t.Session == "race" && t.TimeLeftKnown && t.SessionLaps == 0
+	r.bc.want(race)
+	if race {
+		r.bc.fill(t, time.Now())
+	}
+}
 
 func newLiveReaderFor(lay layout, exes ...string) *liveReader {
 	r := &liveReader{lay: lay, exes: exes}
@@ -369,6 +386,7 @@ func (r *liveReader) step(d *driveState) (wait time.Duration) {
 		r.state.Store(game.LiveUnknown)
 		r.tele.Store((*game.Telemetry)(nil))
 		*d = driveState{}
+		r.leader(nil)
 		return gameCheckEvery
 	}
 	s := readSample(r.lay)
@@ -376,10 +394,12 @@ func (r *liveReader) step(d *driveState) (wait time.Duration) {
 		r.state.Store(game.LiveUnknown)
 		r.tele.Store((*game.Telemetry)(nil))
 		*d = driveState{}
+		r.leader(nil)
 		return gameCheckEvery
 	}
 	r.state.Store(d.update(s, time.Now()))
 	t := s.t
+	r.leader(&t)
 	r.tele.Store(&t)
 	return sampleEvery
 }

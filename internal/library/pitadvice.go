@@ -46,6 +46,7 @@ type FuelAdvice struct {
 	FuelPerLap float64 `json:"fuelPerLap"` // litres
 	LapMs      int     `json:"lapMs"`      // average lap time
 	Timed      bool    `json:"timed"`      // session ends on time (else on laps)
+	RaceEnd    string  `json:"raceEnd"`    // timed race: "leader" (from where the leader is), "you" (you lead), "unknown" (leader not known: counted as if you lead), D-198
 	TimeLeftMs float64 `json:"timeLeftMs"`
 	LapsToGo   float64 `json:"lapsToGo"`
 	FuelNow    float64 `json:"fuelNow"`
@@ -203,11 +204,7 @@ func fuelAdvice(laps []store.Lap, t game.Telemetry, margin float64, plan stintPl
 		f.LapsToGo = math.Max(0, float64(t.SessionLaps-t.CompletedLaps)-done)
 	case t.TimeLeftKnown: // timed: every lap started before the clock reaches zero is finished
 		f.Timed = true
-		if t.TimeLeftMs <= 0 {
-			f.LapsToGo = 1 - done
-		} else {
-			f.LapsToGo = math.Ceil(done+t.TimeLeftMs/float64(f.LapMs)) - done
-		}
+		f.LapsToGo, f.RaceEnd = timedLapsToGo(t, done, float64(f.LapMs))
 	default:
 		f.Reason = "The session length is not known yet."
 		return f
@@ -303,3 +300,42 @@ func tyreAdvice(laps []store.Lap, t game.Telemetry, dryTarget, wetTarget float64
 }
 
 func round1(v float64) float64 { return math.Round(v*10) / 10 }
+
+// timedLapsToGo is the number of laps still to drive in a session that ends on time. A lap
+// started before the clock reaches zero is finished. In a race, the race ends when the overall
+// leader crosses the line after the clock has run out, and every other car finishes at its next
+// crossing, which can be one lap later than its own first crossing after zero (D-198). Without
+// the leader's position SetupMan counts as if the driver leads.
+func timedLapsToGo(t game.Telemetry, done, lapMs float64) (laps float64, raceEnd string) {
+	own := 1 - done
+	if t.TimeLeftMs > 0 {
+		own = math.Ceil(done+t.TimeLeftMs/lapMs) - done
+	}
+	switch {
+	case t.Session != "race":
+		return own, ""
+	case !t.LeaderKnown:
+		return own, "unknown"
+	case t.LeaderIsPlayer:
+		return own, "you"
+	case t.LeaderFinished:
+		return 1 - done, "leader"
+	}
+	// The leader's finishing crossing, as time left on the clock (zero or below).
+	tl := float64(t.LeaderLapMs)
+	if tl <= 0 {
+		tl = lapMs
+	}
+	tl = math.Min(1.5*lapMs, math.Max(0.5*lapMs, tl)) // leaders of another class lap faster or slower
+	xl := t.TimeLeftMs - (1-t.LeaderProgress)*tl      // the leader's next crossing
+	if xl > 0 {
+		xl -= math.Ceil(xl/tl) * tl
+	}
+	// The driver finishes at the first own crossing after that.
+	c1 := t.TimeLeftMs - (1-done)*lapMs // the driver's next crossing
+	k := 1.0
+	if c1 >= xl {
+		k = math.Floor((c1-xl)/lapMs) + 2
+	}
+	return k - done, "leader"
+}

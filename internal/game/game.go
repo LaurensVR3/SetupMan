@@ -77,6 +77,14 @@ type Telemetry struct {
 	StintKnown     bool
 	TankSize       float64 // litres the car's tank holds
 	TankKnown      bool
+
+	// The overall race leader (D-198, ACC broadcasting): a timed race ends when the leader crosses
+	// the line after the clock has run out; every other car finishes at its next crossing.
+	LeaderKnown    bool
+	LeaderIsPlayer bool    // the player leads
+	LeaderFinished bool    // the leader has crossed the line after the clock ran out
+	LeaderProgress float64 // how far round their lap the leader is, 0 … 1
+	LeaderLapMs    int     // the leader's last clean lap, else best lap (0 = unknown)
 }
 
 // TelemetrySource is implemented by games that can report live data for recording laps.
