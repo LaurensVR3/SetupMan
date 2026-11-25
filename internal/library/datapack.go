@@ -1119,3 +1119,54 @@ func (l *Library) packNames(gameID, car, track string) (string, string) {
 	cn, _, _, tn := l.teleNames(gameID, car, track)
 	return cn, tn
 }
+
+// BestLap is the user's fastest lap of one car on one track, for a best-laps pack (D-201): a base
+// lap new users can compare their laps with.
+type BestLap struct {
+	FileID    int64     `json:"fileId"`
+	N         int       `json:"n"`
+	Lap       int       `json:"lap"`
+	LapMs     int       `json:"lapMs"`
+	Car       string    `json:"car"`
+	CarName   string    `json:"carName"`
+	Class     string    `json:"class"`
+	Track     string    `json:"track"`
+	TrackName string    `json:"trackName"`
+	Started   time.Time `json:"started"`
+	Extra     bool      `json:"extra"` // SetupMan's extra log goes along
+}
+
+// BestLaps returns the user's own fastest valid full lap with telemetry for every car on every
+// track of a game, by track and then fastest first.
+func (l *Library) BestLaps(gameID string) ([]BestLap, error) {
+	out := []BestLap{}
+	if l.db == nil || l.game(gameID) == nil {
+		return out, ErrNoHistory
+	}
+	rows, err := l.db.TelemetryTrackLaps(gameID, "", "")
+	if err != nil {
+		return nil, err
+	}
+	seen := map[string]bool{}
+	for _, r := range rows { // fastest first
+		k := strings.ToLower(r.Car + "|" + r.Track)
+		if seen[k] || r.Ext != "" || !r.Timed || r.DistM < 100 || (r.Valid != nil && !*r.Valid) {
+			continue
+		}
+		seen[k] = true
+		b := BestLap{FileID: r.FileID, N: r.N, Lap: r.Lap, LapMs: r.LapMs, Car: r.Car, Track: strings.ToLower(r.Track), Started: r.StartedAt}
+		b.CarName, _, b.Class, b.TrackName = l.teleNames(gameID, r.Car, r.Track)
+		if r.SessionID != 0 && l.TelemetryDir != "" {
+			_, err := os.Stat(telemetry.ExtraPath(l.TelemetryDir, gameID, r.SessionID))
+			b.Extra = err == nil
+		}
+		out = append(out, b)
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].TrackName != out[j].TrackName {
+			return out[i].TrackName < out[j].TrackName
+		}
+		return out[i].LapMs < out[j].LapMs
+	})
+	return out, nil
+}

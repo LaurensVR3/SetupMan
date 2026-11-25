@@ -970,6 +970,7 @@ func (q Q) TelemetryDisk(game string) (files int, bytes int64, err error) {
 type TeleLapRow struct {
 	TeleLap
 	Car         string    `json:"car"`
+	Track       string    `json:"track"`
 	SessionFile int64     `json:"sessionFile"` // the file the session is shown as
 	StartedAt   time.Time `json:"startedAt"`   // the session's start
 	Kind        string    `json:"kind"`
@@ -977,17 +978,21 @@ type TeleLapRow struct {
 	SessionID   int64     `json:"sessionId"`
 }
 
-// TelemetryTrackLaps returns every full lap on a track, of one car or ("") of every car, each lap
-// once, fastest first.
+// TelemetryTrackLaps returns every full lap on a track ("" = every track), of one car or ("") of
+// every car, each lap once, fastest first.
 func (q Q) TelemetryTrackLaps(game, car, track string) ([]TeleLapRow, error) {
-	where, args := `WHERE f.game = ? AND f.track = ? AND f.missing = 0 AND t.dup = 0 AND t.full = 1`, []any{game, track}
+	where, args := `WHERE f.game = ? AND f.missing = 0 AND t.dup = 0 AND t.full = 1`, []any{game}
+	if track != "" {
+		where += ` AND f.track = ?`
+		args = append(args, track)
+	}
 	if car != "" {
 		where += ` AND f.car = ?`
 		args = append(args, car)
 	}
 	// A lap linked to a recorded lap takes that lap's session and setup: one ACC file can hold a
 	// whole server weekend, and setups can change between stints (D-177, D-179).
-	rows, err := q.ex.Query(lapSelect+`, f.car, k.id, COALESCE(ls.started_at, k.started_at), COALESCE(ls.kind, s.kind, ''), COALESCE(l.session_id, k.session_id, 0),
+	rows, err := q.ex.Query(lapSelect+`, f.car, f.track, k.id, COALESCE(ls.started_at, k.started_at), COALESCE(ls.kind, s.kind, ''), COALESCE(l.session_id, k.session_id, 0),
 		CASE WHEN l.id IS NOT NULL THEN COALESCE(l.setup_id, 0) WHEN k.match = 'manual' THEN COALESCE(k.setup_id, 0) ELSE COALESCE(s.setup_id, 0) END`+lapFrom+`
 		LEFT JOIN sessions ls ON ls.id = l.session_id
 		JOIN telemetry_files f ON f.id = t.file_id JOIN telemetry_files k ON k.id = t.sess_file LEFT JOIN sessions s ON s.id = k.session_id
@@ -1000,7 +1005,7 @@ func (q Q) TelemetryTrackLaps(game, car, track string) ([]TeleLapRow, error) {
 	for rows.Next() {
 		var r TeleLapRow
 		var st int64
-		if err := scanLap(rows, &r.TeleLap, &r.Car, &r.SessionFile, &st, &r.Kind, &r.SessionID, &r.SetupID); err != nil {
+		if err := scanLap(rows, &r.TeleLap, &r.Car, &r.Track, &r.SessionFile, &st, &r.Kind, &r.SessionID, &r.SetupID); err != nil {
 			return nil, err
 		}
 		r.StartedAt = fromMS(st)

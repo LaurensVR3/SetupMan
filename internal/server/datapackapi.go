@@ -92,6 +92,7 @@ func (s *Server) registerDataPacks() {
 	s.mux.HandleFunc("POST /api/datapacks/inspect", s.handlePackInspect)
 	s.mux.HandleFunc("POST /api/datapacks/import", s.handlePackImport)
 	s.mux.HandleFunc("GET /api/datapacks", s.handlePackList)
+	s.mux.HandleFunc("GET /api/datapacks/best-laps/{game}", s.handleBestLaps)
 	s.mux.HandleFunc("DELETE /api/datapacks/{id}", s.handlePackRemove)
 }
 
@@ -237,4 +238,14 @@ func (s *Server) handlePackRemove(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, res)
+}
+
+// handleBestLaps lists the user's fastest lap of every car on every track (a best-laps pack).
+func (s *Server) handleBestLaps(w http.ResponseWriter, r *http.Request) {
+	list, err := s.lib.BestLaps(r.PathValue("game"))
+	if err != nil {
+		historyError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, list)
 }

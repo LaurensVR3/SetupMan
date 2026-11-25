@@ -176,7 +176,7 @@ export const DataPackDialog = {
       </section>
 
       <section v-if="packState.laps.length" class="pack-section">
-        <h3>Laps picked by hand</h3>
+        <h3>Laps ({{ packState.laps.length }})</h3>
         <ul class="pack-laps">
           <li v-for="(l, i) in packState.laps" :key="l.fileId + ':' + l.n"><span>{{ l.label }}</span>
             <button type="button" class="btn btn-sm btn-quiet" @click="removeLap(i)" :aria-label="'Remove ' + l.label">Remove</button></li>

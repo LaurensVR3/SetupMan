@@ -10,6 +10,7 @@ import { lapTime } from "../components/LapTimes.js";
 import { plural } from "../format.js";
 import { bytes, when, kindLabel, classCls, dateLabel } from "../telemetry.js";
 import { showToast } from "../store.js";
+import { addLapsToPack } from "../components/DataPack.js";
 
 const SORTS = [["name", "Track name"], ["recent", "Recent"], ["laps", "Most laps"]];
 
@@ -67,6 +68,18 @@ export const TelemetryPage = {
       const f = (d) => new Date(d).toLocaleDateString(undefined, { month: "long", year: "numeric" });
       return f(x.first) === f(x.last) ? `in ${f(x.first)}` : `from ${f(x.first)} to ${f(x.last)}`;
     });
+    // A best-laps pack (D-201): your fastest lap of every car on every track, with the extra log
+    // where there is one, as base laps for other users to compare with.
+    const packing = ref(false);
+    async function bestLapsPack() {
+      packing.value = true;
+      try {
+        const list = await get(`/api/datapacks/best-laps/${g.value.game}`);
+        if (!list.length) { showToast("No full laps with telemetry yet."); return; }
+        addLapsToPack(list.map((b) => ({ fileId: b.fileId, n: b.n,
+          label: `${lapTime(b.lapMs)} · ${b.trackName} · ${b.carName}` + (b.extra ? " · extra log" : "") })));
+      } catch (e) { showToast(e.message, 7000); } finally { packing.value = false; }
+    }
     async function reindex() {
       try {
         await post(`/api/telemetry/games/${g.value.game}/reindex`);
@@ -75,7 +88,7 @@ export const TelemetryPage = {
       } catch (e) { showToast(e.message); }
     }
     const trackLink = (track, carId) => `/telemetry/${g.value.game}/${enc(track)}` + (carId ? `?car=${enc(carId)}` : "");
-    return { data, error, g, q, sort, car, cars, tracks, period, reindex, trackLink, isRecord, SORTS, lapTime, plural, bytes, when, dateLabel,
+    return { packing, bestLapsPack, data, error, g, q, sort, car, cars, tracks, period, reindex, trackLink, isRecord, SORTS, lapTime, plural, bytes, when, dateLabel,
       kindLabel, classCls };
   },
   template: `
@@ -97,6 +110,7 @@ export const TelemetryPage = {
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a7 7 0 0 1 5.6 11.2l5 5-1.4 1.4-5-5A7 7 0 1 1 10 3Zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
               <input v-model="q" type="search" placeholder="Find a track or car" aria-label="Find a track or car">
             </label>
+            <button v-if="g.laps" type="button" class="btn" :disabled="packing" @click="bestLapsPack" title="Your fastest lap of every car on every track, with telemetry and the extra log, in one data pack for other SetupMan users">Best laps pack…</button>
             <button v-if="g.folder" type="button" class="btn" @click="reindex" :disabled="g.indexing">
               <span v-if="g.indexing" class="tl-busy" aria-hidden="true"></span>{{ g.indexing ? 'Reading new files' : 'Check for new files' }}
             </button>
